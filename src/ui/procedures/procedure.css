@@ -1,0 +1,83 @@
+/* IV minigame dialog — tactical HUD theme (tokens from style.css). */
+#procedure{width:min(860px,calc(100% - 24px));max-height:94dvh;padding:0;overflow:auto;background:var(--brackets-hot),var(--bg-2);border:1px solid var(--line-3)}
+#procedure::backdrop{background:#050604e6;background-image:var(--scanlines)}
+.procedure-top{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;padding:18px 22px 14px;background:var(--bg-0);border-bottom:1px solid var(--line-2);border-left:3px solid var(--amber)}
+.procedure-kicker{color:var(--amber-ink)}
+.procedure-top h2{margin:5px 0 3px;font-size:28px;line-height:1;color:var(--ink)}
+.procedure-top p{font:500 11px var(--mono);letter-spacing:var(--track);text-transform:uppercase;color:var(--ink-2)}
+.procedure-top button{flex-shrink:0;border-color:var(--line-2)}
+.procedure-steps{display:flex;gap:0;background:var(--bg-1);border-bottom:1px solid var(--line)}
+.procedure-steps>span{flex:1;display:flex;align-items:center;gap:8px;padding:10px 16px;font:600 13px var(--font-head);letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);border-right:1px solid var(--line);border-bottom:2px solid transparent}
+.procedure-steps>span:last-child{border-right:0}
+.procedure-steps b{display:grid;place-items:center;width:22px;height:22px;font:700 11px var(--mono);color:var(--ink-3);border:1px solid var(--line-2)}
+.procedure-steps .current{color:var(--amber-ink);border-bottom-color:var(--amber);background:var(--bg-2)}
+.procedure-steps .current b{color:#17120a;background:var(--amber);border-color:var(--amber)}
+.procedure-steps .complete{color:var(--ok)}
+.procedure-steps .complete b{color:var(--ok);border-color:var(--ok)}
+.procedure-board{padding:6px 10px;border-bottom:1px solid var(--line);background:
+  linear-gradient(#ffffff05 1px,transparent 1px) 0 0/32px 32px,linear-gradient(90deg,#ffffff05 1px,transparent 1px) 0 0/32px 32px,var(--bg-0)}
+.procedure-board svg{display:block;width:100%;max-height:240px;touch-action:none}
+.procedure-arm{fill:#2b3226;stroke:#c3c8b0;stroke-width:2}
+.procedure-vein{fill:none;stroke:#8fb3a4;stroke-width:5;stroke-linecap:round;stroke-linejoin:round;opacity:.9}
+.joint-lines{fill:none;stroke:#aab196;stroke-width:1.5;opacity:.4}
+.procedure-board text{fill:var(--ink-2);font:500 12px var(--mono);letter-spacing:.04em}
+.procedure-board #insertion-reticle{stroke:var(--amber);stroke-width:2;fill:#e6aa3e14;pointer-events:none}
+.procedure-board #insertion-needle{pointer-events:none}
+.procedure-controls{padding:18px 22px 20px}
+.procedure-controls h3{font-size:20px;color:var(--ink)}
+.procedure-controls>p{max-width:75ch;margin:7px 0;font-size:13.5px;line-height:1.65;color:var(--ink-2)}
+.procedure-readout{margin:12px 0 6px;padding:10px 14px;font:500 12.5px/1.6 var(--mono);color:var(--ok);background:var(--bg-0) var(--scanlines);border:1px solid var(--line-2);border-left:3px solid var(--ok)}
+.procedure-controls>.procedure-note{margin:10px 0;font:500 11px var(--mono);letter-spacing:.03em;color:var(--ink-3)}
+.procedure-controls>.primary{min-width:220px;margin-top:12px}
+.procedure-warning{padding:9px 22px;font:500 12px var(--mono);color:var(--amber-ink);background:var(--amber-bg);border-bottom:1px solid #e6aa3e66}
+.approach-label{display:flex;justify-content:space-between;margin-top:18px;font:500 10.5px var(--mono);letter-spacing:var(--track);text-transform:uppercase;color:var(--ink-3)}
+.approach-label output{font:700 13px var(--mono);color:var(--amber-ink)}
+.approach-rail{position:relative;display:flex;align-items:center;height:30px;margin:10px 0 20px;background:var(--bg-0);border:1px solid var(--line-2)}
+.approach-rail>span{position:absolute;top:0;bottom:0;pointer-events:none;background:repeating-linear-gradient(135deg,#9dbb8526 0 6px,#9dbb8510 6px 12px);border-left:1px solid var(--ok);border-right:1px solid var(--ok)}
+.approach-rail input{position:relative;z-index:1;width:100%;height:30px;margin:0;appearance:none;background:transparent;accent-color:var(--amber);cursor:ew-resize}
+.approach-rail input::-webkit-slider-runnable-track{height:2px;background:var(--line-3)}
+.approach-rail input::-webkit-slider-thumb{appearance:none;width:8px;height:30px;margin-top:-14px;background:var(--amber);border:0;box-shadow:0 0 0 2px var(--bg-0)}
+.approach-rail input::-moz-range-track{height:2px;background:var(--line-3)}
+.approach-rail input::-moz-range-thumb{width:8px;height:28px;border:0;border-radius:0;background:var(--amber)}
+.depth-caption{display:flex;align-items:center;justify-content:space-between;margin-top:18px;font:500 10.5px var(--mono);letter-spacing:var(--track);text-transform:uppercase;color:var(--ink-3)}
+.depth-caption strong{font:700 14px var(--mono);color:var(--amber-ink)}
+.depth-meter{position:relative;height:32px;margin:10px 0 16px;overflow:hidden;background:var(--bg-0);border:1px solid var(--line-2)}
+.depth-target{position:absolute;top:0;bottom:0;background:repeating-linear-gradient(135deg,#9dbb852e 0 6px,#9dbb8514 6px 12px);border-left:2px solid var(--ok);border-right:2px solid var(--ok)}
+.depth-target::after{content:'Trafienie';position:absolute;inset:0;display:grid;place-items:center;font:600 10px var(--mono);letter-spacing:var(--track);text-transform:uppercase;color:var(--ok)}
+#depth-fill{position:absolute;top:0;bottom:0;left:0;width:0;background:#e6aa3e22;border-right:1px solid #e6aa3e88}
+#depth-position{position:absolute;top:0;bottom:0;left:0;width:3px;background:var(--amber-ink);box-shadow:0 0 6px var(--amber)}
+.hold-button{display:flex;align-items:center;justify-content:center;gap:14px;width:100%;padding:16px 20px;user-select:none;touch-action:none;font:700 16px/1 var(--font-head);letter-spacing:.08em;text-transform:uppercase;color:var(--ink);background:var(--bg-3);border:1px solid var(--amber);border-radius:0}
+.hold-button:hover{background:var(--amber-bg)}
+.hold-button.pressed{color:#17120a;background:var(--amber);border-color:var(--amber-ink)}
+.hold-button.pressed kbd{color:#17120a;border-color:#17120a;background:transparent}
+.procedure-disclaimer{padding:10px 22px;font:500 10.5px var(--mono);letter-spacing:.03em;color:var(--ink-3);background:var(--bg-1);border-top:1px solid var(--line)}
+.procedure-result{display:flex;align-items:center;gap:16px;padding:14px 16px;background:var(--ok-bg);border:1px solid #9dbb8566;border-left:3px solid var(--ok)}
+.procedure-result.failure{background:var(--crit-bg);border-color:#f26a5f66;border-left-color:var(--crit)}
+.result-mark{display:grid;place-items:center;flex-shrink:0;width:42px;height:42px;font:700 24px/1 var(--mono);color:var(--bg-0);background:var(--ok)}
+.procedure-result.failure .result-mark{background:var(--crit)}
+.procedure-result h3{font-size:18px;color:var(--ink)}
+.procedure-result p{margin-top:5px;font-size:13px;line-height:1.6;color:var(--ink-2)}
+.technique-results{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;margin:16px 0 4px;background:var(--line);border:1px solid var(--line)}
+.technique-results span{padding:9px 12px;background:var(--bg-1);font:500 10.5px var(--mono);letter-spacing:var(--track);text-transform:uppercase;color:var(--ink-3)}
+.technique-results b{display:block;margin-top:5px;font:600 24px/1 var(--mono);color:var(--ink)}
+@media (max-width:600px){
+  .procedure-top{padding:14px 16px 12px}
+  .procedure-top h2{font-size:22px}
+  .procedure-steps>span{padding:8px 8px;gap:5px;font-size:11.5px}
+  .procedure-steps b{width:19px;height:19px;font-size:10px}
+  .procedure-board{padding:8px 0}
+  .procedure-board svg{min-height:140px}
+  .procedure-controls{padding:14px 16px 16px}
+  .procedure-controls h3{font-size:17px}
+  .procedure-controls>p{font-size:13px}
+  .procedure-readout{font-size:11.5px;padding:9px 10px}
+  .procedure-disclaimer{padding:10px 16px}
+  .procedure-result{gap:12px;padding:12px}
+  .technique-results span{padding:8px;font-size:9.5px}
+  .technique-results b{font-size:19px}
+  .hold-button{gap:10px;font-size:14px}
+  .procedure-warning{padding:9px 16px}
+}
+.procedure-site-window{fill:var(--amber);fill-opacity:.06;stroke:var(--amber);stroke-opacity:.6;stroke-width:1.5;stroke-dasharray:6 6;pointer-events:none}
+.procedure-board svg:focus{outline:1px solid var(--line-3);outline-offset:-1px}
+.procedure-board svg:focus-visible{outline:2px solid var(--amber)}

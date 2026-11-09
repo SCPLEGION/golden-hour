@@ -1,0 +1,22 @@
+/* Live instrument states toggled by live-hud.js (no layout here). */
+.bag-item[hidden],.bag-empty[hidden]{display:none!important}
+
+/* trend direction flash on vitals */
+.vital-reading strong[data-direction=up]{text-shadow:0 0 10px #e6e8dc33}
+.vital-reading strong[data-direction=down]{text-shadow:0 0 10px #e6aa3e33}
+
+/* vital thresholds: data-level on .vital — ok | warn | crit (set in patient.js / live-hud.js) */
+.vital[data-level=ok] .vital-trend{color:var(--ok)}
+.vital[data-level=warn]{border-left-color:var(--amber);background:linear-gradient(90deg,#e6aa3e14,transparent 70%),var(--bg-0)}
+.vital[data-level=warn] .vital-reading strong{color:var(--amber-ink)}
+.vital[data-level=warn] .vital-trend{color:var(--amber)}
+.vital[data-level=warn] .vital-label::after{content:'Uwaga';padding:0 4px;color:#17120a;background:var(--amber)}
+.vital[data-level=crit]{border-left-color:var(--crit);background:linear-gradient(90deg,#f26a5f24,transparent 75%),var(--bg-0)}
+.vital[data-level=crit] .vital-reading strong{color:var(--crit)}
+.vital[data-level=crit] .vital-trend{color:var(--crit)}
+.vital[data-level=crit] .vital-label::after{content:'Kryt.';padding:0 4px;color:#170806;background:var(--crit);animation:hud-blink 1s steps(2,start) infinite}
+.monitor-off .vital[data-level] .vital-label::after{animation:none}
+
+@media (prefers-reduced-motion:reduce){
+  .vital[data-level=crit] .vital-label::after{animation:none}
+}

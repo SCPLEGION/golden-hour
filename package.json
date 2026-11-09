@@ -1,0 +1,12 @@
+{
+  "name": "field-medic",
+  "version": "0.6.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node server.js",
+    "start": "node server.js",
+    "test": "node scripts/test.js",
+    "check": "node scripts/check.js"
+  }
+}

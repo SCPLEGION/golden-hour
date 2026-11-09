@@ -1,0 +1,252 @@
+[
+  {
+    "category": "equipment",
+    "id": "burnGel",
+    "title": "Hydrożel na oparzenia"
+  },
+  {
+    "category": "equipment",
+    "id": "salineIrrigation",
+    "title": "Zestaw płukania tkanek"
+  },
+  {
+    "category": "equipment",
+    "id": "eyeShield",
+    "title": "Osłona oka"
+  },
+  {
+    "category": "equipment",
+    "id": "coldCompress",
+    "title": "Zimny kompres"
+  },
+  {
+    "category": "equipment",
+    "id": "armSling",
+    "title": "Temblak"
+  },
+  {
+    "category": "equipment",
+    "id": "pelvicBinder",
+    "title": "Pas stabilizujący miednicę"
+  },
+  {
+    "category": "equipment",
+    "id": "suction",
+    "title": "Ssak ręczny"
+  },
+  {
+    "category": "equipment",
+    "id": "oralRehydration",
+    "title": "Zestaw nawadniania doustnego"
+  },
+  {
+    "category": "equipment",
+    "id": "warmingPack",
+    "title": "Pakiet aktywnego ogrzewania"
+  },
+  {
+    "category": "equipment",
+    "id": "coolingMat",
+    "title": "Mata chłodząca"
+  },
+  {
+    "category": "equipment",
+    "id": "pupilLight",
+    "title": "Latarka do badania źrenic"
+  },
+  {
+    "category": "equipment",
+    "id": "pulseOximeter",
+    "title": "Pulsoksymetr napalcowy"
+  },
+  {
+    "category": "equipment",
+    "id": "glucometer",
+    "title": "Glukometr"
+  },
+  {
+    "category": "equipment",
+    "id": "thermometer",
+    "title": "Termometr kontaktowy"
+  },
+  {
+    "category": "equipment",
+    "id": "stethoscope",
+    "title": "Stetoskop"
+  },
+  {
+    "category": "equipment",
+    "id": "capillaryTest",
+    "title": "Ocena nawrotu kapilarnego"
+  },
+  {
+    "category": "equipment",
+    "id": "sensoryExam",
+    "title": "Zestaw badania czucia"
+  },
+  {
+    "category": "equipment",
+    "id": "woundPacking",
+    "title": "Pakiet tamponady rany"
+  },
+  {
+    "category": "equipment",
+    "id": "impaledSupport",
+    "title": "Stabilizator ciała obcego"
+  },
+  {
+    "category": "equipment",
+    "id": "chestSupport",
+    "title": "Poduszka podpierająca klatkę"
+  },
+  {
+    "category": "medicine",
+    "id": "ketamine",
+    "title": "Ketamina"
+  },
+  {
+    "category": "medicine",
+    "id": "fentanyl",
+    "title": "Fentanyl"
+  },
+  {
+    "category": "medicine",
+    "id": "adrenaline",
+    "title": "Adrenalina"
+  },
+  {
+    "category": "medicine",
+    "id": "glucoseGel",
+    "title": "Żel glukozowy"
+  },
+  {
+    "category": "medicine",
+    "id": "naloxone",
+    "title": "Nalokson"
+  },
+  {
+    "category": "medicine",
+    "id": "ondansetron",
+    "title": "Ondansetron"
+  },
+  {
+    "category": "medicine",
+    "id": "ipratropium",
+    "title": "Bromek ipratropium"
+  },
+  {
+    "category": "medicine",
+    "id": "hydrocortisone",
+    "title": "Hydrokortyzon"
+  },
+  {
+    "category": "medicine",
+    "id": "ibuprofen",
+    "title": "Ibuprofen"
+  },
+  {
+    "category": "medicine",
+    "id": "chlorphenamine",
+    "title": "Chlorfenamina"
+  },
+  {
+    "category": "guide",
+    "id": "exp-burns",
+    "title": "Oparzenia: osłoń właściwą zmianę"
+  },
+  {
+    "category": "guide",
+    "id": "exp-foreign-body",
+    "title": "Przedmiot wbity w ranę"
+  },
+  {
+    "category": "guide",
+    "id": "exp-eyes",
+    "title": "Uraz oka i podrażnienie"
+  },
+  {
+    "category": "guide",
+    "id": "exp-sprain",
+    "title": "Skręcenie, zwichnięcie i złamanie"
+  },
+  {
+    "category": "guide",
+    "id": "exp-perfusion",
+    "title": "Ukrwienie kończyny po zabezpieczeniu"
+  },
+  {
+    "category": "guide",
+    "id": "exp-analgesia",
+    "title": "Przeciwbólowe: szybkość kontra ryzyko"
+  },
+  {
+    "category": "guide",
+    "id": "exp-opioid-reversal",
+    "title": "Nalokson i nawrót obciążenia"
+  },
+  {
+    "category": "guide",
+    "id": "exp-allergy",
+    "title": "Reakcja alergiczna to osobny problem"
+  },
+  {
+    "category": "guide",
+    "id": "exp-glucose",
+    "title": "Glukoza: badanie przed preparatem"
+  },
+  {
+    "category": "guide",
+    "id": "exp-nausea",
+    "title": "Nudności podczas oczekiwania"
+  },
+  {
+    "category": "guide",
+    "id": "exp-temperature",
+    "title": "Za zimno i za gorąco"
+  },
+  {
+    "category": "guide",
+    "id": "exp-hydration",
+    "title": "Odwodnienie a utrata krwi"
+  },
+  {
+    "category": "guide",
+    "id": "exp-suction",
+    "title": "Płyn w drogach oddechowych"
+  },
+  {
+    "category": "guide",
+    "id": "exp-chest-support",
+    "title": "Podparcie klatki nie zamyka rany"
+  },
+  {
+    "category": "guide",
+    "id": "exp-deep-wound",
+    "title": "Tamponada i oszczędzanie gaz"
+  },
+  {
+    "category": "guide",
+    "id": "exp-reserves",
+    "title": "Planowanie torby na długą ewakuację"
+  },
+  {
+    "category": "guide",
+    "id": "exp-live-monitor",
+    "title": "Monitor na żywo i ręczne badania"
+  },
+  {
+    "category": "guide",
+    "id": "exp-assessment-tools",
+    "title": "Wybór narzędzia badania"
+  },
+  {
+    "category": "guide",
+    "id": "exp-treatment-review",
+    "title": "Kontrola skutku zamiast listy odhaczonych rzeczy"
+  },
+  {
+    "category": "guide",
+    "id": "exp-drug-sources",
+    "title": "Źródła opisów nowych leków"
+  }
+]

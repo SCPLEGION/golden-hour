@@ -1,0 +1,251 @@
+export const GUIDES = [
+  {
+    "id": "iv-minigame",
+    "title": "Minigra wkłucia i jakość dostępu",
+    "text": "Wybierz wenflon w torbie i kliknij rękę albo użyj menu kontekstowego. Najpierw wybierz dokładny punkt na rysunku naczynia; możesz kliknąć lub ustawić celownik strzałkami. Następnie ustaw prowadzenie igły suwakiem w zaznaczonym zakresie. Na końcu przytrzymaj przycisk lub Spację i puść w polu trafienia. Nie ma losowego rzutu: wynik zależy od punktu, ustawienia i momentu puszczenia. Dłoń, przedramię i okolica łokcia mają różne marginesy i potencjał przepływu. Udana, lecz niedokładna próba może dać słaby dostęp. Przepływ zależy też od stanu krążenia i stazy. Płyny napływają proporcjonalnie do przepływu, a lek IV ma odpowiednio słabszy efekt. Podczas minigry automatyczny zegar jest wstrzymany, ale rozstrzygnięta próba zużywa czas czynności oraz wenflon. Niepowodzenie powoduje krwiak. Escape przed rozpoczęciem wprowadzania anuluje bez kosztu; po rozpoczęciu oznacza nieudaną próbę. Słaby wenflon możesz usunąć i spróbować ponownie. Wszystkie zakresy są umownymi skalami gry, nie instrukcją medyczną."
+  },
+  {
+    "id": "cockpit",
+    "title": "Ekran gry i szybkie działania",
+    "text": "Stół zajmuje główną część ekranu; torba jest po prawej, a parametry poniżej pacjenta. Domyślnie działa zegar czasu rzeczywistego i podłączony monitor. Pacjent może się zmieniać również wtedy, gdy przeglądasz torbę lub wybierasz miejsce. Pauza zatrzymuje automatyczne sekundy, ale wykonana czynność nadal zużywa przypisany jej czas symulacji. Możesz ustawić tempo 1×, 2× lub 4×. Klawisze 1–4 wykonują badanie miejscowe, pomiar, zgłoszenie ewakuacji i obserwację przez 30 sekund. L otwiera dziennik, H poradnik. Skróty działają poza polami formularzy, menu i oknami procedur. Escape odkłada trzymany przedmiot i zamyka dziennik. Podłączony monitor aktualizuje parametry na żywo, a odłączony pozostawia ostatni odczyt."
+  },
+  {
+    "id": "controls",
+    "title": "Sterowanie stołem i sprzętem",
+    "text": "Ciało leży poziomo, głową po lewej. Prawy przycisk na ranie, opatrunku, wenflonie lub kończynie otwiera menu dotyczące tego miejsca. Na ekranie dotykowym dotknij rany albo użyj przycisku Działania pod stołem. Przedmioty możesz przeciągać z torby lub wziąć do ręki i kliknąć miejsce użycia. Otwarcie menu nie wykonuje czynności, ale domyślnie nie zatrzymuje działającego zegara. Do spokojnego planowania użyj pauzy. Escape odkłada przedmiot albo zamyka menu. Tab wybiera miejsce, Shift+F10 otwiera jego menu, strzałki wybierają pozycję, Enter zatwierdza. Opatrunek zabezpiecza wybraną ranę, staza obejmuje kończynę, a szyna unieruchamia jej złamania. Założony sprzęt widać na ciele."
+  },
+  {
+    "id": "iv",
+    "title": "Wenflon, staza i lokalny dostęp IV",
+    "text": "W tym modelu gry wenflon zakładasz osobno w lewej lub prawej ręce. Aby podać płyn albo lek IV, kliknij ten konkretny dostęp lub rękę. Wenflon jest umieszczany poniżej stazy: jeżeli na tej samej kończynie jest staza, podanie zużyje preparat, ale nie da efektu ogólnoustrojowego. Założenie stazy podczas wlewu zatrzyma jego dalszy dopływ. Lek, który już dotarł do krążenia, nie znika po późniejszym założeniu stazy. Możesz założyć drugi dostęp w drugiej ręce. Przekreślony wenflon i czerwony przewód wskazują brak przepływu."
+  },
+  {
+    "id": "start",
+    "title": "Pierwsze minuty",
+    "text": "Jesteś sam z pacjentem, a zespół ewakuacyjny jest 15–25 minut drogi stąd. Zgłoś ewakuację. Widoczne krwawienia i deformacje widzisz od razu. Kliknij część ciała, obejrzyj urazy i zdecyduj, co wymaga natychmiastowej reakcji. Badanie ujawnia to, czego nie widać. Zegar domyślnie płynie także między czynnościami; krwawienie nie czeka na kolejny przycisk. Pauza zatrzymuje automatyczny upływ, ale wybrana czynność nadal kosztuje swój czas. Poradnik, minigra procedury i przełączenie przeglądarki w tło automatycznie wstrzymują zegar do powrotu."
+  },
+  {
+    "id": "bleeding",
+    "title": "Rana, krwotok i złamanie",
+    "text": "Jedna kończyna może mieć kilka urazów. W grze opatrunek uciskowy zmniejsza krwawienie, ale masywny krwotok może trwać nadal. Gaza hemostatyczna i staza mają silniejszy efekt. Staza działa wyłącznie na kończyny; czas jej założenia jest zapisywany. Szyna zmniejsza ból złamania, lecz nie tamuje krwi. Opatrunek nie naprawia złamanej kości. Sprawdzaj ukrwienie i czucie po leczeniu."
+  },
+  {
+    "id": "breathing",
+    "title": "Oddychanie i przytomność",
+    "text": "Niska saturacja jest objawem, nie rozpoznaniem. W grze przyczyny obejmują niedrożność, ranę klatki, skurcz oskrzeli i działanie leków. Badanie głowy ocenia drożność, klatki — szmery oddechowe. Tlen ma ograniczony zapas i nie usuwa każdej przyczyny. Wentylacja workiem działa tylko przez czas wykonywania czynności."
+  },
+  {
+    "id": "drugs",
+    "title": "Jak działają leki w grze",
+    "text": "Każde podanie zużywa jedną umowną porcję, bez przeliczenia na rzeczywiste dawki. Przeczytaj kartę leku: droga podania, opóźnienie działania, czas aktywności i ryzyko. IV wymaga wcześniejszego dostępu. Podanie tabletki nieprzytomnemu jest zablokowane. Morfina może pogorszyć oddech, zwłaszcza przy słabym krążeniu; paracetamol działa słabiej i wolniej. TXA ogranicza utratę krwi, a salbutamol działa na skurcz oskrzeli. Powtarzanie aktywnej porcji może zaszkodzić. Wywiad ujawnia zgłaszane alergie."
+  },
+  {
+    "id": "long",
+    "title": "Długie oczekiwanie",
+    "text": "Założone zabezpieczenia, tlen, płyny i leki działają w każdej sekundzie symulacji, także między czynnościami. Podłączony monitor pokazuje aktualne parametry i ich trend; po odłączeniu zatrzymuje ostatni odczyt. Ręczne badania miejscowe pozostają wynikami konkretnego momentu. Sprawdzaj rany, zapas tlenu i czasy działania leków. Chroń przed wychłodzeniem. Akcja obserwacji dodaje 30 lub 60 sekund czasu gry, również wtedy, gdy automat jest zapauzowany. Przy tempie 2× lub 4× także pogorszenie, leki i dojazd zespołu postępują szybciej. Karetka przyjedzie tylko po zgłoszeniu."
+  },
+  {
+    "id": "arrest",
+    "title": "Zatrzymanie krążenia",
+    "text": "W tym uproszczonym modelu krytyczna utrata krwi lub tlenu może zatrzymać krążenie. Rozpoznaj stan pomiarem, ogranicz przyczynę i rozpocznij RKO. AED analizuje rytm i nie wykonuje wyładowania przy asystolii. Cykl RKO kupuje czas, ale nie uzupełnia krwi ani nie zabezpiecza rany. Powrót krążenia jest możliwy po poprawie tlenu i krążenia. Przyjazd transportu sam w sobie nie oznacza wygranej, jeśli pacjent nadal wymaga RKO."
+  },
+  {
+    "id": "about",
+    "title": "O modelu i źródłach",
+    "text": "To fikcyjny symulator inspirowany wielowarstwowym leczeniem w grach takich jak Casualties: Unknown. Liczby, czasy, porcje i efekty są balansem rozgrywki, nie protokołem ratownictwa. Ogólne opisy leków oparto o NHS; nie odwzorowujemy rzeczywistego dawkowania ani pełnych przeciwwskazań.",
+    "links": [
+      [
+        "Casualties: Unknown — autor",
+        "https://orsonik.itch.io/scav-prototype"
+      ],
+      [
+        "NHS — morfina",
+        "https://www.nhs.uk/medicines/morphine/"
+      ],
+      [
+        "NHS — paracetamol",
+        "https://www.nhs.uk/medicines/paracetamol-for-adults/"
+      ],
+      [
+        "NHS — TXA",
+        "https://www.nhs.uk/medicines/tranexamic-acid/"
+      ],
+      [
+        "NHS — salbutamol",
+        "https://www.nhs.uk/medicines/salbutamol-inhaler/about-salbutamol-inhalers/"
+      ]
+    ]
+  },
+  {
+    "id": "exp-burns",
+    "title": "Oparzenia: osłoń właściwą zmianę",
+    "text": "Oparzenie może boleć bez dużej utraty krwi. Hydrożel łagodzi ból wybranej zmiany; zestaw płukania ma inny cel przy zabrudzeniu lub oparzeniu chemicznym. Na ciele mogą być równocześnie rana i oparzenie. Kliknij konkretny uraz, aby nie zużyć środka na sąsiednie miejsce. Żaden z tych przedmiotów nie cofa utraconej krwi."
+  },
+  {
+    "id": "exp-foreign-body",
+    "title": "Przedmiot wbity w ranę",
+    "text": "Tag foreignBody oznacza ranę z pozostającym przedmiotem lub odłamkiem. Stabilizator ogranicza jego poruszanie i związany z nim ból w modelu gry. Nie wykonujesz automatycznego wyciągnięcia przez założenie opatrunku. Gdy rana nadal krwawi, potrzebujesz osobnego zabezpieczenia krwawienia."
+  },
+  {
+    "id": "exp-eyes",
+    "title": "Uraz oka i podrażnienie",
+    "text": "Na głowie mogą współistnieć otarcia, krwawienie skóry i problem oka. Osłona oka działa na zmianę oznaczoną eyes; płukanie ogranicza podrażnienie w fikcyjnym modelu. Badanie źrenic to osobna czynność diagnostyczna. Wynik badania oka nie mówi nic o ukrytym urazie brzucha."
+  },
+  {
+    "id": "exp-sprain",
+    "title": "Skręcenie, zwichnięcie i złamanie",
+    "text": "Widoczny obrzęk nie przesądza, który uraz jest obecny. Zbadaj kończynę i sprawdź czucie oraz ukrwienie. Kompres pomaga przy bólu stłuczenia lub skręcenia, temblak podpiera rękę, a szyna dotyczy złamania. Zmniejszenie bólu nie oznacza, że otwarta rana została zabezpieczona."
+  },
+  {
+    "id": "exp-perfusion",
+    "title": "Ukrwienie kończyny po zabezpieczeniu",
+    "text": "Po założeniu stazy sprawdź miejscowy przepływ i czucie. Brak tętna pod stazą jest innym problemem niż niewyczuwalne tętno w całym krążeniu. Ocena nawrotu kapilarnego odnosi się do wybranej kończyny. Ręka z wenflonem potrzebuje własnej oceny, nawet jeśli druga noga wygląda dobrze."
+  },
+  {
+    "id": "exp-analgesia",
+    "title": "Przeciwbólowe: szybkość kontra ryzyko",
+    "text": "Porównuj początek i czas działania oraz obciążenie oddychania. Fentanyl ma w grze silny, szybki efekt i większy koszt oddechowy; ketamina ma odmienny profil. Doustne środki potrzebują czasu i możliwości przełykania. Opioidowy lek nie tamuje krwotoku, a spokojniejszy pacjent nadal może się pogarszać."
+  },
+  {
+    "id": "exp-opioid-reversal",
+    "title": "Nalokson i nawrót obciążenia",
+    "text": "Nalokson ma w grze czasowo ograniczać obciążenie oddechu po opioidach. Nie usuwa opatrunku ani nie leczy rany klatki. Po zakończeniu jego działania wcześniejszy aktywny lek może nadal mieć znaczenie. Monitoruj trend oddechu i sprawdź czasy aktywności zamiast zakładać trwałe odwrócenie problemu."
+  },
+  {
+    "id": "exp-allergy",
+    "title": "Reakcja alergiczna to osobny problem",
+    "text": "Duszność po reakcji alergicznej ma inny cel leczenia niż rana klatki. Wywiad ujawnia zgłaszane alergie, ale nie każdy pacjent może odpowiedzieć. Adrenalina ma w grze szybki profil dla anaphylaxis, a pozostałe środki wspomagające działają wolniej. Chlorfenamina ani hydrokortyzon nie zastępują pilnego rozwiązania problemu w tym modelu."
+  },
+  {
+    "id": "exp-glucose",
+    "title": "Glukoza: badanie przed preparatem",
+    "text": "Osłabienie, poty i trudny kontakt mogą mieć kilka przyczyn. Glukometr pozwala sprawdzić problem glucoseLow bez oglądania ukrytych urazów innych okolic. Żel glukozowy wymaga przytomności. Poprawa komfortu po preparacie nie wyklucza równoczesnego krwawienia lub złamania."
+  },
+  {
+    "id": "exp-nausea",
+    "title": "Nudności podczas oczekiwania",
+    "text": "W grze nudności są osobnym objawem, na który może działać lek przeciwwymiotny. Podanie ondansetronu przez słaby dostęp IV daje słabszą część efektu. Nie jest to metoda poprawiania saturacji, zabezpieczenia złamania ani zatrzymania krwi. Każda niepotrzebna porcja zmniejsza zapas na później."
+  },
+  {
+    "id": "exp-temperature",
+    "title": "Za zimno i za gorąco",
+    "text": "Koc ogranicza utratę ciepła, pakiet aktywnego ogrzewania ma określony czas działania, a mata chłodząca zmienia temperaturę w przeciwną stronę. Nie używaj obu tylko dlatego, że są w torbie. Sprawdź aktualny trend temperatury i warunki zdarzenia. Zakończenie aktywności pakietu nie oznacza zakończenia całej opieki."
+  },
+  {
+    "id": "exp-hydration",
+    "title": "Odwodnienie a utrata krwi",
+    "text": "Nawodnienie doustne w grze wymaga bezpiecznego przełykania i daje ograniczone wsparcie. Płyn IV korzysta z wybranego wenflonu i jego przepływu. Żaden z nich nie zatrzymuje krwawienia. Podobna bladość u dwóch pacjentów nie oznacza tego samego problemu."
+  },
+  {
+    "id": "exp-suction",
+    "title": "Płyn w drogach oddechowych",
+    "text": "Głośny oddech może wynikać z pozycji pacjenta lub przeszkody płynowej. Ssak ręczny działa w grze na airwayFluid; jego zapas i czas są ograniczone. Tlen wspiera utlenowanie, ale sam nie usuwa przeszkody. Gdy po czynności trend się nie poprawia, zbadaj inne przyczyny zamiast powtarzać identyczne działanie."
+  },
+  {
+    "id": "exp-chest-support",
+    "title": "Podparcie klatki nie zamyka rany",
+    "text": "Poduszka daje w modelu gry czasowe wsparcie komfortu i niewielkie wsparcie oddechu. Opatrunek klatki rozwiązuje inny problem: otwartą ranę. Stłuczenie płuca, złamanie żebra i rana zasysająca mogą wymagać różnych decyzji. Porównuj wynik badania z tym, co faktycznie założyłeś."
+  },
+  {
+    "id": "exp-deep-wound",
+    "title": "Tamponada i oszczędzanie gaz",
+    "text": "Pakiet tamponady bardzo silnie ogranicza krwawienie jednej rany w grze, lecz jego założenie trwa dłużej. Przy kilku zmianach nie obejmie automatycznie całej nogi. Upewnij się, że wybrałeś właściwy znacznik. Niewielkie sączenie, masywny krwotok i krwawienie wewnętrzne mają inny koszt czasowy oraz zasobowy."
+  },
+  {
+    "id": "exp-reserves",
+    "title": "Planowanie torby na długą ewakuację",
+    "text": "Nie zużywaj wszystkich silnych środków w pierwszej minucie bez rozpoznania. Zostaw zapas na kolejne miejsce krwawienia, nieudane wkłucie i wyczerpaną butlę. Sprzęt wielorazowy nadal kosztuje czas czynności. Zegar działa także podczas wybierania wyposażenia, więc w razie potrzeby użyj pauzy do zaplanowania kolejności. Po większej interwencji sprawdź rzeczywisty efekt i trend, zanim wybierzesz następną rzecz. Po wznowieniu automatu pacjent, wlewy, leki i ewakuacja znów zmieniają się wraz z czasem."
+  },
+  {
+    "id": "exp-live-monitor",
+    "title": "Monitor na żywo i ręczne badania",
+    "text": "Monitor jest domyślnie podłączony i pokazuje zmiany parametrów podczas płynącej symulacji wraz z krótką historią trendu. Po odłączeniu zatrzymuje ostatni odczyt; ponowne podłączenie wznawia obserwację. Pauza zatrzymuje automatyczny upływ sekund, ale nie usuwa kosztu wykonanej czynności. Tempo 1×, 2× lub 4× określa szybkość całej symulacji, nie tylko animacji monitora. Ręczne badania miejscowe nadal dają wyniki konkretnej chwili i nie stają się automatycznym badaniem całego ciała. Poradnik, procedura i karta przeglądarki w tle automatycznie wstrzymują zegar."
+  },
+  {
+    "id": "exp-assessment-tools",
+    "title": "Wybór narzędzia badania",
+    "text": "Latarka, glukometr, termometr, stetoskop i badanie czucia odpowiadają na różne pytania. Narzędzie nie powinno magicznie ujawniać wszystkich urazów. Wybierz okolicę i rodzaj oceny pasujący do objawu. Dobre badanie pomaga oszczędzić czas i wyposażenie, ale samo nie leczy pacjenta."
+  },
+  {
+    "id": "exp-treatment-review",
+    "title": "Kontrola skutku zamiast listy odhaczonych rzeczy",
+    "text": "Po czynności obejrzyj sprzęt na ciele, aktualny trend i wynik miejscowego badania. Sprawdź, czy opatrunek jest na właściwej ranie, wenflon nie leży pod stazą, a aktywny środek nie wygasł. Jeden poprawny parametr nie oznacza stabilizacji wszystkich układów. Skuteczną decyzję oceniaj po jej celu, nie po liczbie użytych przedmiotów."
+  },
+  {
+    "id": "exp-drug-sources",
+    "title": "Źródła opisów nowych leków",
+    "text": "Nazwy i ogólne klasy leków oparto na publicznych materiałach instytucji medycznych. Czasy, porcje, modyfikatory, efekty uboczne i ich związki z parametrami są fikcyjnym balansem gry. Nie odwzorowujemy rzeczywistego dawkowania, pełnych przeciwwskazań ani uprawnień zawodowych. Linki służą przejrzystości opisów; gra nie pobiera z tych serwisów żadnych danych podczas rozgrywki.",
+    "links": [
+      [
+        "NHS — fentanyl",
+        "https://www.nhs.uk/medicines/fentanyl/about-fentanyl/"
+      ],
+      [
+        "NHS Scotland — ketamina",
+        "https://www.rightdecisions.scot.nhs.uk/scottish-palliative-care-guidelines/medicine-information/ketamine/"
+      ],
+      [
+        "NHS — anafilaksja",
+        "https://www.nhs.uk/conditions/anaphylaxis/"
+      ],
+      [
+        "NHS — hipoglikemia",
+        "https://www.nhs.uk/conditions/low-blood-sugar-hypoglycaemia/"
+      ],
+      [
+        "GOV.UK — nalokson",
+        "https://www.gov.uk/guidance/supplying-take-home-naloxone-without-a-prescription"
+      ],
+      [
+        "MedlinePlus — ipratropium",
+        "https://medlineplus.gov/druginfo/meds/a695021.html"
+      ],
+      [
+        "NHS — ibuprofen",
+        "https://www.nhs.uk/medicines/ibuprofen-for-adults/"
+      ],
+      [
+        "NHS — chlorfenamina",
+        "https://www.nhs.uk/medicines/chlorphenamine-including-piriton/about-chlorphenamine/"
+      ],
+      [
+        "NHS — hydrokortyzon",
+        "https://www.nhs.uk/medicines/hydrocortisone/"
+      ],
+      [
+        "Ulotka producenta — ondansetron",
+        "https://www.medicines.org.uk/emc/files/pil.13787.pdf"
+      ]
+    ]
+  },
+  {
+    "id": "r2-glass-protection",
+    "title": "Szkło i ciała obce: osłoń, nie wyciągaj",
+    "text": "W grze tkwiący przedmiot zabezpieczasz pierścieniem ochronnym i opatrunkiem. Brak nacisku na otwór oraz ograniczenie ruchu zmniejszają ból. Nie pomijaj mniejszej rany obok."
+  },
+  {
+    "id": "r2-flash-eyes",
+    "title": "Błysk, oczy i oparzenie skóry",
+    "text": "Po silnym błysku oczy i skóra potrzebują osobnych działań. Płuczka do oczu łagodzi podrażnienie, a hydrożel chłodzi oparzenie. Oba objawy bywają widoczne równocześnie."
+  },
+  {
+    "id": "r2-wrap-vs-splint",
+    "title": "Opaska, orteza i szyna",
+    "text": "Opaska pomaga przy skręceniu i stłuczeniu, orteza odciąża goleń lub kostkę, a szyna unieruchamia złamanie. Wybierz sprzęt do rodzaju urazu, nie do samej okolicy."
+  },
+  {
+    "id": "r2-hematoma",
+    "title": "Krwiak: wygląd nie mówi wszystkiego",
+    "text": "Duże zasinienie może oznaczać ukrytą utratę krwi. Opatrunek jej nie zatrzyma. Obserwuj tętno, ciśnienie i ból oraz ogranicz ruch okolicy do czasu transportu."
+  },
+  {
+    "id": "r2-local-vs-oral",
+    "title": "Znieczulenie miejscowe i doustne",
+    "text": "Lidokaina działa w wybranej okolicy, a metamizol wymaga przytomności i przełykania. Sprawdź, czy lek pasuje do miejsca bólu i stanu pacjenta, zanim zużyjesz zapas."
+  },
+  {
+    "id": "r2-many-small",
+    "title": "Wiele małych problemów",
+    "text": "Zgłoszenie z kilkoma lekkimi urazami wymaga kolejności: krwawienie, oddech, ból, potem komfort. Każdy z nich może dać punkty, ale rozproszenie przy jednym ignoruje drugi."
+  }
+];

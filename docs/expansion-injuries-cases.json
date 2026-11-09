@@ -1,0 +1,252 @@
+[
+  {
+    "category": "injury",
+    "id": "laceration",
+    "title": "Rozległa rana cięta"
+  },
+  {
+    "category": "injury",
+    "id": "puncture",
+    "title": "Rana kłuta"
+  },
+  {
+    "category": "injury",
+    "id": "abrasion",
+    "title": "Rozległe otarcie"
+  },
+  {
+    "category": "injury",
+    "id": "avulsion",
+    "title": "Rana szarpana z ubytkiem tkanek"
+  },
+  {
+    "category": "injury",
+    "id": "shrapnel",
+    "title": "Rana odłamkowa"
+  },
+  {
+    "category": "injury",
+    "id": "scalpCut",
+    "title": "Rana skóry głowy"
+  },
+  {
+    "category": "injury",
+    "id": "noseBleed",
+    "title": "Krwawienie z nosa"
+  },
+  {
+    "category": "injury",
+    "id": "biteWound",
+    "title": "Rana kąsana"
+  },
+  {
+    "category": "injury",
+    "id": "thermalBurn",
+    "title": "Oparzenie termiczne"
+  },
+  {
+    "category": "injury",
+    "id": "chemicalBurn",
+    "title": "Oparzenie chemiczne skóry"
+  },
+  {
+    "category": "injury",
+    "id": "electricalBurn",
+    "title": "Oparzenie po łuku elektrycznym"
+  },
+  {
+    "category": "injury",
+    "id": "coldInjury",
+    "title": "Uraz z zimna"
+  },
+  {
+    "category": "injury",
+    "id": "sprain",
+    "title": "Skręcenie stawu"
+  },
+  {
+    "category": "injury",
+    "id": "dislocation",
+    "title": "Podejrzenie zwichnięcia"
+  },
+  {
+    "category": "injury",
+    "id": "crushInjury",
+    "title": "Uraz z przygniecenia"
+  },
+  {
+    "category": "injury",
+    "id": "ribFracture",
+    "title": "Podejrzenie złamania żeber"
+  },
+  {
+    "category": "injury",
+    "id": "lungContusion",
+    "title": "Stłuczenie klatki z zaburzeniem oddechu"
+  },
+  {
+    "category": "injury",
+    "id": "smokeExposure",
+    "title": "Narażenie na dym"
+  },
+  {
+    "category": "injury",
+    "id": "aspiration",
+    "title": "Zaleganie treści w drogach oddechowych"
+  },
+  {
+    "category": "injury",
+    "id": "allergicReaction",
+    "title": "Reakcja alergiczna z dusznością"
+  },
+  {
+    "category": "injury",
+    "id": "hypoglycemia",
+    "title": "Podejrzenie niskiego poziomu glukozy"
+  },
+  {
+    "category": "injury",
+    "id": "dehydration",
+    "title": "Odwodnienie"
+  },
+  {
+    "category": "injury",
+    "id": "heatExhaustion",
+    "title": "Wyczerpanie w upale"
+  },
+  {
+    "category": "injury",
+    "id": "eyeIrritation",
+    "title": "Podrażnienie oka"
+  },
+  {
+    "category": "injury",
+    "id": "nausea",
+    "title": "Nudności i odruchy wymiotne"
+  },
+  {
+    "category": "scenario",
+    "id": "glassDoor",
+    "title": "Rozbita witryna"
+  },
+  {
+    "category": "scenario",
+    "id": "fenceFall",
+    "title": "Upadek na ogrodzenie"
+  },
+  {
+    "category": "scenario",
+    "id": "forestSaw",
+    "title": "Wypadek przy pile w lesie"
+  },
+  {
+    "category": "scenario",
+    "id": "quarryDebris",
+    "title": "Odłamki w kamieniołomie"
+  },
+  {
+    "category": "scenario",
+    "id": "skatepark",
+    "title": "Upadek w skateparku"
+  },
+  {
+    "category": "scenario",
+    "id": "farmDog",
+    "title": "Pogryzienie na gospodarstwie"
+  },
+  {
+    "category": "scenario",
+    "id": "canteenBurn",
+    "title": "Poparzenie w kuchni polowej"
+  },
+  {
+    "category": "scenario",
+    "id": "chemicalStore",
+    "title": "Rozlana ciecz w magazynie"
+  },
+  {
+    "category": "scenario",
+    "id": "electricalPanel",
+    "title": "Zdarzenie przy rozdzielni"
+  },
+  {
+    "category": "scenario",
+    "id": "winterShelter",
+    "title": "Przemarznięty turysta"
+  },
+  {
+    "category": "scenario",
+    "id": "footballPitch",
+    "title": "Zderzenie na boisku"
+  },
+  {
+    "category": "scenario",
+    "id": "shoulderFall",
+    "title": "Upadek na bark"
+  },
+  {
+    "category": "scenario",
+    "id": "loadingBay",
+    "title": "Przygniecenie na rampie"
+  },
+  {
+    "category": "scenario",
+    "id": "stairChest",
+    "title": "Uderzenie klatką o schody"
+  },
+  {
+    "category": "scenario",
+    "id": "bikeBarrier",
+    "title": "Rowerzysta na barierze"
+  },
+  {
+    "category": "scenario",
+    "id": "shedSmoke",
+    "title": "Wyniesiony z zadymionej szopy"
+  },
+  {
+    "category": "scenario",
+    "id": "pondRescue",
+    "title": "Wyciągnięty z płytkiego stawu"
+  },
+  {
+    "category": "scenario",
+    "id": "picnicAllergy",
+    "title": "Nagła reakcja na pikniku"
+  },
+  {
+    "category": "scenario",
+    "id": "stationWeakness",
+    "title": "Osłabienie na przystanku"
+  },
+  {
+    "category": "scenario",
+    "id": "trailHeat",
+    "title": "Zasłabnięcie w upale"
+  },
+  {
+    "category": "scenario",
+    "id": "longRace",
+    "title": "Zawodnik poza trasą biegu"
+  },
+  {
+    "category": "scenario",
+    "id": "dustWorkshop",
+    "title": "Pył w warsztacie"
+  },
+  {
+    "category": "scenario",
+    "id": "dockFall",
+    "title": "Upadek na nabrzeżu"
+  },
+  {
+    "category": "scenario",
+    "id": "roofDebris",
+    "title": "Odłamki po zerwaniu poszycia"
+  },
+  {
+    "category": "scenario",
+    "id": "nightMarket",
+    "title": "Upadek na nocnym targu"
+  }
+]
