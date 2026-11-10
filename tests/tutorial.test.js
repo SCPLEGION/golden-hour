@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createGame, act } from '../src/engine.js';
+import { createGame } from '../src/engine.js';
+import { act } from './support.js';
 import { TUTORIAL_STEPS } from '../src/content/tutorial.js';
 import { tutorialProgress } from '../src/simulation/tutorial.js';
 import { renderTutorial } from '../src/ui/tutorial.js';

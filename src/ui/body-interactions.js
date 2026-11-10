@@ -2,6 +2,8 @@
 export function bindBodyInteractions(root,{heldItem,onSelect,onMenu,onPlace}) {
   root.querySelectorAll('[data-part]').forEach(el=>{
     const part=el.dataset.part,injuryId=el.dataset.injury||null;
+    // Missing (amputated) segments: their shortcut is inert, the stump marker carries the menu.
+    if(el.getAttribute('aria-disabled')==='true'){el.onclick=el.oncontextmenu=e=>{e.preventDefault();e.stopPropagation();};return;}
     el.onclick=e=>{
       e.stopPropagation();
       if(heldItem){onPlace(heldItem,part,injuryId);return;}

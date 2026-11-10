@@ -16,7 +16,7 @@ To fikcyjna symulacja gry, nie instruktaż ani narzędzie kliniczne. Dawki, wyni
 - Monitor dynamiczny: puls, ciśnienie, saturacja, oddech, temperatura i ból; wykresy pokazują historię do 60 sekund gry.
 - Zegar ma pauzę i tempa 1×/2×/4×. Procedura, poradnik i ukryta karta zatrzymują automatyczne tykanie. Czynność wykonana przez gracza nadal zużywa czas symulacji.
 - Torba ma wyszukiwanie i filtry dostępności/dopasowania. Aktualizacje czasu nie odbierają fokusu polu wyszukiwania.
-- Katalog obejmuje 40 urazów, 37 zgłoszeń, 39 elementów wyposażenia, 16 leków i 37 poradników. Rozszerzenia: 100 pozycji ([lista](docs/EXPANSION-100.md)) oraz runda 2, 24 pozycje ([lista](docs/EXPANSION-ROUND2.md)).
+- Katalog obejmuje 57 urazów, 42 zgłoszenia (+14 zgłoszeń wbudowanych w stany poszkodowanego), 51 stanów poszkodowanego w 6 kategoriach, 40 elementów wyposażenia, 16 leków i 45 poradników. Rozszerzenia: 100 pozycji ([lista](docs/EXPANSION-100.md)) oraz runda 2, 24 pozycje ([lista](docs/EXPANSION-ROUND2.md)).
 - Zapis lokalny zachowuje zgodność z wcześniejszymi stanami gry.
 
 ## Uruchomienie
@@ -52,6 +52,12 @@ Dodawanie treści zaczynaj od katalogów i testu referencji/osiągalności. Nowy
 - Poziomy trudności Łatwy/Normalny/Trudny (zapasy, czas dojazdu, krwawienie, mnożnik punktów).
 - Podświetlanie miejsc użycia trzymanego sprzętu, znaczniki aktywnych zabezpieczeń, zmiana wyglądu opatrzonych ran.
 - Runda 2 treści: [docs/EXPANSION-ROUND2.md](docs/EXPANSION-ROUND2.md).
+
+## Stany poszkodowanego i kategorie
+
+- „Nowe wezwanie” otwiera dialog dyspozytorni (`#new-call`, `src/ui/new-call.js`): poziom trudności i jedna z 6 kategorii lub „Losowa”. Ostatni wybór zapisuje się w `stats.category`.
+- 51 stanów (`src/content/conditions.js`) z ukrytym protokołem kroków z terminami; pominięty krok jednorazowo pogarsza stan (`src/simulation/protocol.js`). Podsumowanie pokazuje nazwę stanu i listę kroków, ocena dostaje część „Protokół” (15 pkt).
+- Pierwsza gra nowego gracza (samouczek) to nadal dawne losowe zgłoszenie bez protokołu.
 
 ## Ciąg dalszy
 

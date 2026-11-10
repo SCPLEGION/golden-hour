@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createGame, act, restoreGame, SCENARIOS, ITEMS, itemUnavailable, vitals } from '../src/engine.js';
+import { act, legacyRate } from './support.js';
+import { createGame, restoreGame, SCENARIOS, ITEMS, itemUnavailable, vitals } from '../src/engine.js';
 import { BODY_PARTS, BODY_OUTLINES, LEGACY_PARTS, resolvePart, bodyPart, matchesRegion } from '../src/content/body.js';
 import { IV_PROCEDURE } from '../src/content/procedures.js';
 import { injuryBleeding, pain } from '../src/simulation/selectors.js';
@@ -13,15 +14,15 @@ const handIV={...forearmIV,point:{x:680,y:144.2},depth:.56};
 const fresh=(id='gunshot')=>createGame(SCENARIOS.findIndex(s=>s.id===id),()=>.99);
 const withInjuries=(list,id)=>{const g=fresh(id);g.injuries=list.map(([part,type],i)=>({id:`t-${i}`,part,type,treatments:{}}));return g;};
 
-test('23 unique segments with groups, order and consistent flags',()=>{
-  assert.equal(BODY_PARTS.length,23);assert.equal(new Set(BODY_PARTS.map(p=>p.id)).size,23);
+test('31 unique segments with groups, order and consistent flags',()=>{
+  assert.equal(BODY_PARTS.length,31);assert.equal(new Set(BODY_PARTS.map(p=>p.id)).size,31);
   for(const p of BODY_PARTS){
     assert.ok(p.name&&p.group&&Number.isInteger(p.order)&&Array.isArray(p.anchor),p.id);
     assert.ok(p.inset?p.id==='back':BODY_OUTLINES[p.base]&&p.clip.length===2&&p.clip[0]<p.clip[1],p.id);
     if(p.vascular)assert.ok(p.limb&&IV_PROCEDURE.sites.some(s=>s.id===p.ivSite),p.id);
     if(p.tourniquet)assert.ok(p.limb,p.id);
   }
-  for(const group of ['rightArm','leftArm','rightLeg','leftLeg'])assert.deepEqual(BODY_PARTS.filter(p=>p.group===group).map(p=>p.order),[0,1,2,3],group);
+  for(const group of ['rightArm','leftArm','rightLeg','leftLeg'])assert.deepEqual(BODY_PARTS.filter(p=>p.group===group).map(p=>p.order),[0,1,2,3,4,5],group);
   assert.deepEqual(BODY_PARTS.filter(p=>p.tourniquet).map(p=>p.id).sort(),['leftForearm','leftShin','leftThigh','leftUpperArm','rightForearm','rightShin','rightThigh','rightUpperArm']);
   assert.deepEqual(BODY_PARTS.filter(p=>p.vascular).map(p=>p.ivSite),['elbow','forearm','hand','elbow','forearm','hand']);
 });
@@ -39,9 +40,9 @@ test('a tourniquet stops bleeding at and below itself on the same limb only',()=
   const g=withInjuries([['rightForearm','arterial'],['leftForearm','arterial'],['rightUpperArm','laceration']]);
   const upper=act(g,'tourniquet','rightUpperArm');
   assert.notEqual(upper,g);
-  assert.equal(injuryBleeding(upper,upper.injuries[0]),0);assert.ok(injuryBleeding(upper,upper.injuries[1])>.05);assert.equal(injuryBleeding(upper,upper.injuries[2]),0);
+  assert.equal(injuryBleeding(upper,upper.injuries[0]),0);assert.ok(injuryBleeding(upper,upper.injuries[1])>legacyRate(upper,.05));assert.equal(injuryBleeding(upper,upper.injuries[2]),0);
   const lower=act(g,'tourniquet','rightForearm');
-  assert.equal(injuryBleeding(lower,lower.injuries[0]),0);assert.ok(injuryBleeding(lower,lower.injuries[2])>.02);
+  assert.equal(injuryBleeding(lower,lower.injuries[0]),0);assert.ok(injuryBleeding(lower,lower.injuries[2])>legacyRate(lower,.02));
   assert.equal(tourniquetOver(lower,'rightHand'),lower.body.rightForearm.treatments.tourniquet);assert.equal(tourniquetOver(lower,'rightElbow'),undefined);
 });
 
@@ -81,7 +82,7 @@ test('a v0.6 save with the old seven part ids restores and keeps playing',()=>{
   assert.ok(legacy.body.leftArm.ivAt!==null&&legacy.injuries.some(i=>i.part==='leftLeg'));
   const restored=restoreGame(JSON.stringify(legacy));
   assert.ok(restored);assert.deepEqual(restored,g);
-  assert.equal(Object.keys(restored.body).length,23);
+  assert.equal(Object.keys(restored.body).length,31);
   let next=act(restored,'wait60');next=act(next,'morphine','leftArm');next=act(next,'wait60');
   assert.ok(next.elapsed>restored.elapsed);assert.equal(next.medications.length,1);
   for(const k of ['blood','oxygen'])assert.ok(Number.isFinite(next[k]));
@@ -92,7 +93,7 @@ test('every item on every segment never throws and keeps vitals finite',()=>{
     const base=fresh(sid);
     for(const start of [base,act(base,'iv','leftForearm',null,forearmIV)])for(const item of ITEMS)for(const part of BODY_PARTS){
       let g;
-      assert.doesNotThrow(()=>{g=act(start,item.id,part.id,null,item.procedure?(part.ivSite==='hand'?handIV:forearmIV):undefined);},`${sid}/${item.id}/${part.id}`);
+      assert.doesNotThrow(()=>{g=act(start,item.id,part.id,null,item.procedure==='iv'?(part.ivSite==='hand'?handIV:forearmIV):undefined);},`${sid}/${item.id}/${part.id}`);
       const v=vitals(g);
       for(const k of ['pulse','oxygen','breathing','glucose'])assert.ok(Number.isFinite(v[k]),`${sid}/${item.id}/${part.id}/${k}`);
     }
@@ -104,7 +105,7 @@ test('the scene renders one clipped region per segment, dividers and the back in
   for(const target of ['back','rightElbow','chest']){
     const html=renderBodyScene(g,target);
     for(const p of BODY_PARTS)assert.ok(html.includes(`data-part="${p.id}"`),p.id);
-    assert.equal((html.match(/<clipPath id="clip-(?!base-)/g)||[]).length,22);
+    assert.equal((html.match(/<clipPath id="clip-(?!base-)/g)||[]).length,30);
     assert.match(html,/segment-divider/);assert.match(html,/class="body-back-inset"/);
     assert.match(html,/class="body-back-inset"[^]*data-injury="b"/);
   }

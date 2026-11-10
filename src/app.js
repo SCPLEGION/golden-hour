@@ -1,4 +1,6 @@
-import { createGame, act, advanceTime, SCENARIOS } from './engine.js';
+import { createGame, act, advanceTime, scenarioById } from './engine.js';
+import { renderNewCall } from './ui/new-call.js';
+import { validCategory } from './storage.js';
 import { createRealtimeDriver } from './simulation/realtime.js';
 import { sampleMonitor } from './simulation/monitor.js';
 import { scoreRun } from './simulation/scoring.js';
@@ -10,8 +12,10 @@ import { mountGuide } from './ui/guide.js';
 import { createContextMenu } from './ui/context-menu.js';
 import { bindBodyInteractions } from './ui/body-interactions.js';
 import { launchProcedure } from './ui/procedures/index.js';
+import { autoInput } from './simulation/procedures.js';
 import { itemUnavailable } from './simulation/effects.js';
 import { tutorialProgress } from './simulation/tutorial.js';
+import { isMissing } from './simulation/selectors.js';
 import { loadProgress, saveProgress, sanitizeHistory } from './storage.js';
 import { renderStatsPanel } from './ui/stats-panel.js';
 const root=document.querySelector('#app');
@@ -22,24 +26,50 @@ let tab='equipment',saved=true,selectedWound=null,heldItem=null,logOpen=false,pr
 const contextMenu=createContextMenu(executeAction);
 const guide=document.querySelector('#guide');mountGuide(guide);
 const statsDialog=document.querySelector('#stats');
-function openStats(){driver?.reset();statsDialog.innerHTML=renderStatsPanel(stats,id=>SCENARIOS.find(c=>c.id===id)?.title||id);statsDialog.querySelector('[data-close]').onclick=()=>statsDialog.close();statsDialog.querySelector('[data-difficulty]').onchange=e=>{setDifficulty(e.target.value);openStats();};statsDialog.showModal();}
+function openStats(){driver?.reset();statsDialog.innerHTML=renderStatsPanel(stats,id=>scenarioById(id)?.title||id);statsDialog.querySelector('[data-close]').onclick=()=>statsDialog.close();statsDialog.querySelector('[data-difficulty]').onchange=e=>{setDifficulty(e.target.value);openStats();};statsDialog.querySelector('[data-minigames]').onchange=e=>{stats.minigames=e.target.checked?'on':'off';persist();openStats();statsDialog.querySelector('[data-minigames]').focus();announce(stats.minigames==='on'?'Minigry procedur włączone.':'Minigry wyłączone. Procedury wykonują się automatycznie ze średnim wynikiem.');};statsDialog.showModal();}
 statsDialog.onclick=e=>{if(e.target===statsDialog)statsDialog.close();};
+// New call: the player picks difficulty and a category; the patient state inside it is random.
+const newCallDialog=document.querySelector('#new-call');
+newCallDialog.onclick=e=>{if(e.target===newCallDialog)newCallDialog.close();};
+function openNewCall(){
+  driver?.reset();const active=game.status==='active';
+  newCallDialog.innerHTML=renderNewCall({stats,active});
+  newCallDialog.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>newCallDialog.close());
+  newCallDialog.querySelector('form').onsubmit=e=>{
+    e.preventDefault();const data=new FormData(e.target);
+    if(game.status==='active'&&!confirm('Przerwać obecną interwencję i przyjąć nowe wezwanie?'))return;
+    stats.category=validCategory(data.get('category'));stats.difficulty=difficultyById(data.get('difficulty')).id;
+    newCallDialog.close();startCall();
+  };
+  newCallDialog.showModal();
+  (newCallDialog.querySelector('input[name=category]:checked')||newCallDialog.querySelector('input[name=category]'))?.focus();
+}
+function startCall(){
+  const previous=game.protocol?.conditionId;
+  for(let i=0;i<4;i++){game=createGame(0,Math.random,{difficulty:stats.difficulty,category:stats.category});if(game.protocol.conditionId!==previous)break;}
+  target=game.injuries[0].part;tab='equipment';selectedWound=null;heldItem=null;bagSearch='';bagFilter='all';logOpen=false;persist();render();window.scrollTo({top:0,behavior:'instant'});announce('Nowe wezwanie. Oceń poszkodowanego.');
+}
 function setDifficulty(id){stats.difficulty=id;persist();feedback(`Poziom „${difficultyById(stats.difficulty).name}” obowiązuje od następnego wezwania.`);}
 const announce=text=>{document.querySelector('#announcement').textContent=text;};
 function recordRun(){const r=scoreRun(game);stats[game.status]++;stats.best=Math.max(stats.best||0,r.total);stats.history=sanitizeHistory([...(stats.history||[]),{scenarioId:game.scenarioId,status:game.status,total:r.total,grade:r.grade,difficulty:game.difficulty}]);}
 function persist(){saved=saveProgress(game,stats);}
 function feedback(text){announce(text);const box=document.querySelector('#feedback');box.textContent=text;box.hidden=false;clearTimeout(feedback.timer);feedback.timer=setTimeout(()=>box.hidden=true,6500);}
+// On a missing (amputated) segment the only thing to act on is its stump injury.
+const stumpWound=(part,wound)=>wound??(isMissing(game,part)?game.injuries.find(i=>i.part===part)?.id??null:null);
 async function executeAction(id,site=target,wound=selectedWound){
   if(procedureBusy)return;
+  wound=stumpWound(site,wound);
   const item=itemById(id);
   const woundTarget=item?.scope==='wound'?wound:null;
   const reason=item?itemUnavailable(game,item,site,woundTarget):null;
   if(reason){feedback(reason);return;}
   target=site;selectedWound=wound;
   let input=null;
-  if(item?.procedure){
+  // With minigames off every procedure gets the same deterministic, middling attempt.
+  if(item?.procedure&&stats.minigames==='off')input=autoInput(item.procedure,game,site);
+  else if(item?.procedure){
     procedureBusy=true;driver?.reset();contextMenu.close();
-    try{input=await launchProcedure(item.procedure,game,site);}catch(error){feedback(error.message);return;}finally{procedureBusy=false;driver?.reset();}
+    try{input=await launchProcedure(item.procedure,game,site,woundTarget);}catch(error){feedback(error.message);return;}finally{procedureBusy=false;driver?.reset();}
     if(!input)return;
   }
   const before=game.status,stepBefore=tutorialProgress(game).index,next=act(game,id,site,woundTarget,input);
@@ -57,6 +87,7 @@ async function executeAction(id,site=target,wound=selectedWound){
   if(tutorialNote==='Samouczek ukończony.')setTimeout(()=>feedback(tutorialNote),400);
 }
 function openMenu(part,injuryId,x,y){
+  injuryId=stumpWound(part,injuryId);
   target=part;selectedWound=injuryId;render();
   const anchor=injuryId?root.querySelector(`[data-injury="${injuryId}"]`):root.querySelector(`.patient-scene [data-part="${part}"]`);
   if(!x&&!y){const r=anchor.getBoundingClientRect();x=r.left+r.width/2;y=r.top+r.height/2;}
@@ -103,12 +134,7 @@ function render(focus=null) {
   root.querySelector('[data-put-away]')?.addEventListener('click',()=>{heldItem=null;render();});
   root.querySelectorAll('[data-drag-item]').forEach(card=>card.ondragstart=e=>{if(card.draggable){e.dataTransfer.setData('application/x-field-medic-item',card.dataset.dragItem);e.dataTransfer.effectAllowed='copy';}});
   root.querySelectorAll('[data-difficulty]').forEach(s=>s.onchange=()=>setDifficulty(s.value));
-  root.querySelectorAll('[data-new]').forEach(b=>b.onclick=()=>{
-    const accepted=ended||confirm('Przerwać obecną interwencję i wylosować nowego pacjenta?');driver?.reset();if(!accepted)return;
-    const current=SCENARIOS.findIndex(c=>c.id===game.scenarioId);
-    game=createGame((current+1+Math.floor(Math.random()*(SCENARIOS.length-1)))%SCENARIOS.length,Math.random,{difficulty:stats.difficulty});
-    target=game.injuries[0].part;tab='equipment';selectedWound=null;heldItem=null;bagSearch='';bagFilter='all';persist();render();window.scrollTo({top:0,behavior:'instant'});announce('Nowe wezwanie. Oceń poszkodowanego.');
-  });
+  root.querySelectorAll('[data-new]').forEach(b=>b.onclick=openNewCall);
   if(focus)root.querySelector(focus)?.focus({preventScroll:true});
 }
 document.addEventListener('keydown',e=>{

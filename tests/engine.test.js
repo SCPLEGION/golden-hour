@@ -4,7 +4,7 @@ import { createGame, act as engineAct, SCENARIOS, ITEMS, restoreGame, validateCa
 import { bleedingRate, pain, visibleInjuries, activeMedicines, respiratoryBurden } from '../src/simulation/selectors.js';
 import { loadProgress, saveProgress } from '../src/storage.js';
 const perfectIV={point:{x:400,y:132.42105263157896},approach:42,depth:.62,aborted:false};
-const act=(g,id,part='chest',wound=null,input=undefined)=>engineAct(g,id,part,wound,input===undefined&&ITEMS.find(i=>i.id===id)?.procedure==='iv'?perfectIV:input);
+import { act, legacyRate } from './support.js';
 const initial = index => createGame(index,()=>.99);
 const wait = (g,n=1) => {for(let i=0;i<n&&g.status==='active';i++)g=act(g,'wait60');return g;};
 test('catalog references resolve and every item has a registered effect',validateCatalogs);
@@ -47,7 +47,7 @@ test('incorrect equipment can waste a supply without fixing another region',()=>
 });
 test('massive bleeding needs stronger control and treatment cannot be reapplied',()=>{
   const g=initial(1), dressed=act(g,'dressing','rightLeg'), stasis=act(g,'tourniquet','rightLeg');
-  assert.ok(bleedingRate(dressed)>.03);assert.equal(bleedingRate(stasis),0);assert.equal(act(stasis,'tourniquet','rightLeg'),stasis);
+  assert.ok(bleedingRate(dressed)>legacyRate(dressed,.03));assert.equal(bleedingRate(stasis),0);assert.equal(act(stasis,'tourniquet','rightLeg'),stasis);
 });
 test('medicines have delayed, expiring effects and repeat toxicity',()=>{
   let g=act(initial(0),'iv','rightArm');g=act(g,'morphine','rightArm');
@@ -61,11 +61,11 @@ test('history exposes allergy and ignoring it produces a reaction',()=>{
   let g=initial(5);assert.equal(g.historyKnown,false);g=act(g,'history');assert.equal(g.historyKnown,true);
   const before=g.blood;g=act(g,'paracetamol','head');assert.ok(g.blood<=before-12);assert.match(g.log.at(-1).text,/uczuleniowa/);
 });
-test('oxygen expires and can be replaced, IV fluid supports without creating blood',()=>{
+test('oxygen expires and can be replaced, IV fluid adds volume without creating blood',()=>{
   let g=act(initial(0),'hemostatic','leftLeg');g=act(g,'oxygen');assert.equal(g.supplies.oxygen,1);
   assert.equal(act(g,'oxygen'),g);g=wait(g,10);assert.ok(g.oxygenUntil<=g.elapsed);
   g=act(g,'oxygen');assert.equal(g.supplies.oxygen,0);
-  g=act(g,'iv','rightArm');const blood=g.blood;g=act(g,'fluid','rightArm');g=wait(g,2);assert.ok(g.fluidSupport>5);assert.ok(g.blood<=blood);
+  g=act(g,'iv','rightArm');const blood=g.blood,lost=g.phys.lostMl;g=act(g,'fluid','rightArm');g=wait(g,2);assert.ok(g.phys.crystIvMl>150);assert.ok(g.blood<=blood);assert.ok(g.phys.lostMl>=lost);
 });
 test('disconnected monitor preserves timestamped snapshots until an explicit measurement',()=>{
   const disconnected=initial(0);disconnected.monitoring=false;
@@ -113,13 +113,13 @@ test('IV is local: a tourniquet on that arm blocks drugs and fluids but another 
   assert.ok(g.body.rightForearm.ivAt!==null);assert.equal(g.body.leftForearm.ivAt,null);
   const count=g.supplies.morphine;g=act(g,'morphine','rightArm');
   assert.equal(g.supplies.morphine,count-1);assert.equal(g.medications.length,0);assert.match(g.log.at(-1).text,/Brak efektu/);
-  g=act(g,'fluid','rightArm');assert.equal(g.infusions.length,0);assert.equal(g.fluidSupport,0);
+  g=act(g,'fluid','rightArm');assert.equal(g.infusions.length,0);assert.equal(g.phys.crystIvMl,0);
   g=act(g,'iv','leftArm');g=act(g,'morphine','leftArm');assert.equal(g.medications.length,1);assert.equal(g.medications[0].site,'leftForearm');
 });
 test('placing a tourniquet after IV stops a running infusion without undoing delivered medicine',()=>{
   let g=act(initial(0),'iv','rightArm');g=act(g,'fluid','rightArm');
-  assert.ok(g.fluidSupport>0);g=act(g,'morphine','rightArm');g=act(g,'tourniquet','rightArm');
-  const support=g.fluidSupport;g=act(g,'wait30');assert.ok(g.fluidSupport<support);assert.equal(g.medications.length,1);
+  assert.ok(g.phys.crystIvMl>0);g=act(g,'morphine','rightArm');g=act(g,'tourniquet','rightArm');
+  const support=g.phys.crystIvMl,left=g.infusions[0].ml;g=act(g,'wait30');assert.ok(g.phys.crystIvMl<support);assert.equal(g.infusions[0].ml,left);assert.equal(g.medications.length,1);
 });
 test('a dressing targets a single wound and wound IDs cannot target a different region',()=>{
   let g=initial(0);const [shot,fracture]=g.injuries;
@@ -168,7 +168,7 @@ test('location and technique change actual flow, fluid support and delivered med
   const weak=engineAct(initial(0),'iv','leftArm',null,{...perfectIV,depth:.72});
   assert.ok(flowEfficiency(forearm,'leftArm')>flowEfficiency(hand,'leftHand'));
   assert.ok(flowEfficiency(forearm,'leftArm')>flowEfficiency(weak,'leftArm'));
-  const goodFluid=act(forearm,'fluid','leftArm'),poorFluid=act(hand,'fluid','leftArm');assert.ok(goodFluid.fluidSupport>poorFluid.fluidSupport);
+  const goodFluid=act(forearm,'fluid','leftArm'),poorFluid=act(hand,'fluid','leftArm');assert.ok(goodFluid.phys.crystIvMl>poorFluid.phys.crystIvMl);
   let goodDrug=act(forearm,'morphine','leftArm'),poorDrug=act(hand,'morphine','leftArm');assert.ok(goodDrug.medications[0].delivery>poorDrug.medications[0].delivery);
   goodDrug=act(goodDrug,'wait30');poorDrug=act(poorDrug,'wait30');assert.ok(pain(goodDrug)<pain(poorDrug));
 });
@@ -189,5 +189,5 @@ test('partial IV delivery scales clotting support as well as analgesia',()=>{
   const goodTXA=act(act(good,'txa','leftArm'),'wait60');
   const handTXA=act(act(hand,'txa','leftArm'),'wait60');
   assert.ok(bleedingRate(goodTXA)<bleedingRate(handTXA));
-  assert.ok(goodTXA.blood>handTXA.blood);
+  assert.ok(goodTXA.phys.lostMl<handTXA.phys.lostMl);
 });

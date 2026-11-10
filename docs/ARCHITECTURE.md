@@ -48,7 +48,7 @@ Jeżeli nowy lek potrzebuje innego zachowania niż powyższe, dodaj nowy efekt l
 
 ## Nowy uraz
 
-Dodaj definicję do `src/content/injuries.js`. `visible: null` ukrywa go do zbadania właściwej okolicy. `finding` jest wynikiem badania. `bleed` to utrata punktów krwi na sekundę, `oxygenLoss` — tlenu. `pain` to poziom bólu. Tagi podłączają istniejące mechaniki:
+Dodaj definicję do `src/content/injuries.js`. `visible: null` ukrywa go do zbadania właściwej okolicy. `finding` jest wynikiem badania. `bleed` to dawne tempo krwawienia (punkty/s); od fazy P1 silnik przelicza je na mL/min w `src/content/injury-physiology.js` (wpis albo domyślny wpis tagu jest wymagany dla każdego urazu — `validateCatalogs`). `oxygenLoss` — ubytek tlenu. `pain` to poziom bólu. Tagi podłączają istniejące mechaniki:
 
 - `external`, `wound`: opatrunki, gaza; staza odcina zewnętrzne krwawienie kończyny.
 - `massive`: zwykły opatrunek ogranicza utratę krwi słabiej.
@@ -64,35 +64,87 @@ Dopisz rekord do `src/content/scenarios.js`: `id`, `title`, `scene`, `quote`, `h
 
 ## Ciało i poradnik
 
-Okolice ciała to `src/content/body.js`. Od 0.7 ciało składa się z 23 segmentów (`BODY_PARTS`): `head`, `face`, `neck`, `chest`, `abdomen`, `pelvis`, `back` oraz po stronie prawej i lewej `…UpperArm`, `…Elbow`, `…Forearm`, `…Hand`, `…Thigh`, `…Knee`, `…Shin`, `…Foot` (np. `rightElbow`, `leftFoot`). Wybór na sylwetce i liście buduje się z tych samych danych. Nowa okolica musi mieć unikalny identyfikator.
+Okolice ciała to `src/content/body.js`. Od 0.8 ciało składa się z 31 segmentów (`BODY_PARTS`): `head`, `face`, `neck`, `chest`, `abdomen`, `pelvis`, `back` oraz po stronie prawej i lewej `…Shoulder`, `…UpperArm`, `…Elbow`, `…Forearm`, `…Wrist`, `…Hand`, `…Hip`, `…Thigh`, `…Knee`, `…Shin`, `…Ankle`, `…Foot` (np. `rightElbow`, `leftAnkle`). Bark, nadgarstek, biodro i kostka (0.8) są krótkimi segmentami stawowymi (`bridge: true`): bez stazy i bez wenflonu. Wybór na sylwetce i liście buduje się z tych samych danych. Nowa okolica musi mieć unikalny identyfikator.
 
 Pola segmentu:
 
 | Pole | Znaczenie |
 | --- | --- |
 | `group` | Grupa: `head` (głowa, twarz, szyja), `chest`, `abdomen` (brzuch, miednica), `back`, `rightArm`/`leftArm`, `rightLeg`/`leftLeg` |
-| `order` | Kolejność od proksymalnej 0 do dystalnej 3 w kończynie; poza kończynami 0 |
+| `order` | Kolejność od proksymalnej 0 do dystalnej 5 w kończynie (ręka: bark 0, ramię 1, łokieć 2, przedramię 3, nadgarstek 4, dłoń 5; noga: biodro 0, udo 1, kolano 2, podudzie 3, kostka 4, stopa 5); poza kończynami 0 |
 | `limb` | Segment kończyny (szyna, `limbOnly`) |
+| `bridge` | Krótki staw dodany w 0.8; szyna sięga przez niego (`splintReach`) |
+| `stump` | Szerokość kończyny na górnej krawędzi pasa — rysowanie kikuta po amputacji |
 | `tourniquet` | Dozwolona staza: ramię, przedramię, udo, podudzie |
 | `vascular`, `ivSite` | Dostęp IV: łokieć, przedramię, dłoń; `ivSite` to identyfikator miejsca z `IV_PROCEDURE.sites` |
 | `base`, `clip: [y0, y1]` | Kształt bazowy i pas wysokości w układzie portretowym |
 | `anchor`, `device`, `stasis`, `splint` | Punkty zaczepienia ran i sprzętu |
 
-Geometria nie ma osobnych konturów segmentów. `BODY_OUTLINES` zawiera siedem dawnych kształtów (klucze `head`, `chest`, `abdomen`, `rightArm`, `leftArm`, `rightLeg`, `leftLeg`) i to one tworzą rysowany obrys. `body-scene.js` rysuje klikany region segmentu jako kształt bazowy przycięty `clipPath` (`clip-<id>`, prostokąt x 0–1000, y `clip`). Pasy: głowa 40–112 / twarz 112–212 / szyja 212–290; brzuch 520–655 / miednica 655–800; klatka cała; ręka 285–480 / 480–565 / 565–760 / 760–880; noga 700–1000 / 1000–1110 / 1110–1378 / 1378–1465. Granice pasów są rysowane cienkimi liniami `segment-divider` przyciętymi do obrysu (`clip-base-<id>`). Plecy nie mają kształtu w widoku z przodu: są osobną wstawką `body-back-inset` (`BACK_INSET`, własny układ współrzędnych) przy stopach, w prawym górnym rogu stołu; rany pleców rysują się w tej wstawce.
+Geometria nie ma osobnych konturów segmentów. `BODY_OUTLINES` zawiera siedem dawnych kształtów (klucze `head`, `chest`, `abdomen`, `rightArm`, `leftArm`, `rightLeg`, `leftLeg`) i to one tworzą rysowany obrys. `body-scene.js` rysuje klikany region segmentu jako kształt bazowy przycięty `clipPath` (`clip-<id>`, prostokąt x 0–1000, y `clip`). Pasy: głowa 40–112 / twarz 112–212 / szyja 212–290; brzuch 520–655 / miednica 655–800; klatka cała; ręka 285–335 / 335–480 / 480–565 / 565–735 / 735–775 / 775–880; noga 700–790 / 790–1000 / 1000–1110 / 1110–1370 / 1370–1410 / 1410–1465 (pasy jednej bazy są ciągłe i nie nachodzą na siebie — sprawdza to `tests/amputation.test.js`). Granice pasów są rysowane cienkimi liniami `segment-divider` przyciętymi do obrysu (`clip-base-<id>`). Plecy nie mają kształtu w widoku z przodu: są osobną wstawką `body-back-inset` (`BACK_INSET`, własny układ współrzędnych) przy stopach, w prawym górnym rogu stołu; rany pleców rysują się w tej wstawce.
 
 `regions` przedmiotu może wymieniać identyfikatory grup lub segmentów (`matchesRegion`): `['leftArm']` obejmuje cały lewy kończynowy pas, `['head']` także twarz i szyję, `['abdomen']` także miednicę. Mechanika zależna od położenia:
 
 - Staza zatrzymuje zewnętrzne krwawienie urazów tej samej grupy o `order` ≥ jej segmentu i odcina przepływ wenflonów poniżej (`tourniquetOver` w `vascular.js`, używane przez krwawienie, przepływ IV, badanie i ocenę perfuzji). Na dłoni, stopie, stawie i tułowiu jest odrzucana.
-- Szyna działa na złamania własnego segmentu i sąsiednich (`order` ±1) tej samej kończyny.
+- Szyna działa na złamania własnego segmentu i sąsiednich (`order` ±1) tej samej kończyny, a przez jeden segment `bridge` sięga dalej (`splintReach` w `body.js`, używane przez `splinted` i efekt `splint`). Dzięki temu dawne pary sąsiadów zostają bez zmian: szyna na przedramieniu obejmuje łokieć, nadgarstek i dłoń, na podudziu — kolano, kostkę i stopę, na ramieniu — bark i łokieć, na udzie — biodro i kolano. Szyna na łokciu nie sięga barku (ramię nie jest stawem pośrednim).
+- Przesunięcie `order` nie zmienia stazy: miejsca stazy (ramię 1, przedramię 3, udo 1, podudzie 3) obejmują nadal te same dawne segmenty; bark i biodro leżą powyżej każdej stazy, nadgarstek i kostka poniżej stazy przedramienia/podudzia.
 - Wenflon zakłada się na segment naczyniowy; minigra ma z góry ustawione miejsce (`ivSite`), a resolver odrzuca punkt spoza niego. Leki i płyny `requires: 'iv'` podane na dowolny segment ręki używają wenflonu tego segmentu, a jeśli go nie ma — drożnego wenflonu tej samej ręki (`ivSiteFor`).
 
 Zgodność: `LEGACY_PARTS` mapuje dawne `rightArm`/`leftArm` na `…Forearm` oraz `rightLeg`/`leftLeg` na `…Thigh`; `resolvePart(id)` zwraca segment dla nowych i dawnych identyfikatorów (`head`, `chest`, `abdomen` pozostają). Scenariusze mogą nadal używać dawnych identyfikatorów — `createGame` i `validateCatalogs` je rozwiązują — ale dokładniejsze miejsca (np. `face` dla oka, `rightFoot` dla kostki) są preferowane. `act`, `itemUnavailable` i `contextActions` także przyjmują dawne identyfikatory. `restoreGame` przenosi klucze `g.body` (wraz z `ivAt`, `ivPlacement`, `ivQuality`, `ivAttempts`, `treatments`) oraz `injuries[].part`, `infusions[].site`, `medications[].site`, `supports[].target`, `assessments[].part` bez zmiany wersji stanu i inicjalizuje nowe segmenty.
 
+### Amputacje urazowe (0.8)
+
+Urazy z tagiem `amputation` (`amputationHand`, `amputationForearm`, `amputationFoot`, `amputationShin`; tagi `external`, `wound`, `massive`, `amputation`) usuwają swój segment S i wszystkie segmenty tej samej grupy o wyższym `order`. Czysty selektor `missingSegments(g)` (i `isMissing(g, id)`) w `selectors.js` wylicza je z `g.injuries` — stan nie przechowuje osobnej flagi. `partialAmputation` (tagi `external`, `wound`) to drobny uraz bez braków.
+
+- Brakujący segment: `itemUnavailable` zwraca `MISSING_PART` („Tej części brak — wybierz wyżej”) dla każdego przedmiotu; wyjątek to `STUMP_CARE` (`dressing`, `hemostatic`) podane na sam uraz amputacyjny (`injuryId`). `act('examine')` jest odrzucane na brakującym segmencie bez urazu. Staza, szyna i wenflon nie liczą się na brakującym segmencie (`tourniquetsOver`, `splinted`, `hasAccess`).
+- Krwawienie (`injuryBleeding`): zatrzymuje je tylko staza proksymalnie do S na tej samej kończynie (zwykłe reguły jakości `tourniquetQuality`). Gaza hemostatyczna na kikucie mnoży krwawienie przez `1 − .5·packQuality` (najwyżej −50%), opatrunek przez `.85`; inne przedmioty stabilizujące nie mają dostępu. `proximalTourniquetSite(id)` w `body.js` zwraca najbliższe miejsce stazy powyżej segmentu.
+- Balans (krew/s): dłoń .085, stopa .09, przedramię .12, podudzie .14, częściowa amputacja palców .016. Przy dojeździe 25 min każdy scenariusz kończy się sukcesem przy szybkiej stazie powyżej, a przegrywa przy samym opatrunku lub tamponadzie.
+- `createGame` nie losuje dodatkowego stłuczenia na brakującym segmencie.
+- Rysowanie (`body-scene.js`): brakujące segmenty nie mają regionów; obrys bazy z brakami jest przycięty do pozostałych pasów (`clip-base-<base>-stump`), linie anatomii i separatory maskuje `stump-mask` (pasy braków ∩ obrys bazy). Na cięciu (`cutPoint(id)`: górna krawędź pasu S na linii między kotwicami) rysuje się `STUMP_ART` (`.stump-end`, szerokość `stump`), a znacznik urazu (`WOUND_ART.amputation`) stoi w tym samym punkcie i przyjmuje opatrunek/gazę. Sprzęt, wsparcia i odznaki zabezpieczeń nie rysują się na brakujących segmentach; odznaka opatrunku kikuta stoi przy cięciu. Przyciski części (`patient.js`) dla braków mają klasę `missing`, `aria-disabled="true"` i `title="Brak"`, a `body-interactions.js` ich nie obsługuje. Menu kontekstowe brakującego segmentu zawiera tylko wyłączoną pozycję `missing`; znacznik kikuta pokazuje badanie, opatrunek i gazę.
+- Zapisy: `restoreGame` inicjalizuje brakujące klucze nowych segmentów (zapisy 0.6 i 0.7 działają); braki wynikają z urazów, więc nie wymagają migracji.
+
 Poradniki to `src/content/guides.js`. Dodaj `id`, `title`, `text` i opcjonalne `links: [[nazwa, url]]`. Biblioteka oraz wyszukiwanie obejmą wpis automatycznie.
+
+## Stany poszkodowanego i protokół
+
+`src/content/conditions.js` definiuje `CATEGORIES` (6 kategorii: `drobne`, `zewnetrzne`, `zagadka`, `medyczne`, `srodowisko`, `mieszane`; „Losowa” = `RANDOM_CATEGORY`, tylko w UI i `stats.category`) oraz `CONDITIONS`. Stan to `{id, category, name, severity: 'lekki'|'poważny'|'krytyczny', scenario, protocol}`. `scenario` jest identyfikatorem z `scenarios.js` albo rekordem w tym samym kształcie (bez `id` — przyjmuje id stanu; trafia do `CONDITION_SCENARIOS`, a `scenarioFor`/`scenarioById` w `engine.js` szuka w obu listach). Wbudowane scenariusze nie są w `SCENARIOS`, więc dawne losowanie po indeksie się nie zmienia.
+
+Krok protokołu: `{id, label, check, deadline, consequence}`. `deadline` to sekundy gry, mnożone przez `deadlineMultiplier` poziomu (łatwy 1,5, normalny 1, trudny 0,75) i zapisywane w stanie. Specyfikacje są deklaratywne (`CHECKS`/`CONSEQUENCES` w `src/simulation/protocol.js`):
+
+| `check` | Spełniony, gdy |
+| --- | --- |
+| `{examined: 'head' \| [...]}` | zbadano jeden z segmentów |
+| `{action: 'history'\|'vitals'\|'transport'\|'examine'}` | wykonano czynność (lub jej skutek jest w stanie) |
+| `{item: id}`, `{itemAny: [ids]}` | użyto przedmiotu (zdarzenie albo ślad w lekach, ocenach, wsparciach, zabezpieczeniach) |
+| `{treatedInjury: typ}`, `{treatedAll: typ}` | uraz (każdy uraz) tego typu ma zabezpieczenie lub stazę powyżej |
+| `{transport: true}`, `{warm: true}`, `{airway: true}`, `{oxygenGiven: true}` | ewakuacja wezwana, okrycie/ogrzewanie, drożność, tlen lub wentylacja |
+| `{any: [check, ...]}` | którykolwiek z warunków |
+
+`consequence` (stosowana raz, gdy termin minie bez wykonania): `worsen: {injury, to}` (zmiana typu pierwszego takiego urazu), `oxygen`, `blood`, `temperature` (różnice), `pain` (stała kara bólu w `g.protocol.pain`, dodawana w `pain()`), `unconscious: true` (`initialUnconscious`), `addInjury: [część, typ]`. Kilka kluczy w jednym obiekcie działa łącznie. Dziennik dostaje wpis „Zaniedbano: … — stan się pogarsza.” — przed terminem gra niczego nie podpowiada.
+
+Stan: `g.protocol = {conditionId, pain, steps: {[id]: {deadline, doneAt, missedAt}}}` — klucz istnieje tylko w grach ze stanem. `createGame(index, random, {difficulty, category, conditionId})` wybiera stan (`pickCondition`: `conditionId`, inaczej losowo z kategorii — pierwsze wywołanie `random` — a dla `losowa`/nieznanej z całej listy). Bez `category` i `conditionId` tworzenie gry jest identyczne jak wcześniej. `act` wywołuje `checkProtocol(g, {id, target, injuryId})` po efekcie, przed upływem czasu czynności, więc krok liczy się od jej rozpoczęcia; `tick` wywołuje `checkProtocol(g)` co sekundę (warunki stanu i terminy). Wykonanie po terminie zapisuje `doneAt` (pół punktu), konsekwencja już zastosowana zostaje.
+
+`protocolStatus(g)` zwraca `[{id, label, deadline, doneAt, onTime, late, missed}]`. `scoreRun` przy protokole skaluje dotychczasowe części do 34/21/17/13 i dodaje `protocol` (15 pkt × udział kroków na czas, spóźnione liczą się w połowie); bez protokołu ocena jest taka jak wcześniej. `restoreGame` waliduje `g.protocol` (`validProtocol`: znany stan, dokładnie te same kroki, liczby skończone) i przy błędzie usuwa sam protokół, zachowując grę; nieznany wbudowany scenariusz oznacza nieznaną grę (`null`). Wersja stanu się nie zmienia.
+
+Interfejs: przycisk `data-new` otwiera `#new-call` (`renderNewCall`), pasek zgłoszenia pokazuje tylko kategorię i ciężkość (`renderConditionTags`), a podsumowanie — nazwę stanu i listę kroków (`renderProtocolDebrief`). Zagadki (`zagadka`) muszą mieć mylący `scene`/`quote` i ukrytą przyczynę (`visible: null`). Nowe urazy stanów: `headInjury`→`headBleedSevere`, `spinalInjury`→`spinalCordInjury`, `strokeSigns`→`strokeSevere`, `hiddenChestWound`, `coPoisoning`, `stingAnaphylaxis`, `opioidOverdose`, `postIctal`, `heatStroke`; nowy sprzęt `cervicalCollar` (efekt `stabilize`, tag `spine`, szyja). `validateCatalogs` wywołuje `validateConditions`. `tests/conditions.test.js` zawiera prosty „solver” (mapuje specyfikacje kroków na czynności) i sprawdza, że każdy stan kończy się sukcesem przy 25-minutowym dojeździe, a pominięcie kluczowych kroków w zagadkach daje wyraźnie gorszy wynik. Nowy stan dodajesz samym rekordem w `CONDITIONS`.
 
 ## Zapis i kompatybilność
 
-Stan v2 jest zapisany pod kluczem `field-medic-v2`, niezależnie od prototypu v1. `restoreGame` waliduje stan przed wznowieniem; uszkodzone lub niezgodne dane prowadzą do nowej gry. Dodawane pozycje wyposażenia i części ciała są inicjalizowane przy odczycie istniejącego zapisu. Przy usuwaniu identyfikatorów, zmianie znaczenia pól lub fizjologii należy dodać jawną migrację albo podnieść wersję stanu. Identyfikatory treści traktuj jako stabilne.
+Stan gry ma `version: 3` (pod kluczem `field-medic-v2`, niezależnie od prototypu v1); zapisy v2 są migrowane przy odczycie (patrz „Fizjologia w jednostkach”). `restoreGame` waliduje stan przed wznowieniem; uszkodzone lub niezgodne dane prowadzą do nowej gry. Dodawane pozycje wyposażenia i części ciała są inicjalizowane przy odczycie istniejącego zapisu. Przy usuwaniu identyfikatorów, zmianie znaczenia pól lub fizjologii należy dodać jawną migrację albo podnieść wersję stanu. Identyfikatory treści traktuj jako stabilne.
+
+## Fizjologia w jednostkach (P1)
+
+Plan i fazy: `docs/PHYSIOLOGY-PLAN.md`. Stan kliniczny ma dwa pola: `g.profile` (`sex`, `ageY`, `massKg`, `heightCm`, `ebvMl`, `hb0`, `seed`) losowane w `createGame` **po** wszystkich dawnych losowaniach (ten sam seed daje ten sam scenariusz, pacjenta i dojazd; `options.profile` nadpisuje pola), oraz `g.phys` (`lostMl`, `hbMassG`, `crystIvMl`, `crystInMl`, `plasmaDeficitMl`, `hr`, `svrIdx`, `map`, `sbp`, `dbp`, `sv`, `reserve`, `lowMapS`, księgi `injuryMl`/`boneMl`).
+
+- `src/content/physiology-data.js`: `NORMALS`, `HEMORRHAGE_CLASSES` (ATLS), `TUNING`, `CV_TUNING` — komentarze R (zakres podręcznikowy) / G (strojenie gry).
+- `src/content/injury-physiology.js`: na uraz `vessel`, `rate` (mL/min przy MAP 90 dla 75 kg; P1 = dawne `bleed` × 1575, w czasie gry × EBV/5250), `pExp` (krwawienie × (MAP/90)^pExp), `bone` (ukryta utrata złamania wg segmentu, τ 30 min, szyna × 0,6, staza powyżej ją zatrzymuje), `capMl` (limit krwiaka/zmiażdżenia).
+- `src/simulation/physio-model.js`: `clinicalSnapshot(g)` — czysty, zapamiętywany odczyt (`lossFrac`, `lostMl`, `hemorrhageClass`, `map`, `sbp`, `dbp`, `hr` z bólem i lekami, `spo2`, `rr`, `tempC`, `gcs`/`avpu` (przybliżone), `glucose` mmol/L, `perfusion`, `hb`, `reserve`, `causes`); `applyInsult(g,{kind:'bleed'|'plasma'|'oxygen'|'temperature',…})` — jedyna droga zmian krwi i tlenu z protokołu, toksyczności, alergii, RKO z tętnem i strain hipoksji; profil, `initPhys`, baroreflex `circulate`.
+- `src/simulation/physio-circulation.js`: sekunda krążenia — krwawienie zależne od ciśnienia, worki 500 mL (~100 mL/min × przepływ wenflonu), redystrybucja krystaloidu do 25% (τ 20 min) i rozcieńczenie Hb, baroreflex (HR/SVR z opóźnieniem τ 6/15 s, MAP = CO·SVR, SBP = MAP+⅔PP, DBP = MAP−⅓PP) oraz `reserve` (podaż DBP/70 × Hb; spada poniżej 0,85).
+- Zatrzymanie: `reserve` = 0, MAP < 35 przez 20 s albo dawny próg tlenu ≤ 38 (do fazy P2). Budżet 180 s i jakość RKO bez zmian; ROSC wymaga RKO, perfuzji > 27, tlenu > 65 i krwawienia < 1,05% EBV/min, po nim krążenie jest ustalane od nowa, a rezerwa ≥ 0,35.
+- `vitals()` ma dawny kształt + `map`; HR/BP pochodzą z modelu, szum jest deterministyczny (`noise(g)` z `profile.seed`), w ticku nie ma `Math.random`.
+- Lustra do fazy P4: `g.blood = 100 − 200·(lostMl+plasmaDeficitMl)/EBV`, `g.oxygen` jak dotąd. `circulation(g)` = indeks perfuzji z objętości efektywnej (krew + krystaloid − deficyt osocza + wsparcie leków jako objętość wirtualna) w dawnej skali 0–100. `injuryBleeding`/`bleedingRate` zwracają mL/min (nominalnie, bez czynnika ciśnienia).
+- Ocena: „Stan przy przekazaniu” = indeks wstrząsowy HR/SBP (≤ 0,7 pełne, ≥ 1,3 zero; 10 pkt) + SpO₂ (≥ 94 → 80; 7,5) + temperatura (36–38 pełne, 0 przy ≤ 34/≥ 40; 7,5), notatka „Utrata krwi ~X l (klasa N)”. „Gospodarka sprzętem” i „Szybkość wezwania pomocy” liczą się tylko przy przekazaniu żywego pacjenta z co najmniej połową punktów stanu oraz niezerową perfuzją i SpO₂ (inaczej 0 z notatką „Nie liczono…”).
+- Zapis `version: 3`: `restoreGame` waliduje `profile`/`phys` i `infusions[].ml`; v2 migruje (`physio-migrate.js`): mężczyzna 80 kg (EBV 5600) z wiekiem z opisu, `lostMl = (100 − blood)·0,005·EBV`, `fluidSupport` → `crystIvMl`, pozostały czas 2-minutowego wlewu → mL worka.
+- Testy: `tests/physio.calibration.test.js` (klasy ATLS, rozcieńczenie, próg zatrzymania), `tests/physio.migrate.test.js`, `tests/perf.test.js` (20 000 ticków < 250 ms, determinizm, kolejność losowań), `tests/reference-care.test.js` (`referenceCare` z `tests/support.js` ratuje każdy scenariusz i stan: ciężki/lekki × normalny/trudny; `REPORT=1` wypisuje marginesy).
 
 ## Weryfikacja
 
@@ -104,7 +156,7 @@ Stan v2 jest zapisany pod kluczem `field-medic-v2`, niezależnie od prototypu v1
 
 `advanceTime(state, seconds)` w `engine.js` wykonuje kolejne sekundy zwykłego ticka. `src/simulation/monitor.js` zapisuje maksymalnie 60 próbek; ponowny pomiar w tej samej sekundzie zastępuje próbkę zamiast dublować czas. Wyłączenie monitora zatrzymuje tylko zapis i prezentację nowych odczytów — pacjent nadal zmienia stan. `src/ui/live-hud.js` aktualizuje małe pola, wykresy i podtrzymanie bez ponownego renderowania torby, aktywnego pola tekstowego czy menu kontekstowego.
 
-Dodając nowy parametr fizjologiczny, utrzymaj źródło prawdy w `physiology.js`/`selectors.js`, dodaj go do próbki monitora w `monitor.js`, a dopiero potem dodaj wizualizację w `patient.js`. Nie wyliczaj stanu pacjenta w DOM. Nowe wsparcie czasowe rejestruj jako modyfikator w `modifiers.js` lub jako efekt sprzętu; `woundModifiers` stosuje je do urazów, a czas wygaśnięcia należy przechowywać w stanie gry.
+Dodając nowy parametr fizjologiczny, utrzymaj źródło prawdy w `g.phys` (`physio-*.js`) i czytaj go przez `clinicalSnapshot`/selektory, dodaj go do próbki monitora w `monitor.js`, a dopiero potem dodaj wizualizację w `patient.js`. Nie wyliczaj stanu pacjenta w DOM. Nowe wsparcie czasowe rejestruj jako modyfikator w `modifiers.js` lub jako efekt sprzętu; `woundModifiers` stosuje je do urazów, a czas wygaśnięcia należy przechowywać w stanie gry.
 
 Katalog 100 nowych wpisów, ich liczby i powiązania sprawdza [EXPANSION-100.md](EXPANSION-100.md). Testy jednostkowe znajdują się w `tests/engine.test.js`, `tests/expansion.test.js` i `tests/realtime.test.js`. Dodatkowa regresja UI: `tests/browser_expansion.py`.
 
@@ -149,7 +201,7 @@ Interfejs gry renderuje `src/ui/game-screen.js`: pasek zgłoszenia, stół, torb
 
 1. W definicji sprzętu ustaw `procedure: 'identyfikator'`.
 2. W `src/simulation/procedures.js` zarejestruj `{validate(input), resolve(game, part, input)}` w `PROCEDURES`. Resolver jest czysty: zwraca wynik, nie mutuje gry.
-3. W `src/ui/procedures/index.js` dodaj widok do `PROCEDURE_VIEWS`. Widok zwraca Promise z danymi próby lub `null`, gdy anulowano przed rozpoczęciem.
+3. W `src/ui/procedures/index.js` dodaj widok do `PROCEDURE_VIEWS`. Widok dostaje `(game, part, injuryId)` i zwraca Promise z danymi próby lub `null`, gdy anulowano przed rozpoczęciem.
 4. Efekt wyposażenia odbiera rozstrzygnięty wynik jako `procedure` w `({g, item, target, injuryId, procedure})`.
 
 Aplikacja sama uruchamia przypisany widok i przekazuje jego dane do `act(state, itemId, partId, injuryId, procedureInput)`. Silnik odrzuca czynność z wymaganą procedurą, jeśli danych brak lub walidacja zawiedzie. Sam interfejs nie nadaje sobie wyniku „sukces”. Rozszerzenie o nowy rodzaj procedury wymaga wpisów w rejestrach i własnego widoku, bez zmian w głównej obsłudze akcji.
@@ -171,3 +223,22 @@ Niepowodzenie lub przerwanie rozpoczętej próby zużywa zestaw i czas oraz doda
 `flowEfficiency` w module `vascular.js` jest wspólnym źródłem aktualnej skuteczności: technika × potencjał miejsca × czynnik krążenia. Staza zawsze daje zero. Starsze dostępy bez informacji o jakości zachowują poprzedni przepływ, aby migracja nie pogarszała rozpoczętych gier.
 
 Fizjologia w każdej sekundzie mnoży tempo wlewu przez aktualny przepływ. Lek IV zapisuje `delivery` z chwili podania. Selektory skalują działanie przeciwbólowe, wpływ na krwawienie, efekty oddechowe i obciążenie leku, zamiast tylko wyświetlać procent w UI. Już dostarczony lek nie traci działania przez późniejszą stazę. Usunięcie dostępu kończy jego wlewy i pozwala na kolejną próbę; nie usuwa podanych wcześniej leków.
+
+### Minigry stazy, RKO, tamponady i opatrunku klatki
+
+Cztery kolejne procedury korzystają z tego samego kontraktu. Parametry są w `src/content/procedures.js` (`TOURNIQUET_PROCEDURE`, `CPR_PROCEDURE`, `PACKING_PROCEDURE`, `SEAL_PROCEDURE`), czyste walidatory i resolvery w `src/simulation/procedures.js`, widoki w `src/ui/procedures/*-minigame.js`. Wspólny cykl życia dialogu (`openSession` w `src/ui/procedures/shell.js`) sprząta pętlę `requestAnimationFrame`, timery i wszystkie nasłuchy w jednym `finish`. Escape, zamknięcie dialogu lub ukrycie karty przed wynikiem zwraca `null`: nic nie jest zużywane i czas nie płynie. Każdy widok ma region `role="status"` z komunikatem dla czytników ekranu, pełną obsługę klawiatury (Spacja/Enter/strzałki) i wskaźnika (pointer capture przy przytrzymaniu) oraz wariant `prefers-reduced-motion`.
+
+| Procedura | Przedmiot | Dane próby | Wynik i efekt |
+| --- | --- | --- | --- |
+| `tourniquet` | `tourniquet` | `{tension: 0..1, timeMs, aborted}` | Pole `window` [.62, .84] → `quality` 1 (pełne odcięcie). Poniżej → `quality = .9·tension/.62`; krwawienie dystalne × (1 − quality). Powyżej → `quality` 1 i `strain` 0..1, ból +2,5·strain, wpis w dzienniku. Zapis: `body[part].tourniquetQuality`, `tourniquetStrain`. |
+| `cpr` | `cpr` | `{intervalsMs: number[14], depths: number[15], aborted}` | Trafność tempa (pole 100–120/min, tolerancja 30/min) × trafność głębokości (pole .55–.85, tolerancja .3). `benefit = .4 + .6·quality`; podczas czynności budżet zatrzymania maleje o `1 − .75·benefit` na sekundę (dawniej stałe .25). |
+| `packing` | `hemostatic` (każdy z efektem `hemostatic`) | `{filled: 0..1, pressureMs, aborted}` | `quality = filled · (.35 + .65·min(1, pressureMs/3000))`. Mnożnik krwawienia gazy `.05 + .45·(1 − quality)`. Zapis: `injury.packQuality`. |
+| `seal` | `seal` | `{phase: 0..1, attempts: 1..2, aborted}` | Okno końca wydechu [.62, .88] → `quality` 1. Poza nim `.3 + .4·trafność` (tolerancja .4). Ubytek tlenu z rany × (1 − quality), krwawienie × (1 − .9·quality). Druga próba dodaje `extraTime` 10 s do czasu czynności. Zapis: `injury.sealQuality`. |
+
+Resolvery zwracają także `score` (ocena techniki, rośnie monotonicznie z jakością wykonania); dla stazy i opatrunku w polu docelowym `quality` wynosi 1, a `score` maleje od 1 w środku pola do .7 przy krawędzi. Wynik może mieć `extraTime` — silnik dolicza go do czasu czynności. Staza z `tourniquetQuality < .5` nie odcina przepływu IV ani tętna obwodowego (`tourniquetOver(g, part, .5)`), a `tourniquetQuality(g, part)` w `vascular.js` zwraca najlepsze odcięcie nad segmentem dla krwawienia. Luźną stazę (`quality < 1`) można dokręcić ponownie kolejnym zestawem; czas pierwszego założenia zostaje. Układ ukrytych kieszeni tamponady jest tylko prezentacją, ziarnisty po scenariuszu, segmencie i ranie.
+
+`restoreGame` przyjmuje nowe pola opcjonalnie (skończone 0..1, inaczej zapis jest odrzucany), bez zmiany wersji. Brak pola oznacza pełną skuteczność (`?? 1`), więc starsze zapisy działają jak przed 0.8. Przejściowy `g.cprBenefit` jest usuwany po czynności.
+
+### Wyłączone minigry
+
+`stats.minigames: 'on' | 'off'` (domyślnie `'on'`; brak lub błędna wartość to `'on'`) przełącza się w panelu dyżuru. Przy `'off'` `app.js` pomija widok i przekazuje `autoInput(id, g, part)` z `simulation/procedures.js`: deterministyczną, poprawną, przeciętną próbę. Wyniki: staza `tension .63` (w polu, pełne odcięcie, `score` ≈ .73); RKO odstępy 600 ms (100/min) i głębokość .46 → `quality` .70, `benefit` .82; tamponada `filled .8`, ucisk 2400 ms → `quality` ≈ .70 (mnożnik krwawienia ≈ .19); opatrunek `phase .64` (w polu, pełna szczelność, `score` ≈ .75); IV środek zakresu miejsca (y = 140), prowadzenie 42 i głębokość docelowa → jakość ≈ .88 (łokieć), .94 (przedramię), .98 (dłoń). Testy jednostkowe używają tego samego `autoInput` przez `tests/support.js`.

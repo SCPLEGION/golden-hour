@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createGame, act } from '../src/engine.js';
+import { createGame } from '../src/engine.js';
+import { act } from './support.js';
 import { protectionMarkers } from '../src/ui/protections.js';
 const fresh=()=>createGame(0,()=>.99);
 test('fresh game has no protection markers',()=>{

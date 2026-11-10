@@ -3,7 +3,7 @@
    Olive-graphite substrate, sharp edges, monospace telemetry, condensed heads.
    Accents: amber = selection / warning, green = OK, red = critical only.
    Files: style.css (tokens, shell, panels, dialogs) · ui/operating-surface.css
-   (body scene + context menu) · ui/procedures/procedure.css (IV minigame) ·
+   (body scene + context menu) · ui/procedures/procedure.css (procedure minigames) ·
    ui/live.css (live instrument states).
    ========================================================================== */
 
@@ -173,6 +173,9 @@ h3{font-size:13px}
 .part-button{flex:1 1 auto;min-height:24px;padding:3px 6px;font:600 12px/1 var(--font-head);letter-spacing:.04em;text-transform:uppercase;white-space:nowrap;color:var(--ink-2);background:var(--bg-3);border:1px solid var(--line-2);border-radius:0}
 .part-button:hover{color:var(--ink);border-color:var(--line-3)}
 .part-button.selected{color:var(--amber-ink);background:var(--amber-bg);border-color:var(--amber)}
+.part-button.missing{color:var(--ink-3,#6d7466);background:transparent;border-style:dashed;text-decoration:line-through;cursor:not-allowed;opacity:.6}
+.part-button.missing:hover{color:var(--ink-3,#6d7466);border-color:var(--line-2)}
+.missing-note{font-weight:500;font-size:.75em;color:var(--ink-2);letter-spacing:.02em}
 .selected-part{padding:8px 12px;max-height:118px;overflow:auto;flex-shrink:0;background:var(--bg-2);border-top:1px solid var(--line)}
 .selected-part h3{display:flex;align-items:center;gap:8px;font-size:15px;color:var(--ink)}
 .target-mark{color:var(--amber);font-size:16px}
@@ -559,4 +562,45 @@ dialog::backdrop{background:#050604d9;background-image:var(--scanlines)}
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{scroll-behavior:auto!important}
   .tutorial-focus,.status-light.critical,.monitor-mode i.on{animation:none}
+}
+#stats .minigame-toggle{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin:0 0 18px;padding:10px 12px;font:500 10.5px var(--mono);letter-spacing:var(--track);text-transform:uppercase;color:var(--ink-2);background:var(--bg-1);border:1px solid var(--line);border-left:3px solid var(--amber);cursor:pointer}
+#stats .minigame-toggle input{width:18px;height:18px;margin:0;accent-color:var(--amber)}
+#stats .minigame-toggle small{flex-basis:100%;font:400 12.5px/1.5 var(--font-body);letter-spacing:0;text-transform:none;color:var(--ink-3)}
+
+/* ---------- new call / patient states ---------- */
+#new-call{width:min(860px,calc(100% - 24px))}
+.new-call-intro{margin:14px 0 12px;font-size:13.5px;color:var(--ink-2)}
+#new-call .difficulty-select{margin:0 0 14px}
+.category-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:8px;margin:0;padding:0;border:0;min-width:0}
+.category-grid legend{margin-bottom:8px;padding:0;font:500 10.5px var(--mono);letter-spacing:var(--track);text-transform:uppercase;color:var(--ink-3)}
+.category-card{position:relative;display:grid;grid-template-rows:auto 1fr auto;gap:5px;padding:12px 14px 11px 16px;background:var(--bg-1);border:1px solid var(--line-2);cursor:pointer;transition:border-color .15s,background .15s}
+.category-card:hover{background:var(--bg-3);border-color:var(--line-3)}
+.category-card input{position:absolute;opacity:0;pointer-events:none}
+.category-card:has(input:checked){background:var(--amber-bg);border-color:var(--amber);box-shadow:inset 3px 0 0 var(--amber)}
+.category-card:has(input:focus-visible){outline:2px solid var(--amber);outline-offset:2px}
+.category-name{font:700 17px/1.1 var(--font-head);letter-spacing:.04em;text-transform:uppercase;color:var(--ink)}
+.category-card small{font-size:12.5px;line-height:1.4;color:var(--ink-2)}
+.category-count{font:500 10.5px var(--mono);letter-spacing:var(--track);text-transform:uppercase;color:var(--amber-ink)}
+.category-card.random{border-style:dashed}
+.new-call-warning{margin:14px 0 0;padding:8px 12px;font-size:13px;color:var(--amber-ink);background:var(--amber-bg);border-left:3px solid var(--amber)}
+.new-call-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px;padding-top:12px;border-top:1px solid var(--line)}
+.mission-tags{display:inline-flex;gap:6px;align-items:baseline}
+.mission-tags b{padding:2px 7px;font:600 10.5px var(--mono);letter-spacing:.06em;text-transform:uppercase;border:1px solid var(--line-2);color:var(--ink-2);background:var(--bg-2)}
+.severity-tag.low{color:var(--ok);border-color:var(--ok);background:var(--ok-bg)}
+.severity-tag.mid{color:var(--amber-ink);border-color:var(--amber);background:var(--amber-bg)}
+.severity-tag.high{color:var(--crit);border-color:var(--crit);background:var(--crit-bg)}
+.protocol-debrief{margin:4px 0 10px;padding:10px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.protocol-debrief .eyebrow{color:var(--amber-ink)}
+.protocol-debrief h3{margin:4px 0 8px;font-size:18px;color:var(--ink)}
+.protocol-list{list-style:none;margin:0;padding:0;display:grid;gap:4px}
+.protocol-list li{display:grid;grid-template-columns:20px 1fr;gap:0 8px;font-size:13px;color:var(--ink)}
+.protocol-list small{grid-column:2;font:500 11px var(--mono);color:var(--ink-3)}
+.protocol-mark{grid-row:1/span 2;font:700 15px/1.2 var(--mono)}
+.protocol-list .on-time .protocol-mark{color:var(--ok)}
+.protocol-list .late .protocol-mark{color:var(--amber-ink)}
+.protocol-list .missed .protocol-mark{color:var(--crit)}
+@media (max-width:480px){
+  .category-grid{grid-template-columns:1fr}
+  .category-card{padding:10px 12px 9px 14px}
+  .new-call-actions .primary{flex:1}
 }

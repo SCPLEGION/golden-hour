@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as Engine from '../src/engine.js';
+import { act as autoAct } from './support.js';
 import {sampleMonitor,HISTORY_LIMIT} from '../src/simulation/monitor.js';
 import {createRealtimeDriver} from '../src/simulation/realtime.js';
 
@@ -11,7 +12,7 @@ test('a new patient has an initial live monitor reading and real physiology chan
   const g=seed('gunshot');assert.equal(g.monitoring,true);assert.equal(g.paused,false);assert.equal(g.speed,1);
   assert.ok(g.vitals);assert.equal(g.vitals.time,0);
   const next=advance(g,20);assert.equal(g.elapsed,0);assert.equal(next.elapsed,20);
-  assert.ok(next.blood<g.blood);assert.equal(next.vitals.time,next.elapsed);assert.notDeepEqual(next.vitals,g.vitals);
+  assert.ok(next.phys.lostMl>g.phys.lostMl);assert.equal(next.vitals.time,next.elapsed);assert.notDeepEqual(next.vitals,g.vitals);
 });
 
 test('monitor oscillations are deterministic and treatment changes the physiological trend',()=>{
@@ -20,9 +21,9 @@ test('monitor oscillations are deterministic and treatment changes the physiolog
   assert.ok(new Set(a.monitorHistory.map(v=>v.pulse)).size>1);
   const hemorrhage=seed('workshop');
   const untreated=advance(hemorrhage,120);
-  const controlled=Engine.act(hemorrhage,'tourniquet','rightLeg');
+  const controlled=autoAct(hemorrhage,'tourniquet','rightLeg');
   const treated=advance(controlled,120-controlled.elapsed);
-  assert.equal(treated.elapsed,untreated.elapsed);assert.ok(treated.blood>untreated.blood);assert.ok(treated.vitals.pulse<untreated.vitals.pulse);
+  assert.equal(treated.elapsed,untreated.elapsed);assert.ok(treated.phys.lostMl<untreated.phys.lostMl);assert.ok(treated.vitals.pulse<untreated.vitals.pulse);
 });
 
 test('oxygen loss and corrective airway care appear on the live monitor without manual measuring',()=>{
@@ -43,7 +44,7 @@ test('an unplugged monitor preserves its last reading until explicitly measured 
   const g=seed('gunshot');g.monitoring=false;
   const snapshot=structuredClone(g.vitals),history=structuredClone(g.monitorHistory);
   const next=advance(g,30);
-  assert.deepEqual(next.vitals,snapshot);assert.deepEqual(next.monitorHistory,history);assert.ok(next.blood<g.blood);
+  assert.deepEqual(next.vitals,snapshot);assert.deepEqual(next.monitorHistory,history);assert.ok(next.phys.lostMl>g.phys.lostMl);
   sampleMonitor(next,true);assert.equal(next.vitals.time,30);assert.ok(next.vitals.pulse!==snapshot.pulse);
 });
 

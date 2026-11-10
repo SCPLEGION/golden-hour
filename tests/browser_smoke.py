@@ -38,9 +38,27 @@ with sync_playwright() as p:
         assert 'Wkłucie wykonane' in page.locator('.procedure-result').inner_text()
         page.locator('[data-procedure-finish]').click()
         page.locator('#procedure').wait_for(state='hidden')
+    def finish_procedure():
+        page.locator('[data-procedure-finish]:not([disabled])').click()
+        page.locator('#procedure').wait_for(state='hidden')
+    def complete_tourniquet():
+        # Keyboard nudges are deterministic: 36 x 0.02 lands inside the target window.
+        page.locator('#procedure [data-hold]').wait_for(state='visible')
+        for _ in range(36):page.keyboard.press('ArrowUp')
+        page.keyboard.press('Enter')
+        assert 'Staza zablokowana' in page.locator('.procedure-result').inner_text()
+        finish_procedure()
+    def complete_packing():
+        page.locator('#packing-map').wait_for(state='visible')
+        page.keyboard.press('Space');page.locator('[data-procedure-next]').click()
+        page.locator('#procedure [data-hold]').focus();page.keyboard.down('Space')
+        page.locator('.procedure-result').wait_for(state='visible',timeout=8000);page.keyboard.up('Space')
+        finish_procedure()
     def choose(action):
         page.locator(f'[data-context-action="{action}"]').click()
         if action=='iv':complete_iv()
+        if action=='tourniquet':complete_tourniquet()
+        if action=='hemostatic':complete_packing()
     seed()
     page.locator('[data-pick="dressing"]').click();assert page.locator('.tool-in-hand').count()==1
     page.keyboard.press('Escape');assert page.locator('.tool-in-hand').count()==0
@@ -161,7 +179,7 @@ with sync_playwright() as p:
         if page.locator('.debrief').count():break
         page.locator('[data-action="wait60"]').click()
     assert state()['status']=='saved'
-    page.locator('[data-new]').first.click();assert state()['elapsed']==0
+    page.locator('[data-new]').first.click();page.locator('#new-call [data-new-start]').click();assert state()['elapsed']==0 and state().get('protocol')
     assert not errors,errors
-    print(json.dumps({'game_cockpit':'passed','IV_minigame_success_failure_abort':'passed','mouse_and_touch_insertion':'passed','horizontal_outline':'passed','wound_context_menu':'passed','visible_equipment':'passed','local_IV_and_tourniquet':'passed','pick_and_place':'passed','native_drag_drop':'passed','keyboard':'passed','guide':'passed','persistence':'passed','mobile_320_and_390':'passed','25_minute_rescue':'passed','console_errors':errors}))
+    print(json.dumps({'game_cockpit':'passed','IV_minigame_success_failure_abort':'passed','tourniquet_and_packing_minigames':'passed','mouse_and_touch_insertion':'passed','horizontal_outline':'passed','wound_context_menu':'passed','visible_equipment':'passed','local_IV_and_tourniquet':'passed','pick_and_place':'passed','native_drag_drop':'passed','keyboard':'passed','guide':'passed','persistence':'passed','mobile_320_and_390':'passed','25_minute_rescue':'passed','console_errors':errors}))
     browser.close()

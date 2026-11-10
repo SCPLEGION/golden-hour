@@ -13,7 +13,7 @@ export function createContextMenu(onAction) {
     let group='';
     menu.innerHTML=`<div class="context-heading"><div><strong>${bodyPart(part).name}</strong><span>${injury?escape(INJURIES[injury.type].name):'Wybierz czynność'}</span></div><button aria-label="Zamknij menu" data-close-menu>✕</button></div><div role="menu" aria-label="Działania na pacjencie">${entries.map(e=>{
       const heading=e.group!==group?`<div class="context-group" role="presentation">${e.group}</div>`:'';group=e.group;
-      return `${heading}<button role="menuitem" data-context-action="${e.id}" ${e.disabled?'aria-disabled="true"':''}><span>${escape(e.label)}${e.disabled||e.warning?`<small class="${e.warning?'context-warning':''}">${escape(e.disabled||e.warning)}</small>`:''}</span><b>${e.time}s</b></button>`;
+      return `${heading}<button role="menuitem" data-context-action="${e.id}" ${e.disabled?'aria-disabled="true"':''}><span>${escape(e.label)}${e.disabled||e.warning?`<small class="${e.warning?'context-warning':''}">${escape(e.disabled||e.warning)}</small>`:''}</span>${e.time?`<b>${e.time}s</b>`:''}</button>`;
     }).join('')}</div>`;
     menu.hidden=false;menu.style.left='0px';menu.style.top='0px';
     const rect=menu.getBoundingClientRect();

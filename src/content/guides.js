@@ -5,6 +5,31 @@ export const GUIDES = [
     "text": "Wybierz wenflon w torbie i kliknij rękę albo użyj menu kontekstowego. Najpierw wybierz dokładny punkt na rysunku naczynia; możesz kliknąć lub ustawić celownik strzałkami. Następnie ustaw prowadzenie igły suwakiem w zaznaczonym zakresie. Na końcu przytrzymaj przycisk lub Spację i puść w polu trafienia. Nie ma losowego rzutu: wynik zależy od punktu, ustawienia i momentu puszczenia. Dłoń, przedramię i okolica łokcia mają różne marginesy i potencjał przepływu. Udana, lecz niedokładna próba może dać słaby dostęp. Przepływ zależy też od stanu krążenia i stazy. Płyny napływają proporcjonalnie do przepływu, a lek IV ma odpowiednio słabszy efekt. Podczas minigry automatyczny zegar jest wstrzymany, ale rozstrzygnięta próba zużywa czas czynności oraz wenflon. Niepowodzenie powoduje krwiak. Escape przed rozpoczęciem wprowadzania anuluje bez kosztu; po rozpoczęciu oznacza nieudaną próbę. Słaby wenflon możesz usunąć i spróbować ponownie. Wszystkie zakresy są umownymi skalami gry, nie instrukcją medyczną."
   },
   {
+    "id": "tourniquet-minigame",
+    "title": "Minigra stazy: naciąg i blokada",
+    "text": "Po wybraniu stazy przytrzymaj przycisk lub Spację, aby obracać pokrętło; strzałki korygują naciąg o mały krok. Puszczone pokrętło powoli się luzuje, więc gdy wskaźnik jest w zielonym polu, zablokuj je przyciskiem lub Enter. Pulsujący znacznik krwawienia poniżej stazy blednie w miarę dokręcania i gaśnie w polu docelowym. Za słaby naciąg tylko ogranicza krwawienie (luźną stazę można dokręcić ponownie, zużywając kolejną), za mocny zatrzymuje je, ale nasila ból. Escape przerywa bez zużycia stazy. To umowna skala gry."
+  },
+  {
+    "id": "cpr-minigame",
+    "title": "Minigra RKO: rytm i głębokość",
+    "text": "Wykonaj serię 15 uciśnięć dużym przyciskiem albo Spacją. Gra nie podaje rytmu: odstęp między naciśnięciami wyznacza tempo, które powinno mieścić się w polu 100–120 na minutę, a czas przytrzymania wyznacza głębokość pokazaną na słupkach. Jakość serii to iloczyn trafności tempa i głębokości; w modelu gry lepsza seria dłużej podtrzymuje pacjenta w zatrzymaniu krążenia. Escape przerywa serię bez kosztu. To uproszczony balans rozgrywki, nie instrukcja."
+  },
+  {
+    "id": "packing-minigame",
+    "title": "Minigra tamponady: kieszenie i ucisk",
+    "text": "Gaza hemostatyczna uruchamia tamponadę. Jama rany jest podzielona na strefy, a kieszenie o różnej głębokości są ukryte. Kliknij strefę albo wybierz ją strzałkami i naciśnij Spację lub Enter, aby włożyć warstwę. Warstwa poza kieszenią lub w pełnej kieszeni przepada, a zapas warstw jest ograniczony. Potem przytrzymaj przycisk lub Spację do końca odliczania; wcześniejsze puszczenie osłabia wynik. Jakość tamponady skaluje ograniczenie krwawienia tej rany. Escape przed końcem nie zużywa gazy."
+  },
+  {
+    "id": "seal-minigame",
+    "title": "Minigra opatrunku klatki: moment wydechu",
+    "text": "Na ekranie przesuwa się przebieg oddechu w tempie oddechu pacjenta. Naciśnij przycisk, Spację lub Enter, gdy pionowa linia jest w zielonym polu pod koniec wydechu. Trafienie daje pełną szczelność; przyłożenie poza polem tylko częściowo ogranicza ubytek tlenu. Po chybieniu możesz raz spróbować ponownie kosztem 10 s gry albo zostawić opatrunek. Przy ograniczonym ruchu przebieg jest nieruchomy, a przesuwa się tylko wskaźnik. Escape przed wynikiem nie zużywa opatrunku."
+  },
+  {
+    "id": "minigames-off",
+    "title": "Wyłączanie minigier procedur",
+    "text": "W panelu dyżuru możesz wyłączyć minigry. Wtedy wenflon, staza, RKO, tamponada i opatrunek klatki wykonują się od razu z jednakowym, przeciętnym wynikiem: staza i opatrunek trafiają w pole przy jego krawędzi, RKO i tamponada mają około 70% jakości, a wenflon jest zakładany w środku wybranego miejsca. Ustawienie jest zapisywane w przeglądarce i można je w każdej chwili zmienić."
+  },
+  {
     "id": "cockpit",
     "title": "Ekran gry i szybkie działania",
     "text": "Stół zajmuje główną część ekranu; torba jest po prawej, a parametry poniżej pacjenta. Domyślnie działa zegar czasu rzeczywistego i podłączony monitor. Pacjent może się zmieniać również wtedy, gdy przeglądasz torbę lub wybierasz miejsce. Pauza zatrzymuje automatyczne sekundy, ale wykonana czynność nadal zużywa przypisany jej czas symulacji. Możesz ustawić tempo 1×, 2× lub 4×. Klawisze 1–4 wykonują badanie miejscowe, pomiar, zgłoszenie ewakuacji i obserwację przez 30 sekund. L otwiera dziennik, H poradnik. Skróty działają poza polami formularzy, menu i oknami procedur. Escape odkłada trzymany przedmiot i zamyka dziennik. Podłączony monitor aktualizuje parametry na żywo, a odłączony pozostawia ostatni odczyt."
@@ -247,5 +272,20 @@ export const GUIDES = [
     "id": "r2-many-small",
     "title": "Wiele małych problemów",
     "text": "Zgłoszenie z kilkoma lekkimi urazami wymaga kolejności: krwawienie, oddech, ból, potem komfort. Każdy z nich może dać punkty, ale rozproszenie przy jednym ignoruje drugi."
+  },
+  {
+    "id": "amputation-game",
+    "title": "Amputacja urazowa — gra",
+    "text": "Gdy brakuje części kończyny, brakującego odcinka nie można wybrać ani nic na nim założyć. Krwawienie z kikuta zatrzymuje w grze wyłącznie staza powyżej miejsca odcięcia na tej samej kończynie: przy utracie dłoni lub stopy — na przedramieniu albo podudziu (lub wyżej), przy utracie przedramienia lub podudzia — na ramieniu albo udzie. Opatrunek na znaczniku kikuta tylko nieznacznie spowalnia krwawienie, a gaza hemostatyczna zmniejsza je najwyżej o połowę. Częściowa amputacja palców jest mniejszym urazem: wystarcza zabezpieczenie rany. To model gry, nie instrukcja kliniczna."
+  },
+  {
+    "id": "joint-segments",
+    "title": "Nowe segmenty stawów",
+    "text": "Kończyny mają po sześć odcinków: bark, ramię, łokieć, przedramię, nadgarstek i dłoń oraz biodro, udo, kolano, podudzie, kostkę i stopę. Bark, nadgarstek, biodro i kostka to krótkie stawy: nie przyjmują stazy ani wenflonu. Szyna obejmuje swój odcinek i sąsiednie, a krótki staw nie przerywa zasięgu — szyna na przedramieniu nadal unieruchamia także dłoń, a na podudziu stopę. Staza zatrzymuje krwawienie tylko poniżej siebie, więc rana barku lub biodra nie jest nią objęta."
+  },
+  {
+    "id": "conditions-categories",
+    "title": "Stany i kategorie wezwań",
+    "text": "Przycisk „Nowe wezwanie” otwiera dyspozytornię: wybierasz poziom trudności i kategorię zgłoszenia — drobne urazy, poważne obrażenia zewnętrzne, zagadkę diagnostyczną, stany nagłe medyczne, środowisko i wypadki albo urazy wielomiejscowe. Konkretny stan poszkodowanego jest losowany w obrębie kategorii; „Losowa” bierze dowolny. Na pasku zgłoszenia widać tylko kategorię i ciężkość, a nie rozpoznanie. Nie każdy stan to widoczna rana: czasem trzeba od razu zbadać głowę, klatkę lub brzuch, zebrać wywiad, zmierzyć glukozę albo temperaturę, zanim pojawią się objawy. Opis zdarzenia w zagadkach bywa mylący — ufaj badaniu, nie pierwszemu wrażeniu. Każdy stan ma ukryty protokół kilku kroków z terminem w czasie gry. Krok wykonany po terminie liczy się w połowie, a pominięty powoduje jednorazowe pogorszenie stanu i wpis w dzienniku. Na łatwym poziomie terminy są dłuższe, na trudnym krótsze. Podsumowanie po interwencji ujawnia nazwę stanu, listę kroków (na czas, spóźnione, pominięte) i dodaje część oceny „Protokół”. Terminy i skutki są umownym balansem gry, nie wytycznymi klinicznymi."
   }
 ];

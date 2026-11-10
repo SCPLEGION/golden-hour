@@ -40,7 +40,10 @@ test('score multiplier is applied and clamped',()=>{
   const g={...make('hard'),status:'saved',blood:100,oxygen:99,transportCalledAt:0};
   const r=scoreRun(g);
   assert.ok(r.total<=100);assert.equal(r.difficulty.id,'hard');
-  assert.equal(scoreRun({...g,difficulty:'easy'}).total,Math.round(scoreRun({...g,difficulty:'normal'}).total*.8));
+  // Each run is scored against its own starting bag, so compare untouched easy/normal bags.
+  const same=d=>({...make(d),status:'saved',blood:100,oxygen:99,transportCalledAt:0});
+  assert.equal(scoreRun(same('easy')).total,Math.round(scoreRun(same('normal')).total*.8));
+  assert.equal(scoreRun(same('hard')).parts.find(p=>p.id==='economy').points,15);
   assert.equal(difficultyById('x').id,'normal');
 });
 test('storage tolerates missing or invalid difficulty',()=>{

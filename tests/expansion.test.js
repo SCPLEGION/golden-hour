@@ -1,9 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {SCENARIOS,createGame,act,validateCatalogs} from '../src/engine.js';
+import {SCENARIOS,createGame,validateCatalogs} from '../src/engine.js';
+import {act} from './support.js';
 import {INJURIES} from '../src/content/injuries.js';
-import {BODY_PARTS,resolvePart} from '../src/content/body.js';
+import {BODY_PARTS,resolvePart,proximalTourniquetSite} from '../src/content/body.js';
 import {ITEMS} from '../src/content/items.js';
 import {GUIDES} from '../src/content/guides.js';
 import {pain,injuryBleeding,respiratoryBurden,vitals,isConscious} from '../src/simulation/selectors.js';
@@ -30,9 +31,9 @@ test('expansion manifests account for exactly 100 concrete catalog additions',()
   }
 });
 
-test('all 37 cases reference actual body parts and every added injury is reachable',()=>{
-  assert.equal(SCENARIOS.length,37);assert.equal(Object.keys(INJURIES).length,40);
-  assert.equal(new Set(SCENARIOS.map(c=>c.id)).size,37);
+test('all 42 cases reference actual body parts and every added injury is reachable',()=>{
+  assert.equal(SCENARIOS.length,42);assert.equal(Object.keys(INJURIES).length,57); // 45 + 12 patient-state injuries (conditions.js)
+  assert.equal(new Set(SCENARIOS.map(c=>c.id)).size,42);
   const parts=new Set(BODY_PARTS.map(p=>p.id));
   for(const c of SCENARIOS){
     assert.ok(c.title&&c.scene&&c.history&&c.lesson,c.id);assert.ok(c.injuries.length,c.id);
@@ -49,7 +50,8 @@ test('every case remains rescuable with a 25-minute evacuation using core care',
     if(g.injuries.some(i=>INJURIES[i.type].tags.includes('bronchospasm')))g=act(g,'salbutamol','chest');
     for(const injury of [...g.injuries]){
       const d=INJURIES[injury.type],limb=BODY_PARTS.find(p=>p.id===injury.part)?.limb;
-      if(d.tags.includes('massive')&&limb)g=act(g,'tourniquet',injury.part);
+      // An amputated segment cannot hold a tourniquet: it goes on the nearest site above the cut.
+      if(d.tags.includes('massive')&&limb)g=act(g,'tourniquet',d.tags.includes('amputation')?proximalTourniquetSite(injury.part):injury.part);
       else if(d.tags.includes('wound'))g=act(g,g.supplies.hemostatic>0?'hemostatic':'dressing',injury.part,injury.id);
       if(d.tags.includes('chest'))g=act(g,'seal',injury.part,injury.id);
       if(d.tags.includes('fracture')&&limb)g=act(g,'splint',injury.part);

@@ -18,15 +18,21 @@ const mirror=([x,y])=>[1000-x,y];
 const limb=(side,names)=>{
   const left=side==='left',arm=`${side}Arm`,leg=`${side}Leg`,m=p=>left?mirror(p):p;
   const L=(id,name,group,order,clip,anchor,extra={})=>seg(`${side}${id}`,name,group,group,clip,m(anchor),{order,limb:true,...Object.fromEntries(Object.entries(extra).map(([k,v])=>[k,Array.isArray(v)?m(v):v]))});
+  // Bands of one base are contiguous and ordered proximal → distal. `bridge` marks the short
+  // joint segments added in 0.8: a splint reaches across them (see splintReach).
   return [
-    L('UpperArm',names[0],arm,0,[285,480],[338,385],{stasis:[330,420],tourniquet:true}),
-    L('Elbow',names[1],arm,1,[480,565],[302,522],{vascular:true,ivSite:'elbow'}),
-    L('Forearm',names[2],arm,2,[565,760],[270,655],{splint:[277,650],tourniquet:true,vascular:true,ivSite:'forearm'}),
-    L('Hand',names[3],arm,3,[760,880],[238,815],{vascular:true,ivSite:'hand'}),
-    L('Thigh',names[4],leg,0,[700,1000],[428,860],{stasis:[425,820],tourniquet:true}),
-    L('Knee',names[5],leg,1,[1000,1110],[415,1055]),
-    L('Shin',names[6],leg,2,[1110,1378],[410,1240],{stasis:[410,1160],splint:[408,1240],tourniquet:true}),
-    L('Foot',names[7],leg,3,[1378,1465],[412,1420])
+    L('Shoulder',names[0],arm,0,[285,335],[352,312],{bridge:true}),
+    L('UpperArm',names[1],arm,1,[335,480],[338,385],{stasis:[330,420],tourniquet:true}),
+    L('Elbow',names[2],arm,2,[480,565],[302,522],{vascular:true,ivSite:'elbow'}),
+    L('Forearm',names[3],arm,3,[565,735],[270,655],{splint:[277,650],tourniquet:true,vascular:true,ivSite:'forearm'}),
+    L('Wrist',names[4],arm,4,[735,775],[246,755],{bridge:true}),
+    L('Hand',names[5],arm,5,[775,880],[238,815],{vascular:true,ivSite:'hand'}),
+    L('Hip',names[6],leg,0,[700,790],[425,758],{bridge:true}),
+    L('Thigh',names[7],leg,1,[790,1000],[428,860],{stasis:[425,820],tourniquet:true}),
+    L('Knee',names[8],leg,2,[1000,1110],[415,1055]),
+    L('Shin',names[9],leg,3,[1110,1370],[410,1240],{stasis:[410,1160],splint:[408,1240],tourniquet:true}),
+    L('Ankle',names[10],leg,4,[1370,1410],[412,1390],{bridge:true}),
+    L('Foot',names[11],leg,5,[1410,1465],[412,1437])
   ];
 };
 export const BODY_PARTS = [
@@ -37,16 +43,40 @@ export const BODY_PARTS = [
   seg('abdomen','Brzuch','abdomen','abdomen',[520,655],[500,590]),
   seg('pelvis','Miednica','abdomen','abdomen',[655,800],[500,722]),
   seg('back','Plecy','back',null,null,[150,150],{inset:true}),
-  ...limb('right',['Prawe ramię','Prawy łokieć','Prawe przedramię','Prawa dłoń','Prawe udo','Prawe kolano','Prawe podudzie','Prawa stopa']),
-  ...limb('left',['Lewe ramię','Lewy łokieć','Lewe przedramię','Lewa dłoń','Lewe udo','Lewe kolano','Lewe podudzie','Lewa stopa'])
+  ...limb('right',['Prawy bark','Prawe ramię','Prawy łokieć','Prawe przedramię','Prawy nadgarstek','Prawa dłoń','Prawe biodro','Prawe udo','Prawe kolano','Prawe podudzie','Prawa kostka','Prawa stopa']),
+  ...limb('left',['Lewy bark','Lewe ramię','Lewy łokieć','Lewe przedramię','Lewy nadgarstek','Lewa dłoń','Lewe biodro','Lewe udo','Lewe kolano','Lewe podudzie','Lewa kostka','Lewa stopa'])
 ];
 // Pre-0.7 limb ids map to their most representative segment (saves, scenarios, callers).
 export const LEGACY_PARTS={rightArm:'rightForearm',leftArm:'leftForearm',rightLeg:'rightThigh',leftLeg:'leftThigh'};
 export const resolvePart=id=>LEGACY_PARTS[id]??id;
-export const bodyPart=id=>BODY_PARTS.find(p=>p.id===resolvePart(id));
+let partIndex=null;
+export const bodyPart=id=>{if(partIndex?.size!==BODY_PARTS.length)partIndex=new Map(BODY_PARTS.map(p=>[p.id,p]));return partIndex.get(resolvePart(id));};
 // Item `regions` may list group ids ('leftArm', 'head') or exact segment ids.
 export const matchesRegion=(regions,id)=>{const p=bodyPart(id);return Boolean(p&&regions.some(r=>r===p.id||r===p.group));};
 export const sameGroup=(a,b)=>bodyPart(a)?.group===bodyPart(b)?.group;
+// A splint covers its own segment and the adjacent ones of the same limb, reaching across one
+// `bridge` joint segment (forearm ↔ hand over the wrist), so pre-0.8 neighbours stay neighbours.
+export const splintReach=(a,b)=>{
+  const p=bodyPart(a),q=bodyPart(b);if(!p?.limb||!q?.limb||p.group!==q.group)return false;
+  const d=Math.abs(p.order-q.order);
+  return d<=1||(d===2&&Boolean(BODY_PARTS.find(s=>s.group===p.group&&s.order===Math.min(p.order,q.order)+1)?.bridge));
+};
+// Most distal tourniquet site strictly proximal to a segment (the stump site after an amputation).
+export const proximalTourniquetSite=id=>{const p=bodyPart(id);return BODY_PARTS.filter(t=>p?.limb&&t.group===p.group&&t.tourniquet&&t.order<p.order).sort((a,b)=>b.order-a.order)[0]?.id??null;};
+// Horizontal extent [x0, x1] of a base outline at height y (path end points as a polygon).
+const outlinePoints=d=>{const pts=[];let cur=[0,0];for(const [,c,args] of d.matchAll(/([MLCSHVZ])([^MLCSHVZ]*)/g)){const n=args.trim().split(/[\s,]+/).filter(Boolean).map(Number);if(c==='Z')continue;cur=c==='H'?[n.at(-1),cur[1]]:c==='V'?[cur[0],n.at(-1)]:[n.at(-2),n.at(-1)];pts.push(cur);}return pts;};
+export const outlineSpan=(base,y)=>{
+  const pts=outlinePoints(BODY_OUTLINES[base]||''),xs=[];
+  pts.forEach(([x0,y0],i)=>{const [x1,y1]=pts[(i+1)%pts.length];if(y0!==y1&&y>=Math.min(y0,y1)&&y<=Math.max(y0,y1))xs.push(x0+(x1-x0)*(y-y0)/(y1-y0));});
+  return xs.length?[Math.min(...xs),Math.max(...xs)]:null;
+};
+// Where an amputation cuts: the middle of the outline at the proximal edge of the segment's band.
+export const cutPoint=id=>{
+  const p=bodyPart(id);if(!p?.clip)return p?.anchor;
+  const span=outlineSpan(p.base,p.clip[0]);return span?[Math.round((span[0]+span[1])/2),p.clip[0]]:[p.anchor[0],p.clip[0]];
+};
+// Width of the limb at that cut (used to size the drawn stump end).
+export const cutWidth=id=>{const p=bodyPart(id),span=p?.clip&&outlineSpan(p.base,p.clip[0]);return span?Math.round(span[1]-span[0]):80;};
 export const BODY_RIG={viewBox:'0 175 1500 650',transform:'translate(0 1000) rotate(-90)'};
 export const horizontalPoint=([x,y])=>[y,1000-x];
 // Scene (horizontal) coordinates of a segment anchor, including the back inset.

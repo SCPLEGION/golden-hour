@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {SCENARIOS,createGame,act,validateCatalogs,restoreGame} from '../src/engine.js';
+import {SCENARIOS,createGame,validateCatalogs,restoreGame} from '../src/engine.js';
+import {act} from './support.js';
 import {INJURIES} from '../src/content/injuries.js';
 import {BODY_PARTS,resolvePart} from '../src/content/body.js';
 import {ITEMS} from '../src/content/items.js';
@@ -101,7 +102,7 @@ test('any item on any body part never throws or corrupts state',()=>{
     const withIV=act(base,'iv','leftArm',null,perfectIV);
     for(const start of [base,withIV])for(const item of ITEMS)for(const part of BODY_PARTS){
       let g;
-      assert.doesNotThrow(()=>{g=act(start,item.id,part.id,null,item.procedure?perfectIV:undefined);},`${item.id}/${part.id}`);
+      assert.doesNotThrow(()=>{g=act(start,item.id,part.id,null,item.procedure==='iv'?perfectIV:undefined);},`${item.id}/${part.id}`);
       finite(g);
     }
   }

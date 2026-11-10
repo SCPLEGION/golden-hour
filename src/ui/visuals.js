@@ -39,8 +39,13 @@ Object.assign(WOUND_ART, {
   sprain:'<ellipse rx="31" ry="39" fill="#a18b69" opacity=".32"/><path d="M-12-24L8-9L-8 8L12 24" fill="none" stroke="#d0b684" stroke-width="4"/>',
   foreignBody:'<ellipse rx="25" ry="30" fill="#804c48" opacity=".6"/><path d="M-7-38L10-32L4 20L-6 27L-13 18Z" fill="#a6b5ab" stroke="#d8dfcc" stroke-width="2"/>',
   eyes:'<path d="M-33 0Q0-29 33 0Q0 29-33 0Z" fill="#45676b" stroke="#c2d4c5" stroke-width="3"/><circle r="11" fill="#9ebcb5"/><path d="M-20-20L20 20" stroke="#d69d7b" stroke-width="3"/>',
+  // 0.8 amputations: the marker is the raw cut surface (distal = +y in the portrait rig).
+  amputation:'<ellipse rx="30" ry="11" fill="#7d2f37" stroke="#e88b7d" stroke-width="3"/><circle cx="-4" r="6" fill="#e9dfc6" stroke="#b9a98a" stroke-width="2"/><path d="M-14 9Q-18 30-9 38Q0 33-6 12M10 9Q15 25 21 27Q25 19 15 8" fill="#a94d51"/>',
+  partialAmputation:'<ellipse rx="26" ry="30" fill="#76363f" opacity=".7"/><path d="M-16-24V6M-4-28V-2M8-26V10" stroke="#d9c6a6" stroke-width="7" stroke-linecap="round"/><path d="M-20 6H20" stroke="#ef8e7d" stroke-width="5"/><path d="M-4-2L8 4" stroke="#2b1f21" stroke-width="4"/>',
   airwayFluid:'<circle r="29" fill="none" stroke="#a2c4ba" stroke-width="2"/><path d="M-14 10Q-5-17 0-18Q4-10 13 9Q14 24 0 25Q-14 22-14 10Z" fill="#88afb0" opacity=".8"/>'
 });
+// Rounded skin edge closing a stump outline at the cut (scaled to the limb width by the scene).
+export const STUMP_ART='<path d="M-42-3Q-40 19 0 21Q40 19 42-3Z" fill="#2b3226" stroke="#c3c8b0" stroke-width="2.4" stroke-linejoin="round"/><path d="M-30 6Q0 15 30 6" fill="none" stroke="#c3c8b0" stroke-opacity=".35" stroke-width="1.5"/>';
 export function deviceArt(effect){return DEVICE_ART[effect]||'<circle r="20" fill="#506e69" stroke="#b4c8b8" stroke-width="3"/><path d="M-10 0H10M0-10V10" stroke="#dbe2cb" stroke-width="4"/>';}
 export function itemIcon(item) {
   let art=DEVICE_ART[item.visual]||DEVICE_ART[item.effect];
