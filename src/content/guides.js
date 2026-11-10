@@ -62,7 +62,7 @@ export const GUIDES = [
   {
     "id": "drugs",
     "title": "Jak działają leki w grze",
-    "text": "Każde podanie zużywa jedną umowną porcję, bez przeliczenia na rzeczywiste dawki. Przeczytaj kartę leku: droga podania, opóźnienie działania, czas aktywności i ryzyko. IV wymaga wcześniejszego dostępu. Podanie tabletki nieprzytomnemu jest zablokowane. Morfina może pogorszyć oddech, zwłaszcza przy słabym krążeniu; paracetamol działa słabiej i wolniej. TXA ogranicza utratę krwi, a salbutamol działa na skurcz oskrzeli. Powtarzanie aktywnej porcji może zaszkodzić. Wywiad ujawnia zgłaszane alergie."
+    "text": "Każde podanie zużywa jedną umowną porcję, bez przeliczenia na rzeczywiste dawki. Przeczytaj kartę leku: droga podania, tempo narastania działania, długość działania i ryzyko. IV wymaga wcześniejszego dostępu. Podanie tabletki nieprzytomnemu jest zablokowane. Morfina może pogorszyć oddech, zwłaszcza przy słabym krążeniu; paracetamol działa słabiej i wolniej. TXA ogranicza utratę krwi, a salbutamol działa na skurcz oskrzeli. Kolejne porcje kumulują się z poprzednimi — mogą nasilić senność i spowolnić oddech. Wywiad ujawnia zgłaszane alergie."
   },
   {
     "id": "long",
@@ -72,7 +72,7 @@ export const GUIDES = [
   {
     "id": "arrest",
     "title": "Zatrzymanie krążenia",
-    "text": "W tym uproszczonym modelu krytyczna utrata krwi lub tlenu może zatrzymać krążenie. Rozpoznaj stan pomiarem, ogranicz przyczynę i rozpocznij RKO. AED analizuje rytm i nie wykonuje wyładowania przy asystolii. Cykl RKO kupuje czas, ale nie uzupełnia krwi ani nie zabezpiecza rany. Powrót krążenia jest możliwy po poprawie tlenu i krążenia. Przyjazd transportu sam w sobie nie oznacza wygranej, jeśli pacjent nadal wymaga RKO."
+    "text": "W tym uproszczonym modelu krytyczna utrata krwi lub tlenu może zatrzymać krążenie. Rozpoznaj stan pomiarem, ogranicz przyczynę i rozpocznij RKO. AED analizuje rytm: wyładowanie pomaga tylko przy migotaniu komór (np. po porażeniu prądem lub w głębokim wychłodzeniu, gdzie skuteczne jest dopiero po ogrzaniu). Przy asystolii i rytmie bez tętna z krwotoku lub niedotlenienia nie ma wskazań. Cykl RKO kupuje czas, ale nie uzupełnia krwi ani nie zabezpiecza rany. Powrót krążenia jest możliwy po poprawie tlenu i krążenia. Przyjazd transportu sam w sobie nie oznacza wygranej, jeśli pacjent nadal wymaga RKO."
   },
   {
     "id": "about",
@@ -134,7 +134,7 @@ export const GUIDES = [
   {
     "id": "exp-opioid-reversal",
     "title": "Nalokson i nawrót obciążenia",
-    "text": "Nalokson ma w grze czasowo ograniczać obciążenie oddechu po opioidach. Nie usuwa opatrunku ani nie leczy rany klatki. Po zakończeniu jego działania wcześniejszy aktywny lek może nadal mieć znaczenie. Monitoruj trend oddechu i sprawdź czasy aktywności zamiast zakładać trwałe odwrócenie problemu."
+    "text": "Nalokson ma w grze czasowo ograniczać obciążenie oddechu po opioidach. Nie usuwa opatrunku ani nie leczy rany klatki. Po zakończeniu jego działania wcześniejszy aktywny lek może nadal mieć znaczenie. Nalokson słabnie wcześniej niż opioid: monitoruj trend oddechu i panel podtrzymania zamiast zakładać trwałe odwrócenie problemu."
   },
   {
     "id": "exp-allergy",
@@ -282,6 +282,16 @@ export const GUIDES = [
     "id": "joint-segments",
     "title": "Nowe segmenty stawów",
     "text": "Kończyny mają po sześć odcinków: bark, ramię, łokieć, przedramię, nadgarstek i dłoń oraz biodro, udo, kolano, podudzie, kostkę i stopę. Bark, nadgarstek, biodro i kostka to krótkie stawy: nie przyjmują stazy ani wenflonu. Szyna obejmuje swój odcinek i sąsiednie, a krótki staw nie przerywa zasięgu — szyna na przedramieniu nadal unieruchamia także dłoń, a na podudziu stopę. Staza zatrzymuje krwawienie tylko poniżej siebie, więc rana barku lub biodra nie jest nią objęta."
+  },
+  {
+    "id": "p3-drug-curves",
+    "title": "Leki w grze — narastanie i słabnięcie działania",
+    "text": "Lek nie działa od razu i nie wyłącza się nagle. Po podaniu najpierw musi się wchłonąć, a potem dotrzeć do miejsca działania: dożylnie dzieje się to najszybciej, domięśniowo w ciągu kilku minut, wziewnie podobnie, a doustnie najwolniej. Panel podtrzymania pokazuje przy każdym leku pasek siły i fazę: działanie narasta, szczyt działania albo działanie słabnie. Kolejna porcja dodaje się do tego, co jeszcze krąży — przy lekach przeciwbólowych daje niewiele więcej ulgi, za to wyraźnie nasila senność i spowalnia oddech, zwłaszcza we wstrząsie. Antagonista opioidów działa krócej niż sam opioid, więc oddech może znów zwolnić. Niektóre leki, jak kortykosteroid, działają dopiero po wielu godzinach i w czasie wezwania nic nie zmieniają. Gra liczy umowne porcje i nie podaje rzeczywistych dawek."
+  },
+  {
+    "id": "p3-heat-cold",
+    "title": "Ciepło i wychłodzenie",
+    "text": "Temperatura pacjenta wynika z bilansu ciepła: organizm wytwarza ciepło, a traci je do otoczenia. Utrata rośnie przy zimnie, wietrze i mokrym ubraniu (mokry pacjent traci ciepło kilka razy szybciej), przy odsłanianiu kolejnych okolic podczas badania i przy oparzeniach; zimne płyny dożylne też chłodzą. Koc termiczny ogranicza utratę o około dwie trzecie, pakiet ogrzewający dodaje niewiele ciepła i działa najlepiej razem z kocem. Drżenie mięśni ogrzewa, ale słabnie we wstrząsie, po lekach nasennych i w głębokim wychłodzeniu. Wychłodzony pacjent staje się splątany, a bardzo głębokie wychłodzenie grozi migotaniem komór — defibrylacja pomaga dopiero po ogrzaniu. W upale bez pocenia temperatura dalej rośnie i zaburza świadomość; mata chłodząca ją obniża. Sprawdzaj termometrem trend, nie tylko jeden odczyt."
   },
   {
     "id": "conditions-categories",

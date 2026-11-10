@@ -7,6 +7,7 @@ import { itemById } from '../content/items.js';
 import { TOURNIQUET_PROCEDURE } from '../content/procedures.js';
 import { injuryPhysiology } from '../content/injury-physiology.js';
 import { clinicalSnapshot, scaleOf, noise } from './physio-model.js';
+import { drugDefinitions, drugEffects } from './physio-pharmacology.js';
 // Amputation injuries remove their segment and every more distal segment of the same limb.
 // Per-state memo for hot per-tick selectors; the key lists everything that may change in place.
 export function memoized(store,g,key,compute){const hit=store.get(g);if(hit&&hit.key.length===key.length&&hit.key.every((v,i)=>v===key[i]))return hit.value;const value=compute();store.set(g,{key,value});return value;}
@@ -23,20 +24,19 @@ function computeMissing(g){
 export const isMissing=(g,id)=>missingSegments(g).includes(resolvePart(id));
 // Perfusion index 0..100 derived from effective volume (legacy circulation scale; see physio-model.js).
 export const circulation=g=>clinicalSnapshot(g).perfusion;
-export const activeMedicines = g => g.medications.filter(m => m.start <= g.elapsed && m.end > g.elapsed);
+// Doses (physio-pharmacology.js) of drugs whose first channel is above 10% of its Emax.
+export const activeMedicines = g => {const on=new Set(drugEffects(g).filter(e=>e.active).map(e=>e.id));return g.medications.filter(m=>on.has(m.id));};
+// Drug definitions carrying their current channel values in the item fields (painRelief, reliefStrength, burden, …).
 export const activeDrugDefinitions = g => memoized(DRUGS,g,[g.elapsed,g.medications.length,g.medications],()=>drugDefinitions(g));
-const drugDefinitions = g => [...new Set(activeMedicines(g).map(m=>m.id))].map(id=>{
-  const def=itemById(id),delivery=Math.max(...activeMedicines(g).filter(m=>m.id===id).map(m=>m.delivery??1));
-  return {...def,circulationSupport:(def.circulationSupport||0)*delivery,oxygenSupport:(def.oxygenSupport||0)*delivery,temperatureSupport:(def.temperatureSupport||0)*delivery,glucoseSupport:(def.glucoseSupport||0)*delivery,respiratoryRelief:(def.respiratoryRelief||0)*delivery,painRelief:(def.painRelief||0)*delivery,pulseIncrease:(def.pulseIncrease||0)*delivery,bleedingMultiplier:1-(1-(def.bleedingMultiplier??1))*delivery,reliefStrength:delivery};
-});
 export const activeModifiers=g=>[...activeDrugDefinitions(g),...supportDefinitions(g)];
+// Respiratory burden of the drugs (central depression input of physio-respiration): each drug's depression channel,
+// reduced by the antagonism of a drug whose `respiratoryReliefTag` matches its tags (naloxone → opioids).
 export function respiratoryBurden(g){
-  const reliefs=activeModifiers(g).filter(d=>d.respiratoryRelief);
-  const opioidRelief=bounded(reliefs.filter(d=>!d.respiratoryReliefTag||d.respiratoryReliefTag==='opioid').reduce((n,d)=>n+d.respiratoryRelief,0),0,1);
-  return g.respiratoryDepression*(1-opioidRelief)+activeMedicines(g).reduce((n,m)=>{
-    const tags=itemById(m.id)?.drugTags||[];
-    const relief=bounded(reliefs.filter(d=>!d.respiratoryReliefTag||tags.includes(d.respiratoryReliefTag)).reduce((sum,d)=>sum+d.respiratoryRelief,0),0,1);
-    return n+(m.burden||0)*(1-relief);
+  const defs=activeDrugDefinitions(g),reliefs=[...defs,...supportDefinitions(g)].filter(d=>d.respiratoryRelief);
+  return defs.reduce((n,d)=>{
+    if(!d.burden)return n;
+    const tags=d.drugTags||[],relief=bounded(reliefs.filter(r=>!r.respiratoryReliefTag||tags.includes(r.respiratoryReliefTag)).reduce((sum,r)=>sum+r.respiratoryRelief,0),0,1);
+    return n+d.burden*(1-relief);
   },0);
 }
 export const isConscious = g => clinicalSnapshot(g).conscious;
@@ -99,8 +99,9 @@ export function vitals(g) {
   const pulse=dead?0:Math.round(s.hr+respiratoryWave*1.7*variability+slowWave*1.3+noise(g,1));
   const systolic=dead?0:Math.round(s.sbp+respiratoryWave*2+slowWave+noise(g,2));
   const diastolic=dead?0:Math.round(s.dbp+slowWave*1.4+noise(g,3)*.6);
-  return {time:t,pulse,pressure:dead?'—':`${systolic}/${diastolic}`,systolic,diastolic,map:dead?0:Math.round(s.map),oxygen:Math.round(bounded(g.phys.spo2Shown+(dead?0:respiratoryWave*.25),0,100)*10)/10,breathing:dead?0:Math.round(Math.max(3,s.rr+slowWave*.8)*10)/10,gcs:s.gcs,avpu:s.avpu,etco2:Math.round(s.etco2),temperature:g.temperature.toFixed(1),pain:isConscious(g)?`${pain(g)}/10`:'Brak kontaktu',glucose:Math.round(s.glucoseUnits),rhythm:dead?'Asystolia':'Rytm zatokowy'};
+  return {time:t,pulse,pressure:dead?'—':`${systolic}/${diastolic}`,systolic,diastolic,map:dead?0:Math.round(s.map),oxygen:Math.round(bounded(g.phys.spo2Shown+(dead?0:respiratoryWave*.25),0,100)*10)/10,breathing:dead?0:Math.round(Math.max(3,s.rr+slowWave*.8)*10)/10,gcs:s.gcs,avpu:s.avpu,etco2:Math.round(s.etco2),temperature:s.tempC.toFixed(1),pain:isConscious(g)?`${pain(g)}/10`:'Brak kontaktu',glucose:s.glucose,rhythm:g.status==='lost'?'Asystolia':g.arrest?RHYTHM_LABEL[g.arrest.rhythm]||'Asystolia':'Rytm zatokowy'};
 }
+export const RHYTHM_LABEL={vf:'Migotanie komór',pea:'PEA — bez tętna',asystole:'Asystolia'};
 // Thresholds as EBV fraction per minute (legacy .02 / .002 points per second).
 const bleedingLabel=f=>f>.006?'Krwawi':f>.0006?'Niewielkie sączenie':'Krwawienie zabezpieczone';
 export function visibleInjuries(g,partId) { return g.injuries.filter(i=>i.part===partId && (INJURIES[i.type].visible || g.body[partId].examinedAt!==null)); }

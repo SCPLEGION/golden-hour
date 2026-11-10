@@ -90,18 +90,21 @@ test('active warming changes temperature over time and its use is not repeatable
   const origin=initial('winterShelter');let treated=act(origin,'warmingPack','chest');
   const once=treated;assert.equal(act(treated,'warmingPack','chest'),once);
   treated=wait(treated,2);const untreated=act(wait(origin,2),'wait30');
-  assert.equal(treated.elapsed,untreated.elapsed);assert.ok(treated.temperature>untreated.temperature);assert.ok(treated.temperature>origin.temperature);
+  assert.equal(treated.elapsed,untreated.elapsed);assert.ok(treated.temperature>untreated.temperature);
+  // P3: the pack adds ~40 W; in the wind and wet it rewarms only together with a blanket.
+  const both=wait(act(act(origin,'blanket','chest'),'warmingPack','chest'),8);assert.ok(both.temperature>origin.temperature,`${both.temperature}`);
 });
 
 test('glucose aid changes the hidden glucose problem and naloxone changes opioid respiratory burden',()=>{
   let glucose=initial('stationWeakness');const before=vitals(glucose).glucose;
-  glucose=act(glucose,'glucoseGel','head');glucose=wait(glucose,1);
-  assert.ok(vitals(glucose).glucose>before);
+  glucose=act(glucose,'glucoseGel','head');glucose=wait(glucose,12);
+  assert.ok(vitals(glucose).glucose>before+1.8,`${before} → ${vitals(glucose).glucose}`);
   let opioid=act(initial('gunshot'),'iv','leftArm',null,perfectIV);
   opioid=act(opioid,'morphine','leftArm');opioid=wait(opioid,1);
-  assert.ok(respiratoryBurden(opioid)>0);
-  opioid=act(opioid,'naloxone','rightArm');opioid=wait(opioid,1);
-  assert.equal(respiratoryBurden(opioid),0);
+  const burden=respiratoryBurden(opioid);assert.ok(burden>0);
+  const reversed=wait(act(opioid,'naloxone','rightArm'),5),unopposed=act(wait(opioid,5),'wait30');
+  assert.equal(reversed.elapsed,unopposed.elapsed-5);
+  assert.ok(respiratoryBurden(reversed)<.1*respiratoryBurden(unopposed),`${respiratoryBurden(reversed)} vs ${respiratoryBurden(unopposed)}`);
 });
 
 test('new diagnostic items record findings without healing their underlying cause',()=>{

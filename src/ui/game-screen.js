@@ -6,6 +6,8 @@ import { accessSites, hasFlow, accessStatus } from '../simulation/vascular.js';
 import { renderPatient, renderVitals } from './patient.js';
 import { renderBag } from './bag.js';
 import { scoreRun } from '../simulation/scoring.js';
+import { drugStatus, PHASE_LABEL } from '../simulation/physio-pharmacology.js';
+import { TUNING, RESP_TUNING } from '../content/physiology-data.js';
 import { tutorialProgress } from '../simulation/tutorial.js';
 import { renderTutorial } from './tutorial.js';
 import { DIFFICULTIES, difficultyById } from '../content/difficulty.js';
@@ -18,8 +20,8 @@ function controls(g,target,tab,heldItem){
   return renderBag(g,target,tab,heldItem);
 }
 export function renderSupport(g){
-  const oxygen=Math.max(0,g.oxygenUntil-g.elapsed);
-  return `<section class="support-panel" data-support-panel><div class="support-heading"><h2>Podtrzymanie</h2><span>Aktywne zabezpieczenia</span></div><div class="support-tags">${accessSites(g).map(site=>`<span data-access-site="${site}" class="${hasFlow(g,site)?'on':'blocked'}">${bodyPart(site).name}: ${accessStatus(g,site)}</span>`).join('')||'<span>Brak dostępu IV</span>'}${g.warm?'<span class="on">Koc termiczny</span>':''}${g.airway?'<span class="on">Drogi oddechowe zabezp.</span>':''}</div><div class="oxygen-reserve"><span>Tlen <b data-oxygen-time>${oxygen?time(oxygen):'Niepodłączony'}</b></span><span>Butle ${g.supplies.oxygen}</span><div><i data-oxygen-level style="width:${Math.min(100,oxygen/6)}%"></i></div></div>${g.medications.filter(m=>m.end>g.elapsed).map(m=>`<p class="active-drug"><strong>${itemById(m.id).name}${m.delivery!==undefined&&m.delivery<.99?` · ${Math.round(m.delivery*100)}%`:''}</strong><span data-med-time="${m.id}">${m.start>g.elapsed?`Efekt za ${time(m.start-g.elapsed)}`:time(m.end-g.elapsed)}</span></p>`).join('')}</section>`;
+  const oxygen=Math.max(0,g.oxygenUntil-g.elapsed),cylinder=Math.round(100*(g.phys.o2?.litersLeft||0)/RESP_TUNING.cylinderL),bags=g.infusions.filter(i=>i.end>g.elapsed&&i.ml>0);
+  return `<section class="support-panel" data-support-panel><div class="support-heading"><h2>Podtrzymanie</h2><span>Aktywne zabezpieczenia</span></div><div class="support-tags">${accessSites(g).map(site=>`<span data-access-site="${site}" class="${hasFlow(g,site)?'on':'blocked'}">${bodyPart(site).name}: ${accessStatus(g,site)}</span>`).join('')||'<span>Brak dostępu IV</span>'}${g.warm?'<span class="on">Koc termiczny</span>':''}${g.airway?'<span class="on">Drogi oddechowe zabezp.</span>':''}</div><div class="oxygen-reserve"><span>Tlen <b data-oxygen-time>${oxygen?`${cylinder}% · ${time(oxygen)}`:'Niepodłączony'}</b></span><span>Butle ${g.supplies.oxygen}</span><div><i data-oxygen-level style="width:${cylinder}%"></i></div></div>${bags.map(i=>`<p class="active-drug infusion"><strong>Płyn · ${bodyPart(i.site).name}</strong><span>${Math.round(100*i.ml/TUNING.bagMl)}% worka</span><span class="drug-bar" aria-hidden="true"><i style="width:${Math.round(100*i.ml/TUNING.bagMl)}%"></i></span></p>`).join('')}${drugStatus(g).map(d=>`<p class="active-drug" data-med-phase="${d.id}"><strong>${escape(d.name)}</strong><span>${PHASE_LABEL[d.phase]}${d.strength>1.15?' · silne':''}</span><span class="drug-bar" aria-hidden="true"><i style="width:${Math.round(100*Math.min(1,d.strength))}%"></i></span></p>`).join('')}</section>`;
 }
 function scoreHtml(g){const r=scoreRun(g);return `<div class="score"><div class="score-total"><strong>${r.total}</strong>/100 <span class="score-grade">${escape(r.grade)}</span></div><p class="result-detail">Poziom: ${escape(r.difficulty.name)} (×${r.difficulty.multiplier})</p><ul>${r.parts.map(p=>`<li><span>${escape(p.label)}</span><b>${p.points}/${p.max}</b><small>${escape(p.note)}</small></li>`).join('')}</ul></div>`;}
 export function renderGame({game:g,stats,target,tab,heldItem,selectedWound,saved,logOpen}){

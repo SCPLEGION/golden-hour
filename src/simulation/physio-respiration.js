@@ -7,7 +7,10 @@ import { INJURIES } from '../content/injuries.js';
 import { injuryPhysiology } from '../content/injury-physiology.js';
 import { activeDrugDefinitions, activeModifiers, respiratoryBurden, pain } from './selectors.js';
 import { woundModifiers, bounded } from './modifiers.js';
-import { hbOf, scaleOf } from './physio-model.js';
+import { hbOf, scaleOf, injuryScale } from './physio-model.js';
+import { gcsOf, avpuOf } from './physio-neuro.js';
+// GCS lives in physio-neuro.js since P3; re-exported for older imports.
+export { gcsOf, avpuOf };
 // Severinghaus: PaO2 (mmHg) → saturation 0..1 (60 → .90, 40 → .75, 27 → .50).
 export const severinghaus=p=>p<=0?0:1/(1+23400/(p*p*p+150*p));
 // Inverse by bracketed Newton on the monotone curve (init, migration, display).
@@ -36,20 +39,7 @@ const lerp=(v,t)=>v?v[0]+(v[1]-v[0])*t:0;
 export const bagging=g=>(g.ventilatingUntil>0&&g.ventilatingUntil>=g.elapsed)||Boolean(g.resuscitating);
 // Oxygen item = a non-rebreather on a fresh game cylinder; g.oxygenUntil mirrors the litres left for UI and protocol.
 export function connectOxygen(g){g.phys.o2={device:'nrb',flowLpm:R.flowLpm,litersLeft:R.cylinderL};g.oxygenUntil=g.elapsed+Math.round(R.cylinderL/R.flowLpm*60);}
-const unconsciousInjury=g=>g.injuries.some(i=>INJURIES[i.type]?.unconscious);
 const airwayInjury=g=>g.injuries.some(i=>INJURIES[i.type]?.tags.includes('airway')&&!g.airway);
-// Core GCS: 15 − the worst deficit of hypoxia (SpO2 bands), hypercapnia, perfusion (class/MAP) and injury deficits
-// (an unconscious presentation stays at GCS 6 until the airway is opened, as before P2).
-export function gcsOf(g){
-  if(g.status==='lost'||g.arrest)return 3;
-  const p=g.phys,s=p.sao2*100,loss=p.lostMl/g.profile.ebvMl;
-  const hypoxia=s>=85?0:s>=80?1:s>=75?2:s>=70?3:s>=65?5:s>=60?7:s>=50?9:11;
-  const hypercapnia=Math.min(12,Math.max(0,(p.paco2-55)/6));
-  const perfusion=Math.max(loss>=.4?4:loss>=.3?2:0,p.map<45?7:p.map<55?5:0);
-  const injury=(g.initialUnconscious||unconsciousInjury(g))&&!g.airway?9:0;
-  return Math.max(3,Math.round(15-Math.max(hypoxia,hypercapnia,perfusion,injury)));
-}
-export const avpuOf=gcs=>gcs>=14?'A':gcs>=12?'V':gcs>=9?'P':'U';
 // Relief of one injury's respiratory components: matching drug, chest seal quality, airway-fluid/irrigation items.
 function reliefOf(g,injury,def,resp,drugs){
   let r=1-woundModifiers(injury).oxygenMultiplier;
@@ -65,9 +55,9 @@ export function respire(g){
   const drugs=activeDrugDefinitions(g);
   for(const injury of g.injuries){
     const resp=injuryPhysiology(injury.type)?.resp;if(!resp)continue;
-    const def=INJURIES[injury.type],f=1-reliefOf(g,injury,def,resp,drugs);
+    const def=INJURIES[injury.type],rel=1-reliefOf(g,injury,def,resp,drugs),f=rel*injuryScale(g,injury);
     let t=p.respProg[injury.id]||0;
-    if(resp.tauS){t+=(f-t)*alphaOf(resp.tauS);p.respProg[injury.id]=t;}
+    if(resp.tauS){t+=(rel-t)*alphaOf(resp.tauS);p.respProg[injury.id]=t;}
     const opened=g.airway&&def.tags.includes('airway');
     if(def.tags.includes('airway')&&!opened)airwayTagged=true;
     if(resp.obstruct&&!opened)obstruct=Math.min(obstruct,1-(1-lerp(resp.obstruct,t))*f);

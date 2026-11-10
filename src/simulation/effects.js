@@ -3,7 +3,9 @@ import { bodyPart, matchesRegion, sameGroup, resolvePart, splintReach } from '..
 import { isConscious, canSwallow, toleratesOPA, circulation, vitals, examination, isMissing } from './selectors.js';
 import { connectOxygen } from './physio-respiration.js';
 import { hasAccess, hasFlow, flowEfficiency, accessSites, tourniquetOver, ivSiteFor } from './vascular.js';
-import { applyInsult } from './physio-model.js';
+import { endArrest, roscPossible } from './physiology.js';
+import { THERMAL } from '../content/physiology-data.js';
+import { drugEffects, drugProfileText } from './physio-pharmacology.js';
 import { TUNING } from '../content/physiology-data.js';
 // Effect handlers mutate only the engine's cloned working state.
 // Add an effect and register it here; UI and action dispatch need no changes.
@@ -38,7 +40,7 @@ export const EFFECTS = {
     const sensoryLoss=occluded||local.some(i=>INJURIES[i.type].sensoryLoss);
     const breathingSounds=local.some(i=>INJURIES[i.type].tags.includes('bronchospasm'))?' Świsty wydechowe.':local.some(i=>INJURIES[i.type].tags.includes('chest'))?' Szmer oddechowy jednostronnie osłabiony.':'';
     const headTags=g.injuries.filter(i=>['head','face'].includes(i.part)).flatMap(i=>INJURIES[i.type].tags);
-    const texts={pupils:`Ocena źrenic: ${headTags.includes('opioidOd')?'bardzo wąskie, słabo reagują na światło':headTags.includes('headTrauma')?'reagują nierówno — jedna wolniej':isConscious(g)?'reagują na światło':'kontakt utrudniony; oceń także drożność i oddech'}.`,perfusion:`Ocena perfuzji: ${occluded?'staza odcina przepływ; brak tętna obwodowego':circulation(g)<55?'powrót kapilarny opóźniony, obwodowe tętno słabe':'powrót kapilarny zachowany, tętno obwodowe wyczuwalne'}.`,glucose:`Odczyt glukozy: ${v.glucose} jednostek skali gry.`,temperature:`Temperatura: ${v.temperature}°C.`,breathing:`Oddychanie: ${v.breathing}/min, SpO₂ ${v.oxygen}%.${breathingSounds}`,neurology:`Ocena neurologiczna: ${isConscious(g)?(sensoryLoss?'reaguje na głos; czucie w tej okolicy osłabione':'reaguje na głos; czucie w tej okolicy zachowane'):'pacjent nie odpowiada'}.`};
+    const texts={pupils:`Ocena źrenic: ${headTags.includes('opioidOd')?'bardzo wąskie, słabo reagują na światło':headTags.includes('headTrauma')?'reagują nierówno — jedna wolniej':isConscious(g)?'reagują na światło':'kontakt utrudniony; oceń także drożność i oddech'}.`,perfusion:`Ocena perfuzji: ${occluded?'staza odcina przepływ; brak tętna obwodowego':circulation(g)<55?'powrót kapilarny opóźniony, obwodowe tętno słabe':'powrót kapilarny zachowany, tętno obwodowe wyczuwalne'}.`,glucose:`Odczyt glukozy: ${v.glucose.toFixed(1).replace(".",",")} mmol/l.`,temperature:`Temperatura: ${v.temperature}°C.`,breathing:`Oddychanie: ${v.breathing}/min, SpO₂ ${v.oxygen}%.${breathingSounds}`,neurology:`Ocena neurologiczna: ${isConscious(g)?(sensoryLoss?'reaguje na głos; czucie w tej okolicy osłabione':'reaguje na głos; czucie w tej okolicy zachowane'):'pacjent nie odpowiada'}.`};
     const text=`${part}: ${texts[item.assessment]||'Badanie kontrolne wykonane.'}`;
     g.assessments??=[];g.assessments.push({id:item.id,part:target,time:g.elapsed,text});return text;
   },
@@ -83,22 +85,34 @@ export const EFFECTS = {
   },
   monitor:({g})=>{g.monitoring=true;return 'Podłączono monitor ciągły. Parametry są aktualizowane na żywo.';},
   cpr:({g,procedure})=>{
-    if(!g.arrest) {applyInsult(g,{kind:'bleed',pts:3});return 'Pacjent ma krążenie. RKO nie przynosi korzyści i powoduje uraz: traci 3 punkty krążenia gry.';}
+    // Compressions on a beating heart: a rib fracture (pain, splinting, hidden chest loss) instead of a point penalty.
+    if(!g.arrest) {
+      if(!g.injuries.some(i=>i.id.startsWith('cpr-')))g.injuries.push({id:`cpr-${g.actions}`,part:'chest',type:'ribFracture',treatments:{},at:g.elapsed});
+      return 'Pacjent ma krążenie. RKO nie przynosi korzyści i powoduje uraz: podejrzenie złamania żeber, ból przy oddychaniu.';
+    }
     g.resuscitating=true;g.cprBenefit=procedure?.benefit??1;
     return `Wykonano cykl RKO z wentylacją.${procedure?` Jakość uciśnięć ${Math.round(procedure.quality*100)}% (tempo ${Math.round(procedure.rate*100)}%, głębokość ${Math.round(procedure.depth*100)}%).`:''} Ponownie oceń oznaki krążenia.`;
   },
-  aed:({g})=>g.arrest?'AED: rytm niedefibrylacyjny. Wyładowanie niewskazane. Kontynuuj opiekę i RKO.':'AED: krążenie obecne. Wyładowanie niewskazane.',
+  // Shockable only in VF; above 30 °C a shock restores circulation once the other causes allow it.
+  aed:({g})=>{
+    if(!g.arrest)return 'AED: krążenie obecne. Wyładowanie niewskazane.';
+    if(g.arrest.rhythm!=='vf')return 'AED: rytm niedefibrylacyjny — brak wskazań do wyładowania. Kontynuuj RKO i usuwaj przyczynę.';
+    if(g.temperature<=THERMAL.roscC)return 'AED: migotanie komór — wykonano wyładowanie bez efektu. W głębokim wychłodzeniu serce nie odpowiada; ogrzewaj i kontynuuj RKO.';
+    if(!roscPossible(g))return 'AED: migotanie komór — wykonano wyładowanie. Rytm się zmienił, ale krążenie nie wraca; kontynuuj RKO i usuwaj przyczynę.';
+    endArrest(g);return 'AED: migotanie komór — wykonano wyładowanie. Powrót oznak krążenia. Nadal potrzebna jest dalsza opieka.';
+  },
   medicine:({g,item,target})=>{
     if(item.requires==='iv')target=ivSiteFor(g,target);
     if(item.requires==='iv'&&!hasFlow(g,target))return `${bodyPart(target).name}: zużyto ${item.name}, ale staza odcina ten dostęp IV. Brak efektu ogólnoustrojowego.`;
     const delivery=item.requires==='iv'?flowEfficiency(g,target):1;
-    const repeated=g.medications.some(m=>m.id===item.id && m.end>g.elapsed);
-    if(repeated) { applyInsult(g,{kind:'bleed',pts:10*delivery}); g.respiratoryDepression+=item.drugTags?.includes('opioid')?2*delivery:0; }
+    // Repeated porcje stack in the depot (physio-pharmacology.js); no flat penalty.
+    const repeated=drugEffects(g).some(e=>e.id===item.id&&(e.active||e.pending));
+    // An ignored allergy adds an anaphylactic reaction scaled by the delivered amount.
     const allergy=g.allergies.includes(item.id);
-    if(allergy){applyInsult(g,{kind:'bleed',pts:12*delivery});applyInsult(g,{kind:'oxygen',pts:-12*delivery});}
-    const burden=item.respiratoryBurden?(circulation(g)<60?item.respiratoryBurden*3.3:item.respiratoryBurden):0;
-    g.medications.push({id:item.id,start:g.elapsed+item.onset,end:g.elapsed+item.onset+item.duration,burden:burden*delivery,delivery,site:item.requires==='iv'?target:null});
-    return `Podano ${item.name}: 1 porcja gry (${item.route}).${item.requires==='iv'?` Dostarczono ${Math.round(delivery*100)}% porcji gry.`:''} Początek efektu za ${item.onset} s.${repeated?' Powtórzono aktywny lub oczekujący lek — wystąpiło działanie toksyczne.':''}${allergy?' Wystąpiła reakcja uczuleniowa; stan pacjenta pogorszył się.':''}`;
+    if(allergy&&delivery>0)g.injuries.push({id:`allergy-${g.actions}`,part:'chest',type:'allergicReaction',treatments:{},scale:Math.round(TUNING.allergyScale*delivery*1000)/1000,rampS:TUNING.allergyRampS,at:g.elapsed});
+    g.medications.push({id:item.id,at:g.elapsed,amount:delivery,route:item.route,site:item.requires==='iv'?target:null});
+    const profile=drugProfileText(item.id);
+    return `Podano ${item.name}: 1 porcja gry (${item.route}).${item.requires==='iv'?` Dostarczono ${Math.round(delivery*100)}% porcji gry.`:''} Narastanie działania: ${profile.onset}.${repeated?' Poprzednia porcja nadal działa — porcje kumulują się, rośnie ryzyko działań niepożądanych.':''}${allergy?' Wystąpiła reakcja uczuleniowa; stan pacjenta pogarsza się.':''}`;
   }
 };
 export const MISSING_PART='Tej części brak — wybierz wyżej';

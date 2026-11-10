@@ -42,6 +42,20 @@ export const RESPIRATORY = {
   headBleedSevere:{obstruct:[.7,.45],tauS:600}, strokeSevere:{obstruct:[.72,.45],tauS:600},
   spinalCordInjury:{va:[.7,.5],tauS:600}                                       // diaphragm weakness
 };
+// Circulatory components (P3): anaphylaxis leaks plasma (mL/min for the 75 kg reference, scaled by EBV) and lowers SVR
+// (target × svr); the `relievesTag` drug (adrenaline) stops both in proportion to its effect. An injury's `scale`
+// (allergy created by a drug, by delivered amount) scales these and the respiratory components.
+export const CIRCULATORY = {
+  allergicReaction:{leakMlMin:30,svr:.7},   // R (plan): SVR × .7, plasma leak 30 mL/min
+  stingAnaphylaxis:{leakMlMin:25,svr:.75}
+};
+// Injury GCS deficits (P3, simulation/physio-neuro.js): [at onset, recovered]; `tauS` = recovery τ (after the airway is
+// opened for an unconscious presentation). Max-of-components with the physiological deficits.
+export const NEURO_INJURY = {
+  postIctal:{gcs:[4,0],tauS:900},   // R: post-ictal confusion clears over ~15–30 min
+  headInjury:{gcs:[1,1]},           // repeats questions: confused (GCS 14)
+  strokeSigns:{gcs:[1,1]}           // slurred speech
+};
 const RESP_KEYS=['obstruct','va','depress','aa','shunt'];
 const validResp=r=>RESP_KEYS.every(k=>r[k]===undefined||(Array.isArray(r[k])&&r[k].length===2&&r[k].every(n=>Number.isFinite(n)&&n>=0&&(k==='aa'||n<=1))))&&(r.painVa===undefined||(r.painVa>0&&r.painVa<=1))&&(r.tauS===undefined||r.tauS>=5);
 // Injuries without their own entry take the first matching tag default.
@@ -60,7 +74,7 @@ const build=()=>Object.fromEntries(Object.keys(INJURIES).map(id=>[id,resolve(id)
 export const injuryPhysiology=id=>(table??=build())[id]??resolve(id);
 export function validateInjuryPhysiology(){
   table=null;
-  for(const id of [...Object.keys(INJURY_PHYSIOLOGY),...Object.keys(RESPIRATORY)])if(!INJURIES[id])throw new Error(`Physiology for unknown injury: ${id}`);
+  for(const id of [...Object.keys(INJURY_PHYSIOLOGY),...Object.keys(RESPIRATORY),...Object.keys(CIRCULATORY),...Object.keys(NEURO_INJURY)])if(!INJURIES[id])throw new Error(`Physiology for unknown injury: ${id}`);
   for(const [id,r] of Object.entries(RESPIRATORY))if(!validResp(r))throw new Error(`Invalid respiratory physiology: ${id}`);
   for(const [id,d] of Object.entries(INJURIES))if(d.oxygenLoss&&!RESPIRATORY[id])throw new Error(`Missing respiratory physiology: ${id}`);
   for(const id of Object.keys(INJURIES)){

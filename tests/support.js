@@ -18,6 +18,7 @@ import { bodyPart, matchesRegion, proximalTourniquetSite } from '../src/content/
 import { injuryBleeding, isMissing, isConscious, circulation } from '../src/simulation/selectors.js';
 import { tourniquetOver, ivSiteFor } from '../src/simulation/vascular.js';
 import { clinicalSnapshot } from '../src/simulation/physio-model.js';
+import { drugEffects } from '../src/simulation/physio-pharmacology.js';
 const tagsOf=i=>INJURIES[i.type].tags,has=(g,tag)=>g.injuries.some(i=>tagsOf(i).includes(tag));
 const itemOf=id=>ITEMS.find(i=>i.id===id);
 const SITES=['head','chest','abdomen','rightUpperArm','leftUpperArm','rightThigh','leftThigh'];
@@ -56,6 +57,8 @@ export function solveCheck(g,check){
   throw new Error(type);
 }
 const ivArm=g=>['rightArm','leftArm'].find(a=>!isMissing(g,a)&&tourniquetOver(g,a,.5)===undefined);
+// A drug is still working: active or still rising (physio-pharmacology.js).
+export const working=(g,id)=>drugEffects(g).some(e=>e.id===id&&(e.active||e.pending));
 const goodCPR={intervalsMs:Array(14).fill(545),depths:Array(15).fill(.7),aborted:false};
 const MEDICAL=[['bronchospasm','salbutamol'],['anaphylaxis','adrenaline'],['opioidOd','naloxone'],['glucoseLow','glucoseGel'],['heat','coolingMat'],['cold','warmingPack'],['spine','cervicalCollar'],['airwayFluid','suction']];
 export function referenceCare(g,{trace=null}={}){
@@ -78,7 +81,9 @@ export function referenceCare(g,{trace=null}={}){
     if(g.arrest){g=act(g,'airway','head');g=act(g,'oxygen','head');g=act(g,'cpr','chest',null,goodCPR);continue;}
     if(g.oxygenUntil<=g.elapsed&&g.supplies.oxygen>0&&g.injuries.some(i=>INJURIES[i.type].oxygenLoss))g=act(g,'oxygen','head');
     // A bronchodilator that wore off is repeated (another one when the first runs out).
-    if(has(g,'bronchospasm')&&!g.medications.some(m=>['salbutamol','ipratropium'].includes(m.id)&&m.end>g.elapsed))g=useItem(g,g.supplies.salbutamol>0?'salbutamol':'ipratropium');
+    if(has(g,'bronchospasm')&&!working(g,'salbutamol')&&!working(g,'ipratropium')&&g.supplies.salbutamol+g.supplies.ipratropium>0)g=useItem(g,g.supplies.salbutamol>0?'salbutamol':'ipratropium');
+    // Anaphylaxis can return when adrenaline wears off: a second porcja.
+    if(has(g,'anaphylaxis')&&!working(g,'adrenaline')&&g.supplies.adrenaline>0)g=useItem(g,'adrenaline');
     const site=ivArm(g)&&ivSiteFor(g,ivArm(g));
     if(site&&circulation(g)<65&&g.supplies.fluid>0&&!g.infusions.some(i=>i.end>g.elapsed))g=act(g,'fluid',site);
     trace?.push({time:g.elapsed,...clinicalSnapshot(g),arrest:Boolean(g.arrest)});

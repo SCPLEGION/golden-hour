@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createGame, act as engineAct, SCENARIOS, ITEMS, restoreGame, validateCatalogs } from '../src/engine.js';
+import { createGame, act as engineAct, advanceTime, SCENARIOS, ITEMS, restoreGame, validateCatalogs } from '../src/engine.js';
 import { bleedingRate, pain, visibleInjuries, activeMedicines, respiratoryBurden } from '../src/simulation/selectors.js';
 import { loadProgress, saveProgress } from '../src/storage.js';
 const perfectIV={point:{x:400,y:132.42105263157896},approach:42,depth:.62,aborted:false};
@@ -49,17 +49,26 @@ test('massive bleeding needs stronger control and treatment cannot be reapplied'
   const g=initial(1), dressed=act(g,'dressing','rightLeg'), stasis=act(g,'tourniquet','rightLeg');
   assert.ok(bleedingRate(dressed)>legacyRate(dressed,.03));assert.equal(bleedingRate(stasis),0);assert.equal(act(stasis,'tourniquet','rightLeg'),stasis);
 });
-test('medicines have delayed, expiring effects and repeat toxicity',()=>{
+test('medicines have delayed, expiring effects and repeated porcje stack (P3 PK/PD)',()=>{
   let g=act(initial(0),'iv','rightArm');g=act(g,'morphine','rightArm');
-  assert.equal(activeMedicines(g).length,0);assert.equal(respiratoryBurden(g),0);
-  g=act(g,'vitals');assert.equal(activeMedicines(g).length,1);assert.ok(respiratoryBurden(g)>0);assert.ok(pain(g)<9);
-  const before=g.blood;g=act(g,'morphine','rightArm');assert.ok(g.blood<before-9);assert.ok(g.respiratoryDepression>1);
-  let safe=act(initial(0),'hemostatic','leftLeg');safe=act(safe,'iv','rightArm');safe=act(safe,'morphine','rightArm');safe=wait(safe,10);
-  assert.equal(activeMedicines(safe).length,0);assert.equal(respiratoryBurden(safe),0);
+  assert.equal(activeMedicines(g).length,0,'the effect site lags the plasma');assert.ok(respiratoryBurden(g)<.05);
+  g=act(g,'wait60');assert.equal(activeMedicines(g).length,1);assert.ok(respiratoryBurden(g)>0);assert.ok(pain(g)<9);
+  // Two more porcje stack in the depot: the respiratory burden grows far more than one porcja's.
+  const single=advanceTime(g,1200),stacked=advanceTime(act(act(g,'morphine','rightArm'),'morphine','rightArm'),1150);
+  assert.ok(respiratoryBurden(stacked)>2.5*respiratoryBurden(single),`${respiratoryBurden(stacked)} vs ${respiratoryBurden(single)}`);
+  assert.ok(stacked.log.some(e=>/Nadmierne działanie leków/.test(e.text)));assert.ok(!single.log.some(e=>/Nadmierne/.test(e.text)));
+  // A short-acting opioid wears off.
+  let safe=act(initial(SCENARIOS.findIndex(s=>s.id==='footballPitch')),'iv','rightArm');safe=act(safe,'fentanyl','rightArm');safe=act(safe,'wait60');
+  assert.equal(activeMedicines(safe).length,1);for(let i=0;i<10;i++)safe=advanceTime(safe,600);assert.equal(safe.status,'active');
+  assert.equal(activeMedicines(safe).length,0);assert.ok(respiratoryBurden(safe)<.02);assert.ok(safe.log.some(e=>/Kończy się działanie leku: Fentanyl/.test(e.text)));
 });
-test('history exposes allergy and ignoring it produces a reaction',()=>{
+test('history exposes allergy and ignoring it adds an anaphylactic reaction',()=>{
   let g=initial(5);assert.equal(g.historyKnown,false);g=act(g,'history');assert.equal(g.historyKnown,true);
-  const before=g.blood;g=act(g,'paracetamol','head');assert.ok(g.blood<=before-12);assert.match(g.log.at(-1).text,/uczuleniowa/);
+  const given=act(g,'paracetamol','head'),control=act(g,'wait30');
+  const reaction=given.injuries.find(i=>i.type==='allergicReaction');
+  assert.ok(reaction&&reaction.scale===.5&&reaction.rampS===300&&reaction.part==='chest');assert.match(given.log.at(-1).text,/uczuleniowa/);
+  const later=advanceTime(given,180),calm=advanceTime(control,165);
+  assert.ok(later.oxygen<calm.oxygen-2&&later.phys.plasmaDeficitMl>calm.phys.plasmaDeficitMl+5,`${later.oxygen} vs ${calm.oxygen}`);
 });
 test('oxygen expires and can be replaced, IV fluid adds volume without creating blood',()=>{
   let g=act(initial(0),'hemostatic','leftLeg');g=act(g,'oxygen');assert.equal(g.supplies.oxygen,1);
@@ -170,7 +179,7 @@ test('location and technique change actual flow, fluid support and delivered med
   assert.ok(flowEfficiency(forearm,'leftArm')>flowEfficiency(hand,'leftHand'));
   assert.ok(flowEfficiency(forearm,'leftArm')>flowEfficiency(weak,'leftArm'));
   const goodFluid=act(forearm,'fluid','leftArm'),poorFluid=act(hand,'fluid','leftArm');assert.ok(goodFluid.phys.crystIvMl>poorFluid.phys.crystIvMl);
-  let goodDrug=act(forearm,'morphine','leftArm'),poorDrug=act(hand,'morphine','leftArm');assert.ok(goodDrug.medications[0].delivery>poorDrug.medications[0].delivery);
+  let goodDrug=act(forearm,'morphine','leftArm'),poorDrug=act(hand,'morphine','leftArm');assert.ok(goodDrug.medications[0].amount>poorDrug.medications[0].amount);
   goodDrug=act(goodDrug,'wait30');poorDrug=act(poorDrug,'wait30');assert.ok(pain(goodDrug)<pain(poorDrug));
 });
 test('tourniquets override good technique and removing an IV ends infusion, allowing another attempt',()=>{

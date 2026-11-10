@@ -1,9 +1,11 @@
 // Clinical state in real units (docs/PHYSIOLOGY-PLAN.md). The engine owns g.profile and g.phys;
 // everything else reads them through clinicalSnapshot(g) and changes them through applyInsult(g, …).
-import { NORMALS, TUNING, CV_TUNING, hemorrhageClass } from '../content/physiology-data.js';
+import { NORMALS, TUNING, CV_TUNING, THERMAL, hemorrhageClass } from '../content/physiology-data.js';
+import { CIRCULATORY } from '../content/injury-physiology.js';
 import { INJURIES } from '../content/injuries.js';
-import { activeModifiers, pain } from './selectors.js';
-import { initRespiration, gcsOf, avpuOf } from './physio-respiration.js';
+import { activeModifiers, activeDrugDefinitions, pain } from './selectors.js';
+import { initRespiration } from './physio-respiration.js';
+import { gcsOf, avpuOf, initNeuro } from './physio-neuro.js';
 import { bounded } from './modifiers.js';
 // Profile is drawn from the game's random source after every legacy draw. The patient names are male,
 // so random patients are men; tests and options may pass {sex:'F',massKg,…}.
@@ -23,23 +25,33 @@ export const supportPts=g=>Math.min(TUNING.supportCapPts,activeModifiers(g).redu
 export const effectiveVolume=(g,support=supportPts(g))=>g.profile.ebvMl-g.phys.lostMl+g.phys.crystIvMl-g.phys.plasmaDeficitMl+ptsToMl(g,support);
 export const bloodMirror=g=>bounded(100-200*(g.phys.lostMl+g.phys.plasmaDeficitMl)/g.profile.ebvMl,0,100);
 const A_HR=1-Math.exp(-1/CV_TUNING.tauHrS),A_SVR=1-Math.exp(-1/CV_TUNING.tauSvrS);
+// Relief 0..1 of an injury by a drug whose `relievesTag` matches its tags (adrenaline → anaphylaxis).
+export const drugRelief=(g,injury,defs=activeDrugDefinitions(g))=>{const tags=INJURIES[injury.type]?.tags||[];let r=0;for(const d of defs)if(d.relievesTag&&tags.includes(d.relievesTag))r=Math.max(r,d.reliefStrength||0);return Math.min(1,r);};
+// Severity of an injury: its `scale` (an allergy created by a drug, by delivered amount) ramped in over `rampS` seconds.
+export const injuryScale=(g,i)=>(i.scale??1)*(i.rampS>0&&Number.isFinite(i.at)?Math.min(1,Math.max(0,g.elapsed-i.at)/i.rampS):1);
+// Vasoplegia of anaphylaxis (CIRCULATORY): SVR target × Π(1 − (1 − svr)·scale·(1 − relief)).
+export function svrFactorOf(g){
+  let f=1;for(const i of g.injuries){const c=CIRCULATORY[i.type];if(c)f*=1-(1-c.svr)*injuryScale(g,i)*(1-drugRelief(g,i));}
+  return f;
+}
 // One baroreflex step: lagged HR/SVR follow the MAP error; MAP = CO·SVR (all relative to the normals).
-export function circulate(g,support){
+export function circulate(g,support,svrF=svrFactorOf(g)){
   const T=CV_TUNING,p=g.phys,pre=effectiveVolume(g,support)/g.profile.ebvMl;
   const sv=Math.pow(bounded((pre-T.p0)/(1-T.p0),0,T.svMax),T.gamma);
   const pressure=()=>p.hr/NORMALS.hr*sv*p.svrIdx*NORMALS.map;
   const e=bounded((NORMALS.map-pressure())/NORMALS.map,-.3,1);
   const hrTarget=e>=0?NORMALS.hr+(T.hrMax-NORMALS.hr)*Math.tanh(e/T.e0):NORMALS.hr*(1+e);
-  p.hr+=(hrTarget-p.hr)*A_HR;p.svrIdx+=(bounded(1+T.kSvr*e,T.svrMin,T.svrCap)-p.svrIdx)*A_SVR;
+  p.hr+=(hrTarget-p.hr)*A_HR;p.svrIdx+=(bounded(1+T.kSvr*e,T.svrMin,T.svrCap)*svrF-p.svrIdx)*A_SVR;
   const map=pressure(),pp=NORMALS.pp*Math.pow(sv,T.ppExp);
   p.sv=sv*NORMALS.svMl*scaleOf(g);p.map=map;p.sbp=map+2*pp/3;p.dbp=Math.max(0,map-pp/3);
 }
-export function settleCirculation(g,steps=400){const support=supportPts(g);for(let i=0;i<steps;i++)circulate(g,support);g.phys.lowMapS=0;}
+export function settleCirculation(g,steps=400){const support=supportPts(g),svrF=svrFactorOf(g);for(let i=0;i<steps;i++)circulate(g,support,svrF);g.phys.lowMapS=0;}
 // `oxygen` (legacy SpO2 scale) seeds the respiratory state: SaO2 = oxygen, PaO2 by inverted Severinghaus.
 export function initPhys(g,blood=100,oxygen=g.oxygen){
-  const ebv=g.profile.ebvMl,lostMl=Math.max(0,100-blood)*TUNING.legacyPtMlFrac*ebv;
-  g.phys={lostMl,hbMassG:g.profile.hb0*(ebv-lostMl)/100,crystIvMl:0,crystInMl:0,plasmaDeficitMl:0,hr:NORMALS.hr,svrIdx:1,map:NORMALS.map,sbp:NORMALS.sbp,dbp:NORMALS.dbp,sv:NORMALS.svMl,reserve:1,lowMapS:0,injuryMl:{},boneMl:{}};
-  settleCirculation(g);initRespiration(g,oxygen);
+  const ebv=g.profile.ebvMl,lostMl=Math.max(0,100-blood)*TUNING.legacyPtMlFrac*ebv,env=g.phys?.env;
+  g.phys={lostMl,hbMassG:g.profile.hb0*(ebv-lostMl)/100,crystIvMl:0,crystInMl:0,plasmaDeficitMl:0,hr:NORMALS.hr,svrIdx:1,map:NORMALS.map,sbp:NORMALS.sbp,dbp:NORMALS.dbp,sv:NORMALS.svMl,reserve:1,lowMapS:0,injuryMl:{},boneMl:{},drugActive:{},drugExcess:0,infusedMl:0};
+  if(env)g.phys.env=env;
+  initNeuro(g);settleCirculation(g);initRespiration(g,oxygen);
   return g.phys;
 }
 // Changes to blood/oxygen from content (protocol consequences, toxicity, allergy, hypoxic strain).
@@ -50,11 +62,11 @@ export function applyInsult(g,insult){
   if(insult.kind==='bleed'&&amount>0){p.hbMassG=Math.max(0,p.hbMassG-amount*hbOf(g)/100);p.lostMl+=amount;}
   else if(insult.kind==='plasma'&&amount>0)p.plasmaDeficitMl+=amount;
   else if(insult.kind==='oxygen'&&Number.isFinite(insult.pts)){p.sao2=bounded(p.sao2+insult.pts/100,0,1);if(insult.pts<0)p.o2Debt=Math.min(.5,p.o2Debt-insult.pts/100);g.oxygen=p.sao2*100;}
-  else if(insult.kind==='temperature')g.temperature=bounded(g.temperature+insult.delta,32,40.5);
+  else if(insult.kind==='temperature')g.temperature=bounded(g.temperature+insult.delta,THERMAL.minC,THERMAL.maxC);
   g.blood=bloodMirror(g);
 }
 const memo=new WeakMap();
-const keyOf=g=>[g.elapsed,g.actions,g.phys.sao2,g.phys.paco2,g.phys.rr,g.initialUnconscious,g.injuries.length,g.temperature,g.status,Boolean(g.arrest),Boolean(g.resuscitating),g.airway,g.medications.length,(g.supports||[]).length,g.phys.lostMl,g.phys.crystIvMl,g.phys.plasmaDeficitMl,g.phys.hr,g.phys.map];
+const keyOf=g=>[g.elapsed,g.actions,g.phys.sao2,g.phys.paco2,g.phys.rr,g.initialUnconscious,g.injuries.length,g.temperature,g.status,Boolean(g.arrest),Boolean(g.resuscitating),g.airway,g.medications.length,(g.supports||[]).length,g.phys.glucose,g.phys.lostMl,g.phys.crystIvMl,g.phys.plasmaDeficitMl,g.phys.hr,g.phys.map];
 const same=(a,b)=>a.length===b.length&&a.every((v,i)=>v===b[i]);
 // Pure, memoised per state object (keyed by elapsed, actions and the physiology it reads).
 export function clinicalSnapshot(g){
@@ -67,16 +79,15 @@ function computeSnapshot(g){
   const lossFrac=p.lostMl/ebv,perfusion=bounded(200*effectiveVolume(g,support)/ebv-100,0,100);
   const extra=pain(g)*2+activeModifiers(g).reduce((n,d)=>n+(d.pulseIncrease||0),0);
   const spo2=bounded(p.sao2*100,0,100),tempC=g.temperature,gcs=gcsOf(g),conscious=gcs>=9;
-  const lowGlucose=g.injuries.some(i=>INJURIES[i.type]?.tags.includes('glucoseLow'));
-  const glucoseUnits=bounded((lowGlucose?42:96)+activeModifiers(g).reduce((n,d)=>n+(d.glucoseSupport||0),0),15,180);
+  const glucose=Math.round(p.glucose*10)/10;
   const cls=hemorrhageClass(lossFrac);
   return {lossFrac,lostMl:p.lostMl,ebvMl:ebv,hemorrhageClass:cls.cls,hemorrhageLabel:cls.label,perfusion,support,
     hb:hbOf(g),reserve:p.reserve,
     hr:dead?0:p.hr+extra,map:dead?(g.arrest?p.map:0):p.map,sbp:dead?(g.arrest?p.sbp:0):p.sbp,dbp:dead?(g.arrest?p.dbp:0):p.dbp,
     spo2,pao2:p.pao2,paco2:p.paco2,etco2:dead&&!g.resuscitating?0:Math.max(0,p.paco2-4),fio2:p.fio2,vaFrac:p.vaFrac,shunt:p.shunt,aaExtra:p.aaExtra,
     rr:dead?0:p.rr,tempC,conscious,gcs,avpu:avpuOf(gcs),canSwallow:gcs>=14,toleratesOPA:gcs<=8,
-    glucose:Math.round(glucoseUnits/18*10)/10,glucoseUnits,lactate:null,
-    causes:{hypovolaemia:lossFrac>=.3||perfusion<55,hypoxia:spo2<88,hypothermia:tempC<35,obstruction:g.injuries.some(i=>INJURIES[i.type]?.tags.includes('airway'))&&!g.airway,hypercapnia:p.paco2>55}};
+    glucose,lactate:null,rhythm:g.arrest?g.arrest.rhythm||'asystole':null,
+    causes:{hypovolaemia:lossFrac>=.3||perfusion<55,hypoxia:spo2<88,hypothermia:tempC<35,hyperthermia:tempC>40,hypoglycaemia:glucose<3.9,obstruction:g.injuries.some(i=>INJURIES[i.type]?.tags.includes('airway'))&&!g.airway,hypercapnia:p.paco2>55}};
 }
 // Deterministic monitor noise in [-1, 1]: hash of the patient seed and the second.
 export function noise(g,channel=0){

@@ -6,7 +6,7 @@ import { tick } from '../src/simulation/physiology.js';
 import { clinicalSnapshot, applyInsult, initPhys } from '../src/simulation/physio-model.js';
 import { severinghaus, invSeveringhaus, arterialSaturation, gcsOf, avpuOf } from '../src/simulation/physio-respiration.js';
 import { RESP_TUNING } from '../src/content/physiology-data.js';
-import { act } from './support.js';
+import { act, working } from './support.js';
 
 const index=id=>SCENARIOS.findIndex(s=>s.id===id);
 const scenario=id=>createGame(index(id),()=>.99);
@@ -81,9 +81,11 @@ test('asthma: neglect fatigues into hypoxic arrest; a bronchodilator rescues',()
   let neglected=act(scenario('asthma'),'transport');
   while(!neglected.arrest&&neglected.status==='active')neglected=advanceTime(neglected,30);
   assert.ok(neglected.arrest,'neglect arrests');assert.ok(neglected.elapsed<1500,`${neglected.elapsed}`);
-  let treated=act(act(scenario('asthma'),'transport'),'salbutamol','chest');treated=advanceTime(treated,180);
+  // P3: inhaled absorption — relief builds over a few minutes, and one porcja lasts the whole run.
+  let treated=act(act(scenario('asthma'),'transport'),'salbutamol','chest');treated=advanceTime(treated,360);
   assert.ok(spo2(treated)>94&&treated.phys.paco2<45,`${spo2(treated)}`);
-  for(let n=0;n<4&&treated.status==='active';n++){treated=advanceTime(treated,300);if(!treated.medications.some(m=>m.id==='salbutamol'&&m.end>treated.elapsed))treated=act(treated,'salbutamol','chest');}
+  for(let n=0;n<4&&treated.status==='active';n++){treated=advanceTime(treated,300);if(!working(treated,'salbutamol'))treated=act(treated,'salbutamol','chest');}
+  assert.equal(treated.medications.length,1);
   assert.equal(treated.arrest,null);assert.ok(spo2(treated)>90);
 });
 

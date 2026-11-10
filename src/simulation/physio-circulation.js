@@ -1,13 +1,13 @@
 // One second of circulation in mL: bleeding (pressure dependent, contained caps, hidden fracture loss),
 // crystalloid bags with redistribution and haemodilution, baroreflex haemodynamics and the cardiac reserve.
 import { NORMALS, TUNING, CV_TUNING, RESP_TUNING } from '../content/physiology-data.js';
-import { injuryPhysiology } from '../content/injury-physiology.js';
+import { injuryPhysiology, CIRCULATORY } from '../content/injury-physiology.js';
 import { difficultyById } from '../content/difficulty.js';
 import { bodyPart } from '../content/body.js';
 import { injuryBleeding, activeDrugDefinitions, splinted } from './selectors.js';
 import { flowEfficiency, tourniquetQuality } from './vascular.js';
 import { woundModifiers, bounded } from './modifiers.js';
-import { circulate, hbOf, supportPts, scaleOf } from './physio-model.js';
+import { circulate, hbOf, supportPts, scaleOf, drugRelief, injuryScale } from './physio-model.js';
 const A_CRYST=1-Math.exp(-1/TUNING.crystalloidTauS);
 export const bleedMultiplier=g=>difficultyById(g.difficulty).bleedMultiplier*activeDrugDefinitions(g).reduce((n,d)=>n*(d.bleedingMultiplier??1),1);
 const segmentKey=id=>id.replace(/^(left|right)/,'');
@@ -37,10 +37,13 @@ export function stepCirculation(g){
     if(bone>0){p.boneMl[injury.id]=(p.boneMl[injury.id]||0)+bone;shed+=bone;}
   }
   if(shed>0){p.hbMassG=Math.max(0,p.hbMassG-shed*hbOf(g)/100);p.lostMl+=shed;}
+  // Anaphylactic capillary leak (CIRCULATORY), stopped in proportion to the relieving drug's effect.
+  for(const injury of g.injuries){const c=CIRCULATORY[injury.type];if(c)p.plasmaDeficitMl+=c.leakMlMin/60*scaleOf(g)*injuryScale(g,injury)*(1-drugRelief(g,injury));}
+  p.infusedMl=0;
   for(const infusion of g.infusions){
     if(!(infusion.end>g.elapsed&&infusion.ml>0))continue;
     const flow=flowEfficiency(g,infusion.site);
-    if(flow>.05){const ml=Math.min(infusion.ml,TUNING.infusionMlMin/60*flow);infusion.ml=Math.max(0,infusion.ml-ml);p.crystIvMl+=ml;p.crystInMl+=ml;}
+    if(flow>.05){const ml=Math.min(infusion.ml,TUNING.infusionMlMin/60*flow);infusion.ml=Math.max(0,infusion.ml-ml);p.crystIvMl+=ml;p.crystInMl+=ml;p.infusedMl+=ml;}
     if(infusion.ml<=1e-9){infusion.ml=0;infusion.end=g.elapsed;}
   }
   p.crystIvMl+=(TUNING.crystalloidRetain*p.crystInMl-p.crystIvMl)*A_CRYST;

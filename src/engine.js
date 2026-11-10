@@ -15,6 +15,9 @@ import { validateInjuryPhysiology } from './content/injury-physiology.js';
 import { createProfile, initPhys } from './simulation/physio-model.js';
 import { migrateV2, validProfile, validPhys } from './simulation/physio-migrate.js';
 import { ensureRespiration } from './simulation/physio-respiration.js';
+import { ensureNeuro, validNeuro } from './simulation/physio-neuro.js';
+import { migrateDose, validatePharmacology } from './simulation/physio-pharmacology.js';
+import { environmentOf, validEnvironment } from './simulation/physio-thermal.js';
 export { SCENARIOS, ITEMS, itemUnavailable };
 export { condition, vitals } from './simulation/selectors.js';
 export const ACTIONS = [
@@ -41,6 +44,8 @@ export function validateCatalogs() {
   }
   validateConditions();
   validateInjuryPhysiology();
+  validatePharmacology();
+  for(const c of [...SCENARIOS,...CONDITION_SCENARIOS])if(c.environment!==undefined&&!validEnvironment(c.environment))throw new Error(`Invalid environment in ${c.id}`);
 }
 validateCatalogs();
 // Patient states are used only when a category or condition is requested; legacy calls keep the old draw sequence.
@@ -61,10 +66,10 @@ export function createGame(index=Math.floor(Math.random()*SCENARIOS.length),rand
     if(available.length) injuries.push({id:'extra',part:available[Math.floor(random()*available.length)].id,type:'contusion',treatments:{}});
   }
   const name=['Adam','Michał','Kamil','Piotr','Tomasz'][Math.floor(random()*5)],age=22+Math.floor(random()*40);
-  const g={ version:3, scenarioId:c.id, patient:`${name}, ${age} lat`, elapsed:0, transportDelay:delayMin+Math.floor(random()*((delayMax-delayMin)/60+1))*60, difficulty:difficulty.id, transportAt:null, transportCalledAt:null, status:'active', blood:c.blood, oxygen:c.oxygen, temperature:c.temperature??(injuries.some(i=>INJURIES[i.type].tags.includes('cold'))?35.4:injuries.some(i=>INJURIES[i.type].tags.includes('heat'))?38.6:36.7), respiratoryDepression:0, injuries, body:Object.fromEntries(BODY_PARTS.map(p=>[p.id,{examinedAt:null,note:null,treatments:{},ivAt:null}])), allergies:[...(c.allergies||[])], historyKnown:false, initialUnconscious:injuries.some(i=>INJURIES[i.type].unconscious), airway:false, warm:false, oxygenUntil:0, ventilatingUntil:0, infusions:[], medications:[], arrest:null,vitals:null,monitoring:true,monitorHistory:[],paused:false,speed:1,supports:[],assessments:[], supplies:Object.fromEntries(ITEMS.filter(i=>i.count!==null).map(i=>[i.id,i.count===null?null:Math.max(1,Math.round(i.count*difficulty.supplyMultiplier))])), actions:0, log:[{time:0,text:'Docierasz do poszkodowanego. Masz torbę ratowniczą; zorganizuj ewakuację i rozpocznij ocenę.'}] };
+  const g={ version:3, scenarioId:c.id, patient:`${name}, ${age} lat`, elapsed:0, transportDelay:delayMin+Math.floor(random()*((delayMax-delayMin)/60+1))*60, difficulty:difficulty.id, transportAt:null, transportCalledAt:null, status:'active', blood:c.blood, oxygen:c.oxygen, temperature:c.temperature??(injuries.some(i=>INJURIES[i.type].tags.includes('cold'))?35.4:injuries.some(i=>INJURIES[i.type].tags.includes('heat'))?38.6:36.7), injuries, body:Object.fromEntries(BODY_PARTS.map(p=>[p.id,{examinedAt:null,note:null,treatments:{},ivAt:null}])), allergies:[...(c.allergies||[])], historyKnown:false, initialUnconscious:injuries.some(i=>INJURIES[i.type].unconscious), airway:false, warm:false, oxygenUntil:0, ventilatingUntil:0, infusions:[], medications:[], arrest:null,vitals:null,monitoring:true,monitorHistory:[],paused:false,speed:1,supports:[],assessments:[], supplies:Object.fromEntries(ITEMS.filter(i=>i.count!==null).map(i=>[i.id,i.count===null?null:Math.max(1,Math.round(i.count*difficulty.supplyMultiplier))])), actions:0, log:[{time:0,text:'Docierasz do poszkodowanego. Masz torbę ratowniczą; zorganizuj ewakuację i rozpocznij ocenę.'}] };
   if(condition)g.protocol=createProtocol(condition,difficulty.deadlineMultiplier??1);
   // Drawn last so legacy seeds keep their scenario, patient and delay.
-  g.profile=createProfile(random,options?.profile,age);initPhys(g,c.blood);
+  g.profile=createProfile(random,options?.profile,age);initPhys(g,c.blood);g.phys.env=environmentOf(c);
   sampleMonitor(g);return g;
 }
 export function advanceTime(state,seconds=1){
@@ -127,7 +132,9 @@ export function restoreGame(raw) {
   try {
     const g=typeof raw==='string'?JSON.parse(raw):structuredClone(raw);
     if(![2,3].includes(g?.version) || !scenarioFor(g) || !['active','saved','lost'].includes(g.status)) return null;
-    for(const key of ['elapsed','blood','oxygen','temperature','respiratoryDepression','transportDelay','oxygenUntil','ventilatingUntil','actions',...(g.version===2?['fluidSupport']:[])]) if(!Number.isFinite(g[key]) || g[key]<0) return null;
+    if(g.respiratoryDepression!==undefined&&!(Number.isFinite(g.respiratoryDepression)&&g.respiratoryDepression>=0))return null;
+    delete g.respiratoryDepression;
+    for(const key of ['elapsed','blood','oxygen','temperature','transportDelay','oxygenUntil','ventilatingUntil','actions',...(g.version===2?['fluidSupport']:[])]) if(!Number.isFinite(g[key]) || g[key]<0) return null;
     if(g.transportDelay<900 || g.transportDelay>1500 || (g.transportAt!==null && !Number.isFinite(g.transportAt))) return null;
     g.difficulty??='normal';
     if(!DIFFICULTIES.some(d=>d.id===g.difficulty))return null;
@@ -144,7 +151,8 @@ export function restoreGame(raw) {
     for(const injury of g.injuries) {
       injury.treatments??=Object.fromEntries(Object.entries(g.body[injury.part].treatments).filter(([key])=>['dressing','hemostatic','seal'].includes(key)));
       if(!validTreatments(injury.treatments))return null;
-      for(const key of ['packQuality','sealQuality'])if(injury[key]!==undefined&&!UNIT(injury[key]))return null;
+      for(const key of ['packQuality','sealQuality','scale'])if(injury[key]!==undefined&&!UNIT(injury[key]))return null;
+      for(const key of ['at','rampS'])if(injury[key]!==undefined&&!(Number.isFinite(injury[key])&&injury[key]>=0))return null;
     }
     for(const p of BODY_PARTS) {g.body[p.id].ivAt??=null;if(g.body[p.id].ivAt!==null&&!Number.isFinite(g.body[p.id].ivAt))return null;}
     for(const p of BODY_PARTS){
@@ -160,14 +168,21 @@ export function restoreGame(raw) {
     if(!Array.isArray(g.log) || !g.log.length || g.log.some(e=>!Number.isFinite(e.time) || typeof e.text!=='string')) return null;
     for(const p of BODY_PARTS) if(!g.body?.[p.id]?.treatments || (g.body[p.id].examinedAt!==null && !Number.isFinite(g.body[p.id].examinedAt))) return null;
     for(const i of ITEMS.filter(i=>i.count!==null)) if(!Number.isInteger(g.supplies?.[i.id]) || g.supplies[i.id]<0) return null;
-    if(!Array.isArray(g.medications) || g.medications.some(m=>!itemById(m.id) || !Number.isFinite(m.start) || !Number.isFinite(m.end)||(m.burden!==undefined&&(!Number.isFinite(m.burden)||m.burden<0))||(m.delivery!==undefined&&(!Number.isFinite(m.delivery)||m.delivery<0||m.delivery>1)))) return null;
+    // P3: doses {id, at, amount, route}; P1/P2 records {start, end, delivery} convert in place (no version bump).
+    if(!Array.isArray(g.medications) || g.medications.some(m=>!migrateDose(m))) return null;
     if(!Array.isArray(g.infusions) || g.infusions.some(i=>!Number.isFinite(i.end)||!BODY_PARTS.some(p=>p.id===i.site&&p.vascular)||(g.version===3&&!(Number.isFinite(i.ml)&&i.ml>=0))) || !Array.isArray(g.allergies)) return null;
     // v2 → v3 physiology in mL (simulation/physio-migrate.js); v3 must carry a valid profile and state.
     if(g.version===2)migrateV2(g);
     // P2 respiratory fields default from the legacy SpO2 (no version bump).
-    if(validProfile(g.profile)&&g.phys&&typeof g.phys==='object'&&!Array.isArray(g.phys)&&Number.isFinite(g.phys.lostMl))ensureRespiration(g);
+    if(validProfile(g.profile)&&g.phys&&typeof g.phys==='object'&&!Array.isArray(g.phys)&&Number.isFinite(g.phys.lostMl)){
+      ensureRespiration(g);
+      // P3 fields: environment from the scenario, glucose/neuro state, drug bookkeeping.
+      const p=g.phys;p.env??=environmentOf(scenarioFor(g));ensureNeuro(g);p.drugActive??={};p.drugExcess??=0;p.infusedMl??=0;
+      if(!validEnvironment(p.env)||!validNeuro(p)||typeof p.drugActive!=='object'||Array.isArray(p.drugActive)||!Number.isFinite(p.infusedMl))return null;
+    }
     if(!validProfile(g.profile)||!validPhys(g.phys))return null;
     if(g.arrest!==null && (!Number.isFinite(g.arrest?.budget)||!Number.isFinite(g.arrest?.since))) return null;
+    if(g.arrest){g.arrest.rhythm??='asystole';if(!['vf','pea','asystole'].includes(g.arrest.rhythm))return null;}
     if(g.vitals!==null && !Number.isFinite(g.vitals?.time)) return null;
     delete g.cprBenefit;g.paused??=false;g.speed??=1;g.monitoring??=true;g.monitorHistory??=[];g.supports??=[];g.assessments??=[];
     if(typeof g.paused!=='boolean'||typeof g.monitoring!=='boolean'||![1,2,4].includes(g.speed))return null;
