@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createGame, restoreGame, advanceTime, SCENARIOS } from '../src/engine.js';
 import { clinicalSnapshot } from '../src/simulation/physio-model.js';
+import { severinghaus } from '../src/simulation/physio-respiration.js';
 import { act } from './support.js';
 
 const index=id=>SCENARIOS.findIndex(s=>s.id===id);
@@ -22,6 +23,8 @@ test('v2 → v3: blood points become mL of loss on a deterministic 80 kg profile
   const s=clinicalSnapshot(g);
   assert.equal(s.lossFrac,.25);assert.equal(s.lostMl,1400);assert.equal(s.hemorrhageClass,2);
   assert.equal(g.blood,50,'the legacy mirror keeps its value');assert.equal(g.oxygen,v2.oxygen);
+  // P2: oxygen points become SaO2, PaO2 by inverted Severinghaus.
+  assert.ok(Math.abs(g.phys.sao2*100-v2.oxygen)<1e-9&&Math.abs(severinghaus(g.phys.pao2)-g.phys.sao2)<1e-6,`${g.phys.pao2}`);
   assert.equal(g.phys.crystIvMl,4*.005*5600);assert.ok(Math.abs(s.hb-15)<1e-9||s.hb<15,'Hb only dilutes');
   assert.equal(g.infusions[0].ml,250);assert.ok(g.infusions[0].end>g.elapsed);
   // Settled circulation for that loss, deterministic and stable across restores.

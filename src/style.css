@@ -209,13 +209,14 @@ h3{font-size:13px}
 .simulation-paused .monitor-mode{color:var(--amber-ink)}
 .monitor-toggle{display:flex;align-items:center;gap:7px;padding:4px 9px;font:600 10.5px var(--mono);letter-spacing:var(--track);text-transform:uppercase;color:var(--ink-2);background:var(--bg-3);border:1px solid var(--line-2)}
 .monitor-toggle:hover{color:var(--ink);border-color:var(--line-3)}
-.vital-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:1px;margin-top:7px;background:var(--line)}
+.vital-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:1px;margin-top:7px;background:var(--line)}
 .vital{display:flex;flex-direction:column;gap:2px;min-width:0;padding:6px 10px 4px;background:var(--bg-0);border-left:3px solid transparent}
 .vital-label{display:flex;justify-content:space-between;gap:6px}
 .vital-reading{display:flex;flex-wrap:wrap;align-items:baseline;gap:0 6px;min-height:34px}
 .vital-reading strong{font:500 30px/1.1 var(--mono);letter-spacing:-.03em;color:var(--ink);font-variant-numeric:tabular-nums;white-space:nowrap}
 .vital-reading small{font:500 10.5px var(--mono);color:var(--ink-3);white-space:nowrap}
-.vital-pain .vital-reading strong,.vital-temperature .vital-reading strong{font-size:24px}
+.vital-pain .vital-reading strong,.vital-temperature .vital-reading strong,.vital-gcs .vital-reading strong{font-size:24px}
+.vital-gcs .vital-reading small b{font-weight:600;color:var(--ink-2)}
 .vital-trend{display:block;width:100%;height:22px;overflow:visible;color:var(--ok)}
 .vital-trend path{fill:none;stroke:currentColor;stroke-width:1.6;vector-effect:non-scaling-stroke;stroke-linejoin:miter}
 .vital-trend .trend-baseline{stroke:var(--line-2);stroke-width:1;stroke-dasharray:2 4}
@@ -448,7 +449,7 @@ dialog::backdrop{background:#050604d9;background-image:var(--scanlines)}
   .cockpit{grid-template-columns:minmax(0,1fr) 300px;gap:10px;padding:10px}
   .vital{padding:5px 7px 3px}
   .vital-reading strong{font-size:23px}
-  .vital-pain .vital-reading strong,.vital-temperature .vital-reading strong{font-size:19px}
+  .vital-pain .vital-reading strong,.vital-temperature .vital-reading strong,.vital-gcs .vital-reading strong{font-size:19px}
   .part-shortcuts{grid-template-columns:repeat(3,minmax(0,1fr))}
   .vital-reading small{font-size:9.5px}
   .command-bar>button{padding:5px 9px 5px 5px;font-size:13px;gap:7px}

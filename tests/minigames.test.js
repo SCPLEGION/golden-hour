@@ -83,7 +83,8 @@ test('packing quality scales the hemostatic bleeding reduction',()=>{
 });
 test('seal timing scales oxygen loss from the chest wound',()=>{
   const g=fresh(3),id=g.injuries.find(i=>i.part==='chest').id;
-  const run=s=>{s=structuredClone(s);s.oxygen=90;const before=s.oxygen;tick(s);return before-s.oxygen;};
+  // P2: SpO2 is modelled (open pneumothorax shunt), so the loss is the desaturation after two more minutes.
+  const run=s=>{s=structuredClone(s);for(let i=0;i<120;i++)tick(s);return 100-s.phys.sao2*100;};
   const good=engineAct(g,'seal','chest',id,seal(.75)),poor=engineAct(g,'seal','chest',id,seal(.1)),retry=engineAct(g,'seal','chest',id,seal(.75,2));
   assert.equal(good.injuries.find(i=>i.id===id).sealQuality,1);assert.ok(poor.injuries.find(i=>i.id===id).sealQuality<1);
   assert.ok(run(good)<run(poor)&&run(poor)<run(g),'partial seal reduces oxygen loss less');

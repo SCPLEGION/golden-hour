@@ -40,6 +40,9 @@ export function respiratoryBurden(g){
   },0);
 }
 export const isConscious = g => clinicalSnapshot(g).conscious;
+// GCS gates: oral routes need GCS ≥ 14, an oropharyngeal airway is tolerated at GCS ≤ 8.
+export const canSwallow = g => clinicalSnapshot(g).canSwallow;
+export const toleratesOPA = g => clinicalSnapshot(g).toleratesOPA;
 // Nominal bleeding of one injury in mL/min at MAP 90 (pressure dependence is applied per tick).
 export function injuryBleeding(g, injury) {
   const def = INJURIES[injury.type], part = g.body[injury.part], phys = injuryPhysiology(injury.type);
@@ -88,7 +91,7 @@ export function condition(g) {
   if(s.perfusion<65 || s.spo2<88) return 'Blady, wyraźnie osłabiony';
   return 'Reaguje na głos';
 }
-// Monitor reading: HR/BP from g.phys via the snapshot, deterministic waves and hashed noise.
+// Monitor reading: HR/BP/RR/GCS from g.phys via the snapshot, SpO2 averaged (τ 6 s), deterministic waves and hashed noise.
 export function vitals(g) {
   const s=clinicalSnapshot(g),c=s.perfusion,t=g.elapsed,dead=g.arrest||g.status==='lost';
   const respiratoryWave=Math.sin(t*1.27),slowWave=Math.sin(t*.24+1.1);
@@ -96,7 +99,7 @@ export function vitals(g) {
   const pulse=dead?0:Math.round(s.hr+respiratoryWave*1.7*variability+slowWave*1.3+noise(g,1));
   const systolic=dead?0:Math.round(s.sbp+respiratoryWave*2+slowWave+noise(g,2));
   const diastolic=dead?0:Math.round(s.dbp+slowWave*1.4+noise(g,3)*.6);
-  return {time:t,pulse,pressure:dead?'—':`${systolic}/${diastolic}`,systolic,diastolic,map:dead?0:Math.round(s.map),oxygen:Math.round(bounded(g.oxygen+(dead?0:respiratoryWave*.25),0,100)*10)/10,breathing:dead?0:Math.round(Math.max(4,s.rr+slowWave*.8)*10)/10,temperature:g.temperature.toFixed(1),pain:isConscious(g)?`${pain(g)}/10`:'Brak kontaktu',glucose:Math.round(s.glucoseUnits),rhythm:dead?'Asystolia':'Rytm zatokowy'};
+  return {time:t,pulse,pressure:dead?'—':`${systolic}/${diastolic}`,systolic,diastolic,map:dead?0:Math.round(s.map),oxygen:Math.round(bounded(g.phys.spo2Shown+(dead?0:respiratoryWave*.25),0,100)*10)/10,breathing:dead?0:Math.round(Math.max(3,s.rr+slowWave*.8)*10)/10,gcs:s.gcs,avpu:s.avpu,etco2:Math.round(s.etco2),temperature:g.temperature.toFixed(1),pain:isConscious(g)?`${pain(g)}/10`:'Brak kontaktu',glucose:Math.round(s.glucoseUnits),rhythm:dead?'Asystolia':'Rytm zatokowy'};
 }
 // Thresholds as EBV fraction per minute (legacy .02 / .002 points per second).
 const bleedingLabel=f=>f>.006?'Krwawi':f>.0006?'Niewielkie sączenie':'Krwawienie zabezpieczone';

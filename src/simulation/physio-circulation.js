@@ -1,6 +1,6 @@
 // One second of circulation in mL: bleeding (pressure dependent, contained caps, hidden fracture loss),
 // crystalloid bags with redistribution and haemodilution, baroreflex haemodynamics and the cardiac reserve.
-import { NORMALS, TUNING, CV_TUNING } from '../content/physiology-data.js';
+import { NORMALS, TUNING, CV_TUNING, RESP_TUNING } from '../content/physiology-data.js';
 import { injuryPhysiology } from '../content/injury-physiology.js';
 import { difficultyById } from '../content/difficulty.js';
 import { bodyPart } from '../content/body.js';
@@ -48,9 +48,8 @@ export function stepCirculation(g){
     p.sv=0;p.map=g.resuscitating?T.cprMap*(g.cprBenefit??1):0;p.sbp=p.map*1.4;p.dbp=p.map*.75;p.lowMapS=0;
   }else{
     circulate(g,supportPts(g));
-    // Coronary supply ≈ diastolic pressure × O2 carrying capacity (Hb), relative to normal. Saturation joins
-    // in phase 2; until then hypoxic arrest keeps the legacy oxygen floor (physiology.js).
-    const supply=p.dbp/70*Math.min(1.2,hbOf(g)/g.profile.hb0);
+    // Coronary supply ≈ diastolic pressure × O2 content (Hb × SaO2), relative to normal.
+    const supply=p.dbp/70*Math.min(1.2,hbOf(g)/g.profile.hb0)*Math.min(1,p.sao2/RESP_TUNING.reserveSpo2);
     p.reserve=supply<T.reserveCrit?Math.max(0,p.reserve-(T.reserveCrit-supply)/T.reserveCrit/T.reserveDrainS):Math.min(1,p.reserve+(supply-T.reserveCrit)/T.reserveRecoverS);
     p.lowMapS=p.map<T.arrestMap?p.lowMapS+1:0;
   }

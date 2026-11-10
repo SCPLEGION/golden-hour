@@ -17,6 +17,33 @@ export const INJURY_PHYSIOLOGY = {
   abrasion:CAPILLARY, thermalBurn:CAPILLARY, chemicalBurn:CAPILLARY, electricalBurn:CAPILLARY, flashBurn:CAPILLARY,
   amputationHand:ARTERIAL, amputationForearm:ARTERIAL, amputationFoot:ARTERIAL, amputationShin:ARTERIAL
 };
+// Respiratory physiology (P2, simulation/physio-respiration.js). Components, each [at onset, fully progressed]:
+// `obstruct` upper-airway ventilation factor (removed by an opened airway for 'airway'-tagged injuries), `va` ventilation
+// factor (bronchospasm, chest mechanics), `depress` central depression (lowers RR too), `aa` extra A–a gradient in mmHg
+// (V/Q mismatch, answers to oxygen), `shunt` fraction (does not), `painVa` ventilation at pain ≥ 8 (rib splinting,
+// relieved by analgesia), `tauS` progression τ. Relief r (matching drug, seal quality, suction/irrigation) scales every
+// component by (1 − r) and pulls the progression back toward 0. Every injury with a legacy `oxygenLoss` needs an entry.
+export const RESPIRATORY = {
+  chestWound:{shunt:[.126,.33],aa:[12.6,17],va:[.81,.75],tauS:180},          // open pneumothorax progresses unless sealed
+  hiddenChestWound:{shunt:[.084,.3],aa:[11,16],va:[.83,.75],tauS:240},
+  obstruction:{obstruct:[.524,.25],tauS:240},                                   // → vaFrac .25 until the airway is opened
+  asthma:{va:[.714,.43],aa:[25.5,30],tauS:1800},                                // bronchospasm + fatigue
+  ribFracture:{painVa:.716,aa:[11.4,11.4]},                                     // splinting relieved by analgesia
+  lungContusion:{shunt:[.167,.21],aa:[22,25],tauS:900},                          // shunt rising
+  smokeExposure:{aa:[35,40],tauS:1200},
+  aspiration:{obstruct:[.625,.4],aa:[14,23],tauS:300},                            // → vaFrac .4 until suction
+  allergicReaction:{va:[.725,.68],aa:[18,22],tauS:600},                         // bronchospasm component of anaphylaxis
+  stingAnaphylaxis:{va:[.758,.7],aa:[14.5,20],tauS:600},
+  hypoglycemia:{aa:[10,10]}, dehydration:{aa:[3,3]}, heatExhaustion:{aa:[8,8]},
+  heatStroke:{aa:[28.7,32],tauS:900},
+  coPoisoning:{aa:[36.5,40],tauS:900},                                          // tissue hypoxia proxy (no COHb in P2)
+  opioidOverdose:{obstruct:[.752,.65],depress:[.67,.5],reliefTag:'opioid',tauS:600},
+  postIctal:{obstruct:[.596,.5],aa:[9.2,12],tauS:600},
+  headBleedSevere:{obstruct:[.7,.45],tauS:600}, strokeSevere:{obstruct:[.72,.45],tauS:600},
+  spinalCordInjury:{va:[.7,.5],tauS:600}                                       // diaphragm weakness
+};
+const RESP_KEYS=['obstruct','va','depress','aa','shunt'];
+const validResp=r=>RESP_KEYS.every(k=>r[k]===undefined||(Array.isArray(r[k])&&r[k].length===2&&r[k].every(n=>Number.isFinite(n)&&n>=0&&(k==='aa'||n<=1))))&&(r.painVa===undefined||(r.painVa>0&&r.painVa<=1))&&(r.tauS===undefined||r.tauS>=5);
 // Injuries without their own entry take the first matching tag default.
 export const TAG_DEFAULTS = {
   wound:VENOUS, internal:{vessel:'internal',pExp:1.2},
@@ -25,7 +52,7 @@ export const TAG_DEFAULTS = {
 function resolve(id){
   const def=INJURIES[id],own=INJURY_PHYSIOLOGY[id],tag=def?.tags.find(t=>TAG_DEFAULTS[t]);
   const base=own||(tag&&TAG_DEFAULTS[tag]);
-  return base?{vessel:'none',pExp:0,bone:false,capMl:0,...base,rate:base.rate??(def.bleed||0)*TUNING.legacyMlMinPerPtS}:null;
+  return base?{vessel:'none',pExp:0,bone:false,capMl:0,...base,rate:base.rate??(def.bleed||0)*TUNING.legacyMlMinPerPtS,resp:RESPIRATORY[id]??null}:null;
 }
 let table=null;
 const build=()=>Object.fromEntries(Object.keys(INJURIES).map(id=>[id,resolve(id)]));
@@ -33,7 +60,9 @@ const build=()=>Object.fromEntries(Object.keys(INJURIES).map(id=>[id,resolve(id)
 export const injuryPhysiology=id=>(table??=build())[id]??resolve(id);
 export function validateInjuryPhysiology(){
   table=null;
-  for(const id of Object.keys(INJURY_PHYSIOLOGY))if(!INJURIES[id])throw new Error(`Physiology for unknown injury: ${id}`);
+  for(const id of [...Object.keys(INJURY_PHYSIOLOGY),...Object.keys(RESPIRATORY)])if(!INJURIES[id])throw new Error(`Physiology for unknown injury: ${id}`);
+  for(const [id,r] of Object.entries(RESPIRATORY))if(!validResp(r))throw new Error(`Invalid respiratory physiology: ${id}`);
+  for(const [id,d] of Object.entries(INJURIES))if(d.oxygenLoss&&!RESPIRATORY[id])throw new Error(`Missing respiratory physiology: ${id}`);
   for(const id of Object.keys(INJURIES)){
     const p=resolve(id);
     if(!p)throw new Error(`Missing injury physiology: ${id}`);

@@ -14,7 +14,7 @@ export function updateLiveHUD(root,g,{suspended=false}={}){
     const previous=Number.parseFloat(el.textContent),next=Number.parseFloat(value);
     if(key!=='time'&&Number.isFinite(previous)&&Number.isFinite(next))el.dataset.direction=next>previous?'up':next<previous?'down':'steady';
     if(el.textContent!==String(value))el.textContent=String(value);
-    const cell=key!=='time'&&el.closest('.vital');if(cell){const level=values?vitalLevel(key,value):'';if(cell.dataset.level!==level)cell.dataset.level=level;}
+    const cell=key!=='time'&&!('liveSub' in el.dataset)&&el.closest('.vital');if(cell){const level=values?vitalLevel(key,value):'';if(cell.dataset.level!==level)cell.dataset.level=level;}
   });
   for(const key of ['pulse','pressure','oxygen'])root.querySelectorAll(`[data-trend="${key}"]`).forEach(path=>path.setAttribute('d',trendPath(g.monitorHistory,key)));
   const live=g.monitoring&&!g.paused&&!suspended&&g.status==='active';

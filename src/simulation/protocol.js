@@ -22,7 +22,7 @@ export const CHECKS={
   transport:g=>g.transportAt!==null,
   warm:g=>g.warm||(g.supports||[]).some(s=>s.id==='warmingPack'),
   airway:g=>g.airway,
-  oxygenGiven:(g,v,e)=>g.oxygenUntil>g.elapsed||g.ventilatingUntil>=g.elapsed||['oxygen','bvm'].includes(e?.id),
+  oxygenGiven:(g,v,e)=>g.oxygenUntil>g.elapsed||(g.ventilatingUntil>0&&g.ventilatingUntil>=g.elapsed)||['oxygen','bvm'].includes(e?.id),
   any:(g,v,e)=>v.some(c=>matches(g,c,e))
 };
 export const CONSEQUENCES={

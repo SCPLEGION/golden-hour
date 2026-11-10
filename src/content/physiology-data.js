@@ -5,7 +5,7 @@ export const NORMALS = {
   map:90,           // R: 70–100; also the baroreflex set point
   sbp:120, dbp:75,  // R
   pp:45,            // R: pulse pressure SBP−DBP
-  spo2:98, rr:16, tempC:36.7, glucoseMmol:5.3,
+  spo2:98, rr:16, paco2:40, tempC:36.7, glucoseMmol:5.3,
   hb:{M:15,F:13.5},          // R: g/dL
   ebvPerKg:{M:70,F:65},      // R: mL/kg
   svMl:70                    // R: stroke volume at the reference EBV
@@ -50,4 +50,27 @@ export const CV_TUNING = {
   reserveRecoverS:600,
   arrestMap:35, arrestMapS:20,
   roscReserve:.35, cprMap:22
+};
+// Oxygenation and ventilation (P2, simulation/physio-respiration.js). Calibrated by tests/physio.respiration.test.js:
+// each scenario's untreated SpO2 at 60 s lands within ±4 of its legacy `oxygen` start value.
+export const RESP_TUNING = {
+  patm:713,                 // R: (760 − 47) mmHg, alveolar gas equation PAO2 = FiO2·713 − PaCO2/0.8
+  rq:.8,                    // R: respiratory quotient
+  fio2:{air:.21,nrb:.7,bvm:.9}, // R: room air, non-rebreather 15 L/min (~.7), bag-valve-mask with oxygen (~.9)
+  cylinderL:150, flowLpm:15, // G: game cylinder 150 L at 15 L/min = today's 10-minute window
+  aa0:5, shunt0:.02,        // R: normal A–a gradient (mmHg) and physiological shunt
+  extraction:.24,           // R: normal Sa−Sv (VO2/DO2 ≈ 25%); Sv falls as cardiac output × Hb falls
+  svFloor:.15,
+  paco2Max:150, vaMin:.05, apnoeaVa:.05,
+  tauCo2S:20,               // G: PaCO2 lag
+  tauUpS:20, tauAirS:20, tauHighS:90, tauStoreS:60, // R/G: O2 store lag (20 s on air, 90 s after high FiO2)
+  tauShownS:6,              // G: pulse-oximeter averaging
+  tauRrS:5,
+  softTissue:.4,            // R/G: GCS ≤ 8 without airway support → soft-tissue obstruction, vaFrac × .4 at GCS 3 rising to .7 at GCS 8
+  burdenK:.35,              // G: drug respiratory burden → ventilation ×1/(1+k·burden)
+  supportAaPerUnit:800,     // G: legacy oxygenSupport .01 pt/s → −8 mmHg A–a
+  insultTauS:1800,          // G: legacy "oxygen −N" consequence → SpO2 −N now and a desaturation debt of N points
+                            //    (halved on high FiO2) fading over ~30 min — linear like the legacy points, no cliff
+  hypoxicArrestSpo2:50, hypoxicArrestS:30, // R/G: SpO2 < 50 for 30 s → arrest
+  reserveSpo2:.96           // coronary supply term × min(1, SaO2/.96)
 };

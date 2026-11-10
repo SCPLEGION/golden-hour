@@ -78,7 +78,8 @@ test('airway correction and CPR can reverse hypoxic cardiac arrest',()=>{
   assert.equal(g.arrest,null);assert.equal(g.status,'active');assert.ok(g.log.some(e=>/Powrót oznak/.test(e.text)));
 });
 test('AED refuses asystole and transport does not win during arrest',()=>{
-  let g=initial(4);g.transportAt=10;g.oxygen=37;g=act(g,'wait30');assert.ok(g.arrest);assert.equal(g.status,'active');
+  // P2: SpO2 comes from the model, so the obstructed airway is left to reach hypoxic arrest before the ambulance is due.
+  let g=initial(4);while(!g.arrest&&g.status==='active')g=act(g,'wait30');g.transportAt=g.elapsed+10;g=act(g,'wait30');assert.ok(g.arrest);assert.equal(g.status,'active');
   g=act(g,'aed');assert.equal(g.vitals.rhythm,'Asystolia');assert.ok(g.log.some(e=>/niedefibrylacyjny/.test(e.text)));
 });
 test('ended cases are immutable; transport requests cannot reset the ETA',()=>{

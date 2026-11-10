@@ -83,9 +83,9 @@ Zatrzymanie gdy: `reserve` = 0 (podaż dla serca DBP/70 × CaO2), SpO2 < 50 prze
 |---|---|---|
 | P0 | Szwy bez zmiany zachowania: `clinicalSnapshot`, `applyInsult`, `referenceCare`, test wydajności, indeks przedmiotów `Map`. | **zrobione** |
 | P1 | Krążenie w mL: profil/EBV, Hb, baroreflex, HR/BP z modelu, płyny w mL, zatrzymanie z `reserve`, migracja v2→v3. | **zrobione** (szczegóły i odstępstwa niżej) |
-| P2 | Utlenowanie i wentylacja: FiO2, PaCO2, przeciek, Severinghaus, drogi oddechowe, GCS (hipoksja, perfuzja). | | — |
-| P3 | Leki PK/PD, bilans cieplny i środowisko, glukoza mmol/L, pełne GCS/AVPU. | | — |
-| P4 | Triada śmierci, skrzep i ponowne krwawienie, realne tempa krwawień, oparzenia %TBSA, opcjonalnie TBI/ICP, odma prężna, NIBP co 3 min, nowa ocena, usunięcie luster. | | — |
+| P2 | Utlenowanie i wentylacja: FiO2, PaCO2, przeciek, Severinghaus, drogi oddechowe, GCS (hipoksja, perfuzja). | **zrobione** (szczegóły i odstępstwa niżej) |
+| P3 | Leki PK/PD, bilans cieplny i środowisko, glukoza mmol/L, pełne GCS/AVPU. | — |
+| P4 | Triada śmierci, skrzep i ponowne krwawienie, realne tempa krwawień, oparzenia %TBSA, opcjonalnie TBI/ICP, odma prężna, NIBP co 3 min, nowa ocena, usunięcie luster. | — |
 
 ### Realizacja P0/P1 — odstępstwa od szkicu
 
@@ -97,3 +97,18 @@ Zatrzymanie gdy: `reserve` = 0 (podaż dla serca DBP/70 × CaO2), SpO2 < 50 prze
 - Strain hipoksji (dawne −0,08 pkt/s przy tlenie < 60) trafia do `plasmaDeficitMl`, nie do utraty krwi.
 - Ocena: sprzęt i szybkość wezwania liczą się tylko przy przekazaniu żywego pacjenta z ≥ 12,5/25 pkt stanu **i** niezerową perfuzją oraz SpO₂ (sam warunek połowy przepuszczał niewyrównany wstrząs z dobrą SpO₂ i temperaturą na ~89 pkt).
 - Balans do przejrzenia w P4: próg zatrzymania przesunął się z dawnych 40% do ~44–49% EBV, więc nieleczona rana szarpana (`forestSaw`, tylko wezwanie ewakuacji) dożywa dziś przekazania przy ~42% utraty (wynik ~54, C); amputacje, tętnicze i drogi oddechowe nadal przegrywają bez leczenia.
+
+### Realizacja P2 — odstępstwa od szkicu
+
+- Moduł `simulation/physio-respiration.js`; GCS (`gcsOf`) mieszka w nim do P3 (plan: `physio-neuro`) i nie jest zapisywany w `g.phys` — liczy się na bieżąco z SaO2, PaCO2, MAP/utraty i flag urazów. Zamiast `spo2Shown` jako jedynej saturacji: `sao2` (prawdziwa, z opóźnieniem magazynu) + `spo2Shown` (odczyt, τ 6 s); `g.oxygen` = SaO2·100. `pao2` = odwrócony Severinghaus z SaO2 (przy wysokim FiO2 nasyca się ~200 mmHg — tylko do odczytu).
+- Wartości z tabeli planu (np. niedrożność vaFrac .25, astma aa +25, dym aa +15) dają w ±4 SpO2 startowe scenariuszy tylko jako stan *docelowy*. Urazy mają więc składowe `[początek, pełny postęp]` z τ: niedrożność .524 → .25 (τ 4 min), zachłyśnięcie .625 → .4 (τ 5 min), otwarta rana klatki przeciek .126 → .33 + aa 12,6 → 17 + va .81 → .75 (τ 3 min, odma jako ogólny postęp; opatrunek wentylowy q mnoży składowe przez 1 − q i cofa postęp do 1 − q), astma va .714 → .43, aa 25,5 → 30 (zmęczenie τ 30 min, nie szybciej — inaczej jedna porcja salbutamolu bez tlenu nie dożywa 25 min), dym aa 35 → 40 (scenariusze 87 i 94 z tym samym urazem → środek 90,5), stłuczenie płuca przeciek .167 → .21. Hipoglikemia/odwodnienie/wyczerpanie cieplne/udar cieplny/CO dostały tylko gradient A–a, żeby utrzymać ich dawne SpO2 (proxy, bez uzasadnienia płucnego). Pełna tabela: `RESPIRATORY` w `content/injury-physiology.js`.
+- Tkanki miękkie przy GCS ≤ 8: ×0,4 przy GCS 3 rosnące do ×0,7 przy GCS 8 (płaskie ×0,4 dawało natychmiastową spiralę śmierci przy pierwszym spadku SpO2 < 65), stosowane tylko bez urazu z tagiem `airway` (ten już opisuje niedrożność). Urazy z flagą `unconscious` (nie tylko przy tworzeniu gry, także po `worsen`) i stan `initialUnconscious` dają GCS 6 do udrożnienia — dawna reguła.
+- Pasma hipoksji GCS: ≥ 85 % 0, 80–85 −1, 75–80 −2, 70–75 −3, 65–70 −5, 60–65 −7, 50–60 −9, < 50 −11 (SpO2 84 przy astmie nie blokuje drogi doustnej, < 65 = nieprzytomny jak dawniej). Hiperkapnia (PaCO2 − 55)/6, perfuzja: klasa III −2, IV −4, MAP < 55 −5, < 45 −7.
+- Magazyn tlenu: wzrost zawsze τ 20 s, spadek τ 20 s → 90 s zależnie od wcześniejszego FiO2 (`storeFio2`, τ 60 s). PaCO2 τ 20 s. Mieszanie: Sv z równania Ficka w postaci zamkniętej, Sv ≥ 0,15; mały składnik rozpuszczonego O2 sprawia, że tlen podnosi saturację przy przecieku 35% o ~8 pkt (nie leczy go), a przy luce V/Q do ~100%.
+- Konsekwencje „tlen −N” (protokół, alergia): SaO2 −N od razu + dług desaturacji N pkt odejmowany od celu (o połowę mniejszy przy wysokim FiO2), wygasa τ 30 min. Wariant w mmHg gradientu A–a był nieliniowy: na stromej części krzywej −10 pkt zabijało w 1–2 min.
+- `reserve` zawiera SaO2: podaż × min(1, SaO2/0,96). Astma nie umiera już przy opiece referencyjnej — dzięki modelowi astmy (salbutamol cofa zmęczenie), nie przez pominięcie. Dawny strain hipoksji (deficyt osocza przy SpO2 < 60) zostaje.
+- RR = (16 + 0,6·ból + odruchy·d²)·d³, odruchy = hipoksja (92 − SpO2)·0,45 + hiperkapnia (PaCO2 − 42)·0,2 + 14·(1 − wentylacja mechaniczna) + wstrząs 45·(utrata − 0,12) (zastępczo za kwasicę, mleczany w P3), d = depresja ośrodkowa (opioidy: uraz `opioidOverdose` i `respiratoryBurden` leków, nalokson przez `reliefTag:'opioid'`). Zatrucie opioidem: RR ~6–8.
+- `oxygenLoss` w `injuries.js` zostaje jako znacznik urazu oddechowego (polityki testowe podają przy nim tlen); tick go nie używa, walidacja wymaga wpisu `resp` dla każdego takiego urazu.
+- Naprawiony błąd protokołu: `oxygenGiven` był spełniony w sekundzie 0 (`ventilatingUntil` 0 ≥ `elapsed` 0), przez co pominięcie tlenu w `cabinGas` nie miało skutku.
+- Zatrzymanie bez RKO: bezdech (vaFrac 0,05), CO 0,02; RKO z wentylacją = BVM, CO 0,3 × jakość RKO. Zatrucie CO bez COHb (odczyt fałszywie prawidłowy kłóciłby się z kalibracją `cabinGas` 90) — odłożone. Sensory (NIBP co 3 min, artefakty) — P4.
+- Kalibracja (SpO2 po 60 s bez leczenia vs pole `oxygen`): chest 88,5/87, multiStab 88,5/90, airway 79,3/80, asthma 84,2/84, stairChest 92,3/91, roofDebris 92,3/92, ditchRider 92,3/93, bikeBarrier 89,6/89, shedSmoke 90,6/87, bakeryOven 90,9/94, pondRescue 82,7/83, picnicAllergy 89,6/88, festivalFaint 92,3/91, courierChest 91,3/91, cabinGas 90,1/90, stationToilet 79,6/80, busSeizure 85,9/86, siteHeat 93,1/93; scenariusze bez urazu oddechowego ~98 (cele 95–98).

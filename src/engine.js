@@ -14,6 +14,7 @@ import { checkProtocol, createProtocol, validProtocol, validateConditions } from
 import { validateInjuryPhysiology } from './content/injury-physiology.js';
 import { createProfile, initPhys } from './simulation/physio-model.js';
 import { migrateV2, validProfile, validPhys } from './simulation/physio-migrate.js';
+import { ensureRespiration } from './simulation/physio-respiration.js';
 export { SCENARIOS, ITEMS, itemUnavailable };
 export { condition, vitals } from './simulation/selectors.js';
 export const ACTIONS = [
@@ -163,6 +164,8 @@ export function restoreGame(raw) {
     if(!Array.isArray(g.infusions) || g.infusions.some(i=>!Number.isFinite(i.end)||!BODY_PARTS.some(p=>p.id===i.site&&p.vascular)||(g.version===3&&!(Number.isFinite(i.ml)&&i.ml>=0))) || !Array.isArray(g.allergies)) return null;
     // v2 → v3 physiology in mL (simulation/physio-migrate.js); v3 must carry a valid profile and state.
     if(g.version===2)migrateV2(g);
+    // P2 respiratory fields default from the legacy SpO2 (no version bump).
+    if(validProfile(g.profile)&&g.phys&&typeof g.phys==='object'&&!Array.isArray(g.phys)&&Number.isFinite(g.phys.lostMl))ensureRespiration(g);
     if(!validProfile(g.profile)||!validPhys(g.phys))return null;
     if(g.arrest!==null && (!Number.isFinite(g.arrest?.budget)||!Number.isFinite(g.arrest?.since))) return null;
     if(g.vitals!==null && !Number.isFinite(g.vitals?.time)) return null;

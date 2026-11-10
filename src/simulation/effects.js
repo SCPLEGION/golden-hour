@@ -1,6 +1,7 @@
 import { INJURIES } from '../content/injuries.js';
 import { bodyPart, matchesRegion, sameGroup, resolvePart, splintReach } from '../content/body.js';
-import { isConscious, circulation, vitals, examination, isMissing } from './selectors.js';
+import { isConscious, canSwallow, toleratesOPA, circulation, vitals, examination, isMissing } from './selectors.js';
+import { connectOxygen } from './physio-respiration.js';
 import { hasAccess, hasFlow, flowEfficiency, accessSites, tourniquetOver, ivSiteFor } from './vascular.js';
 import { applyInsult } from './physio-model.js';
 import { TUNING } from '../content/physiology-data.js';
@@ -59,7 +60,7 @@ export const EFFECTS = {
     g.body[target].treatments.splint=g.elapsed;return `${p.name}: unieruchomiono złamanie. Rana wymaga osobnej opieki.`;
   },
   seal:treatment('seal','chest',p=>`założono opatrunek na ranę klatki piersiowej.${p&&p.quality<1?` Przyłożony poza wydechem — szczelność ${Math.round(p.quality*100)}%.`:''}${p?.attempts>1?' Druga próba wydłużyła czynność.':''}`,'sealQuality'),
-  oxygen:({g})=>{g.oxygenUntil=g.elapsed+600;return 'Podłączono tlen. Zapas wystarczy na 10 minut symulacji.';},
+  oxygen:({g})=>{connectOxygen(g);return 'Podłączono maskę z rezerwuarem i butlę tlenową. Zapas wystarczy na 10 minut symulacji.';},
   airway:({g})=>{g.airway=true;return 'Udrożniono i zabezpieczono drogi oddechowe.';},
   ventilate:({g,item})=>{g.ventilatingUntil=g.elapsed+item.time;return 'Wykonano ręczną wentylację przez czas czynności.';},
   blanket:({g})=>{g.warm=true;return 'Okryto poszkodowanego. Ograniczono utratę ciepła.';},
@@ -114,8 +115,9 @@ export function itemUnavailable(g,item,target,injuryId=null) {
   if(item.regions && !matchesRegion(item.regions,target)) return 'Wybierz odpowiednią okolicę';
   if(item.effect==='iv' && !bodyPart(target)?.vascular) return 'Wenflon zakłada się na łokieć, przedramię lub dłoń';
   if(item.requires==='iv' && !ivSiteFor(g,target)) return 'Najpierw wenflon na tej ręce';
-  if(item.route==='Doustnie' && !isConscious(g)) return 'Pacjent nie może przełykać';
-  if(item.effect==='airway' && isConscious(g)) return 'Pacjent przytomny';
+  // Oral routes need a fully alert patient (GCS ≥ 14); an oropharyngeal airway is tolerated only at GCS ≤ 8.
+  if(item.route==='Doustnie' && !canSwallow(g)) return isConscious(g)?'Pacjent nie połyka bezpiecznie — świadomość zaburzona':'Pacjent nie może przełykać';
+  if(item.effect==='airway' && !g.airway && !toleratesOPA(g)) return 'Pacjent reaguje — nie toleruje rurki ustno-gardłowej';
   if(item.effect==='airway' && g.airway) return 'Drożność zabezpieczona';
   if(item.effect==='blanket' && g.warm) return 'Koc już założony';
   if(item.effect==='removeIV'&&!ivSiteFor(g,target))return 'Brak wenflonu w tej ręce';
