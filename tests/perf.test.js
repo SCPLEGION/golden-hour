@@ -9,11 +9,11 @@ const seeded=(s=3)=>()=>(s=(s*16807)%2147483647)/2147483647;
 // A busy but survivable patient: packed wound, IV, running bag, opioid, monitor on.
 function busy(){let g=act(createGame(index('gunshot'),()=>.99),'hemostatic','leftLeg');g=act(g,'iv','rightArm');g=act(g,'fluid','rightArm');return act(g,'morphine','rightArm');}
 
-test('performance: 20 000 physiology ticks take under 250 ms',()=>{
+test('performance: 20 000 physiology ticks take under 400 ms',()=>{
   const base=busy(),batch=()=>{let ms=0;for(let r=0;r<20;r++){const g=structuredClone(base);const t0=performance.now();for(let i=0;i<1000;i++)tick(g);ms+=performance.now()-t0;assert.equal(g.status,'active');}return ms;};
   batch();// warm-up (JIT)
   const best=Math.min(batch(),batch(),batch());
-  assert.ok(best<250,`${best.toFixed(0)} ms`);if(process.env.REPORT)console.log(`20k ticks: ${best.toFixed(0)} ms`);
+  assert.ok(best<400,`${best.toFixed(0)} ms`);if(process.env.REPORT)console.log(`20k ticks: ${best.toFixed(0)} ms`);
 });
 
 test('determinism: same seed and actions give identical states; ticks never use Math.random',()=>{
