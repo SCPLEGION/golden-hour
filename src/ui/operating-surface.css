@@ -26,9 +26,12 @@
 /* ---------- table + body ---------- */
 .table-edge{fill:#0d100b;fill-opacity:.55;stroke:var(--line-2);stroke-width:2}
 .table-seam{stroke:var(--line-2);stroke-width:1.5;stroke-dasharray:6 10}
-.body-outline{fill:#2b3226;stroke:#c3c8b0;stroke-width:2.4;stroke-linejoin:round;pointer-events:none}
-.anatomy-lines{stroke:#aab196;stroke-width:2;opacity:.3;pointer-events:none}
-.segment-divider{fill:none;stroke:#0a0c09;stroke-opacity:.7;stroke-width:1.6;stroke-dasharray:4 5;pointer-events:none;vector-effect:non-scaling-stroke}
+/* silhouette = union of the base outlines: stroke layer under a shaded fill layer (body-scene.js) */
+.body-outline{fill:none;stroke:#b9bfa4;stroke-width:5;stroke-linejoin:round;pointer-events:none}
+.body-fill{fill:#333c2d;pointer-events:none}
+.body-shadow{fill:#000;opacity:.45;pointer-events:none}
+.anatomy-lines{stroke:#c3c8b0;stroke-width:1.8;opacity:.2;pointer-events:none}
+.segment-divider{fill:none;stroke:#0a0c09;stroke-opacity:.45;stroke-width:1.4;stroke-dasharray:3 6;pointer-events:none;vector-effect:non-scaling-stroke}
 .body-region{fill:transparent;stroke:transparent;stroke-width:2;cursor:context-menu;transition:fill .12s,stroke .12s}
 .body-region:hover,.body-region:focus-visible{fill:#e6aa3e17;stroke:#e6aa3eaa;stroke-width:2.5;outline:none}
 .body-region.selected{fill:#e6aa3e2a;stroke:var(--amber);stroke-width:3.5;stroke-dasharray:none}
@@ -37,7 +40,7 @@
 /* back inset ("Plecy") */
 .back-inset-frame{fill:#0d100b;stroke:var(--line-3);stroke-opacity:1;stroke-width:2;stroke-dasharray:14 8;rx:6px}
 .back-inset-label{fill:var(--ink-3);font-family:var(--mono);font-weight:600;letter-spacing:.12em;text-transform:uppercase}
-.body-back-inset .body-outline{fill:#252b20}
+.body-back-inset .body-fill{fill:#2c3427}
 
 /* ---------- wounds + devices ---------- */
 .wound-hit{fill:transparent;stroke:transparent;stroke-width:2}
