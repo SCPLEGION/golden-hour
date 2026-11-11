@@ -18,6 +18,8 @@ import { ensureRespiration } from './simulation/physio-respiration.js';
 import { ensureNeuro, validNeuro } from './simulation/physio-neuro.js';
 import { migrateDose, validatePharmacology } from './simulation/physio-pharmacology.js';
 import { environmentOf, validEnvironment } from './simulation/physio-thermal.js';
+import { ensureHemostasis, validHemostasis } from './simulation/physio-hemostasis.js';
+import { ensureSensors, validSensors, measureNibp } from './simulation/physio-sensors.js';
 export { SCENARIOS, ITEMS, itemUnavailable };
 export { condition, vitals } from './simulation/selectors.js';
 export const ACTIONS = [
@@ -66,10 +68,11 @@ export function createGame(index=Math.floor(Math.random()*SCENARIOS.length),rand
     if(available.length) injuries.push({id:'extra',part:available[Math.floor(random()*available.length)].id,type:'contusion',treatments:{}});
   }
   const name=['Adam','Michał','Kamil','Piotr','Tomasz'][Math.floor(random()*5)],age=22+Math.floor(random()*40);
-  const g={ version:3, scenarioId:c.id, patient:`${name}, ${age} lat`, elapsed:0, transportDelay:delayMin+Math.floor(random()*((delayMax-delayMin)/60+1))*60, difficulty:difficulty.id, transportAt:null, transportCalledAt:null, status:'active', blood:c.blood, oxygen:c.oxygen, temperature:c.temperature??(injuries.some(i=>INJURIES[i.type].tags.includes('cold'))?35.4:injuries.some(i=>INJURIES[i.type].tags.includes('heat'))?38.6:36.7), injuries, body:Object.fromEntries(BODY_PARTS.map(p=>[p.id,{examinedAt:null,note:null,treatments:{},ivAt:null}])), allergies:[...(c.allergies||[])], historyKnown:false, initialUnconscious:injuries.some(i=>INJURIES[i.type].unconscious), airway:false, warm:false, oxygenUntil:0, ventilatingUntil:0, infusions:[], medications:[], arrest:null,vitals:null,monitoring:true,monitorHistory:[],paused:false,speed:1,supports:[],assessments:[], supplies:Object.fromEntries(ITEMS.filter(i=>i.count!==null).map(i=>[i.id,i.count===null?null:Math.max(1,Math.round(i.count*difficulty.supplyMultiplier))])), actions:0, log:[{time:0,text:'Docierasz do poszkodowanego. Masz torbę ratowniczą; zorganizuj ewakuację i rozpocznij ocenę.'}] };
+  const g={ version:3, scenarioId:c.id, patient:`${name}, ${age} lat`, elapsed:0, transportDelay:delayMin+Math.floor(random()*((delayMax-delayMin)/60+1))*60, difficulty:difficulty.id, transportAt:null, transportCalledAt:null, status:'active', temperature:c.temperature??(injuries.some(i=>INJURIES[i.type].tags.includes('cold'))?35.4:injuries.some(i=>INJURIES[i.type].tags.includes('heat'))?38.6:36.7), injuries, body:Object.fromEntries(BODY_PARTS.map(p=>[p.id,{examinedAt:null,note:null,treatments:{},ivAt:null}])), allergies:[...(c.allergies||[])], historyKnown:false, initialUnconscious:injuries.some(i=>INJURIES[i.type].unconscious), airway:false, warm:false, oxygenUntil:0, ventilatingUntil:0, infusions:[], medications:[], arrest:null,vitals:null,monitoring:true,monitorHistory:[],paused:false,speed:1,supports:[],assessments:[], supplies:Object.fromEntries(ITEMS.filter(i=>i.count!==null).map(i=>[i.id,i.count===null?null:Math.max(1,Math.round(i.count*difficulty.supplyMultiplier))])), actions:0, log:[{time:0,text:'Docierasz do poszkodowanego. Masz torbę ratowniczą; zorganizuj ewakuację i rozpocznij ocenę.'}] };
   if(condition)g.protocol=createProtocol(condition,difficulty.deadlineMultiplier??1);
   // Drawn last so legacy seeds keep their scenario, patient and delay.
-  g.profile=createProfile(random,options?.profile,age);initPhys(g,c.blood);g.phys.env=environmentOf(c);
+  // The scenario's legacy `blood`/`oxygen` presentation seeds g.phys; the state keeps no point-scale mirrors (P4).
+  g.profile=createProfile(random,options?.profile,age);initPhys(g,c.blood,c.oxygen);g.phys.env=environmentOf(c);
   sampleMonitor(g);return g;
 }
 export function advanceTime(state,seconds=1){
@@ -111,6 +114,8 @@ export function act(state,id,target='chest',injuryId=null,procedureInput=null) {
   for(let i=0;i<spec.time+(outcome?.extraTime||0) && g.status==='active';i++) tick(g);
   g.resuscitating=false;delete g.cprBenefit;
   if(id==='examine') {g.body[target].examinedAt=g.elapsed;g.body[target].note=examination(g,target);}
+  // A manual measurement (or attaching the monitor) takes a cuff reading now; the cuff then cycles every 180 s.
+  if(id==='vitals'||item?.effect==='monitor')measureNibp(g);
   if(id==='vitals'||item?.effect==='monitor'||item?.effect==='aed')sampleMonitor(g,true);
   return g;
 }
@@ -134,7 +139,9 @@ export function restoreGame(raw) {
     if(![2,3].includes(g?.version) || !scenarioFor(g) || !['active','saved','lost'].includes(g.status)) return null;
     if(g.respiratoryDepression!==undefined&&!(Number.isFinite(g.respiratoryDepression)&&g.respiratoryDepression>=0))return null;
     delete g.respiratoryDepression;
-    for(const key of ['elapsed','blood','oxygen','temperature','transportDelay','oxygenUntil','ventilatingUntil','actions',...(g.version===2?['fluidSupport']:[])]) if(!Number.isFinite(g[key]) || g[key]<0) return null;
+    // `blood`/`oxygen` were point-scale mirrors until P4: required by v2 (migration input), optional in v3, then dropped.
+    for(const key of ['elapsed','temperature','transportDelay','oxygenUntil','ventilatingUntil','actions',...(g.version===2?['fluidSupport','blood','oxygen']:[])]) if(!Number.isFinite(g[key]) || g[key]<0) return null;
+    for(const key of ['blood','oxygen'])if(g[key]!==undefined&&!(Number.isFinite(g[key])&&g[key]>=0))return null;
     if(g.transportDelay<900 || g.transportDelay>1500 || (g.transportAt!==null && !Number.isFinite(g.transportAt))) return null;
     g.difficulty??='normal';
     if(!DIFFICULTIES.some(d=>d.id===g.difficulty))return null;
@@ -179,11 +186,15 @@ export function restoreGame(raw) {
       // P3 fields: environment from the scenario, glucose/neuro state, drug bookkeeping.
       const p=g.phys;p.env??=environmentOf(scenarioFor(g));ensureNeuro(g);p.drugActive??={};p.drugExcess??=0;p.infusedMl??=0;
       if(!validEnvironment(p.env)||!validNeuro(p)||typeof p.drugActive!=='object'||Array.isArray(p.drugActive)||!Number.isFinite(p.infusedMl))return null;
+      // P4 fields: lactate/pH/coag and wound clots, burn progression, NIBP cuff and the last valid SpO2.
+      p.burnProg??={};ensureHemostasis(g);
+      if(!validHemostasis(p)||!p.burnProg||typeof p.burnProg!=='object'||Array.isArray(p.burnProg)||Object.values(p.burnProg).some(n=>!(Number.isFinite(n)&&n>=0&&n<=1)))return null;
     }
     if(!validProfile(g.profile)||!validPhys(g.phys))return null;
     if(g.arrest!==null && (!Number.isFinite(g.arrest?.budget)||!Number.isFinite(g.arrest?.since))) return null;
     if(g.arrest){g.arrest.rhythm??='asystole';if(!['vf','pea','asystole'].includes(g.arrest.rhythm))return null;}
     if(g.vitals!==null && !Number.isFinite(g.vitals?.time)) return null;
+    delete g.blood;delete g.oxygen;
     delete g.cprBenefit;g.paused??=false;g.speed??=1;g.monitoring??=true;g.monitorHistory??=[];g.supports??=[];g.assessments??=[];
     if(typeof g.paused!=='boolean'||typeof g.monitoring!=='boolean'||![1,2,4].includes(g.speed))return null;
     if(!Array.isArray(g.monitorHistory)||g.monitorHistory.some(v=>!Number.isFinite(v.time)||!Number.isFinite(v.pulse)||!Number.isFinite(v.oxygen)||typeof v.pressure!=='string'))return null;
@@ -193,6 +204,7 @@ export function restoreGame(raw) {
     // A protocol that no longer matches the catalog is dropped; the run itself stays playable.
     if(g.protocol!==undefined&&!validProtocol(g.protocol))delete g.protocol;
     else if(g.protocol)g.protocol.pain??=0;
+    ensureSensors(g);if(!validSensors(g.phys))return null;
     if(g.monitoring&&!g.vitals)sampleMonitor(g);
     return structuredClone(g);
   }catch{return null;}

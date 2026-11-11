@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { act, legacyRate } from './support.js';
+import { act, legacyRate, bloodIndex } from './support.js';
+import { injuryPhysiology } from '../src/content/injury-physiology.js';
+import { clinicalSnapshot } from '../src/simulation/physio-model.js';
 import { createGame, restoreGame, SCENARIOS, ITEMS, itemUnavailable } from '../src/engine.js';
 import { BODY_PARTS, BODY_OUTLINES, bodyPart, splintReach, proximalTourniquetSite, cutPoint } from '../src/content/body.js';
 import { INJURIES } from '../src/content/injuries.js';
@@ -63,7 +65,7 @@ test('missingSegments marks the amputated segment and everything distal on that 
   assert.deepEqual(missingSegments(withInjuries([['rightShin','amputationShin'],['leftFoot','amputationFoot']])).sort(),['leftFoot','rightAnkle','rightFoot','rightShin']);
   assert.deepEqual(missingSegments(withInjuries([['leftHand','partialAmputation']])),[]);
   assert.deepEqual(missingSegments(fresh('gunshot')),[]);
-  for(const id of ['amputationHand','amputationForearm','amputationFoot','amputationShin'])assert.ok(['external','wound','massive','amputation'].every(t=>INJURIES[id].tags.includes(t))&&INJURIES[id].bleed>=.08&&INJURIES[id].visible,id);
+  for(const id of ['amputationHand','amputationForearm','amputationFoot','amputationShin'])assert.ok(['external','wound','massive','amputation'].every(t=>INJURIES[id].tags.includes(t))&&injuryPhysiology(id).rate>=120&&INJURIES[id].visible,id);
   assert.deepEqual(INJURIES.partialAmputation.tags,['external','wound']);
   for(const id of ['amputationHand','partialAmputation'])assert.ok(WOUND_ART[id]||INJURIES[id].tags.some(t=>WOUND_ART[t]),id);
 });
@@ -97,12 +99,13 @@ test('only a proximal tourniquet on the same limb stops amputation bleeding',()=
   const hand=withInjuries([['rightHand','amputationHand']]);for(const site of ['rightForearm','rightUpperArm'])assert.equal(injuryBleeding(act(hand,'tourniquet',site),hand.injuries[0]),0,site);
 });
 
+// P4 realistic stump rates (hand 120 … shin 250 mL/min): a packed hand stump may just reach the ambulance, but deep in class IV.
 test('dressing or packing alone does not save an amputation scenario',()=>{
   for(const [id,part] of Object.entries(AMPUTATIONS)){
     let g=fresh(id);g=act(g,'transport');
     const stump=g.injuries.find(i=>i.part===part);
     g=act(g,'hemostatic',part,stump.id);g=act(g,'blanket','chest');g=run(g,1600);
-    assert.equal(g.status,'lost',id);
+    assert.ok(g.status==='lost'||clinicalSnapshot(g).lossFrac>.4,`${id}: ${g.status} ${clinicalSnapshot(g).lossFrac.toFixed(3)}`);
   }
 });
 
@@ -117,7 +120,7 @@ test('each amputation scenario is rescued at a 25-minute delay with a prompt pro
     }
     assert.equal(g.injuries.filter(i=>INJURIES[i.type].tags.includes('amputation')).reduce((n,i)=>n+injuryBleeding(g,i),0),0,id);
     g=act(g,'blanket','chest');g=run(g,1600);
-    assert.equal(g.status,'saved',id);assert.ok(g.blood>40,`${id}: ${g.blood}`);
+    assert.equal(g.status,'saved',id);assert.ok(bloodIndex(g)>40,`${id}: ${bloodIndex(g)}`);
     assert.ok(restoreGame(JSON.parse(JSON.stringify(g))),id);
   }
   // Partial amputation is minor: no missing segments, a dressing controls it.
@@ -132,7 +135,7 @@ test('a save without the joint segments restores with them initialised and keeps
   const restored=restoreGame(JSON.stringify(old));
   assert.ok(restored);for(const id of NEW)assert.deepEqual(restored.body[id],{examinedAt:null,note:null,treatments:{},ivAt:null},id);
   assert.deepEqual(restored,g);
-  const next=act(restored,'wait60');assert.ok(next.elapsed>restored.elapsed&&Number.isFinite(next.blood));
+  const next=act(restored,'wait60');assert.ok(next.elapsed>restored.elapsed&&Number.isFinite(next.phys.lostMl));
   assert.equal(bleedingRate(next),bleedingRate(g));
   // A pre-0.8 save on a gunshot case (no amputations) also restores.
   const legacy=structuredClone(fresh('gunshot'));for(const id of NEW)delete legacy.body[id];assert.ok(restoreGame(legacy));

@@ -3,11 +3,13 @@ import { sampleMonitor } from './monitor.js';
 import { INJURIES } from '../content/injuries.js';
 import { itemById } from '../content/items.js';
 import { circulation } from './selectors.js';
-import { stepThermal, hypothermicVF } from './physio-thermal.js';
+import { stepThermal, stepBurns, hypothermicVF } from './physio-thermal.js';
+import { stepHemostasis } from './physio-hemostasis.js';
+import { stepSensors } from './physio-sensors.js';
 import { stepPharmacology } from './physio-pharmacology.js';
 import { stepNeuro } from './physio-neuro.js';
 import { respire, hypoxicArrestDue } from './physio-respiration.js';
-import { applyInsult, bloodMirror, settleCirculation } from './physio-model.js';
+import { applyInsult, settleCirculation } from './physio-model.js';
 import { stepCirculation, arrestDue } from './physio-circulation.js';
 import { TUNING, CV_TUNING, THERMAL } from '../content/physiology-data.js';
 import { checkProtocol } from './protocol.js';
@@ -22,13 +24,15 @@ export function endArrest(g){g.arrest=null;settleCirculation(g);g.phys.reserve=M
 export function tick(g) {
   g.elapsed++;
   // Circulation in mL (physio-circulation.js); `leak` = nominal bleeding as EBV fraction per minute.
+  stepBurns(g);
   const leak=stepCirculation(g);
   // Heat balance against the scenario environment (physio-thermal.js); drugs, glucose and recovering deficits.
   stepThermal(g);
   stepPharmacology(g);
   stepNeuro(g);
-  // Oxygenation and ventilation (physio-respiration.js); g.oxygen mirrors SaO2 until P4.
+  // Oxygenation and ventilation (physio-respiration.js); then lactate, pH and coagulation (physio-hemostasis.js).
   respire(g);
+  stepHemostasis(g);
   if(g.phys.sao2<.6) applyInsult(g,{kind:'plasma',pts:TUNING.hypoxicStrainPts});
   if(g.oxygenUntil===g.elapsed) g.log.push({time:g.elapsed,text:'Butla tlenowa jest pusta. Dopływ tlenu ustał.'});
   for(const part of Object.values(g.body)) if(part.treatments.tourniquet!==undefined && g.elapsed-part.treatments.tourniquet===900) g.log.push({time:g.elapsed,text:'Staza jest założona od 15 minut. Oceń ukrwienie i czucie kończyny.'});
@@ -53,6 +57,6 @@ export function tick(g) {
   if(g.status==='active' && g.transportAt!==null && g.elapsed>=g.transportAt && !g.arrest) {
     g.status='saved';g.log.push({time:g.elapsed,text:'Zespół dociera na miejsce. Przekazujesz żywego pacjenta do dalszej opieki.'});
   }
-  g.blood=bloodMirror(g);
+  stepSensors(g);
   sampleMonitor(g);
 }

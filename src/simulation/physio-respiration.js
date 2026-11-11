@@ -39,6 +39,7 @@ const lerp=(v,t)=>v?v[0]+(v[1]-v[0])*t:0;
 export const bagging=g=>(g.ventilatingUntil>0&&g.ventilatingUntil>=g.elapsed)||Boolean(g.resuscitating);
 // Oxygen item = a non-rebreather on a fresh game cylinder; g.oxygenUntil mirrors the litres left for UI and protocol.
 export function connectOxygen(g){g.phys.o2={device:'nrb',flowLpm:R.flowLpm,litersLeft:R.cylinderL};g.oxygenUntil=g.elapsed+Math.round(R.cylinderL/R.flowLpm*60);}
+const bronchodilation=drugs=>{let r=0;for(const d of drugs)if(d.relievesTag==='bronchospasm')r=Math.max(r,d.reliefStrength||0);return Math.min(1,r);};
 const airwayInjury=g=>g.injuries.some(i=>INJURIES[i.type]?.tags.includes('airway')&&!g.airway);
 // Relief of one injury's respiratory components: matching drug, chest seal quality, airway-fluid/irrigation items.
 function reliefOf(g,injury,def,resp,drugs){
@@ -61,7 +62,8 @@ export function respire(g){
     const opened=g.airway&&def.tags.includes('airway');
     if(def.tags.includes('airway')&&!opened)airwayTagged=true;
     if(resp.obstruct&&!opened)obstruct=Math.min(obstruct,1-(1-lerp(resp.obstruct,t))*f);
-    if(resp.va)va*=1-(1-lerp(resp.va,t))*f;
+    // P4: a bronchodilator also eases the bronchospasm component of anaphylaxis (not its leak or vasoplegia).
+    if(resp.va)va*=1-(1-lerp(resp.va,t))*f*(def.tags.includes('anaphylaxis')?1-R.anaphylaxisBroncho*bronchodilation(drugs):1);
     if(resp.depress)depress*=1-(1-lerp(resp.depress,t))*f;
     if(resp.painVa)va*=1-(1-resp.painVa)*bounded(pain(g)/8,0,1)*f;
     aa+=lerp(resp.aa,t)*f;shunt+=lerp(resp.shunt,t)*f;
@@ -92,16 +94,15 @@ export function respire(g){
   const rr=dead?0:bounded((NORMALS.rr+.6*pain(g)+reflex*depress*depress)*depress*depress*depress,3,48);
   p.rr+=(rr-p.rr)*(dead?1:A_RR);
   p.lowSpo2S=!dead&&s<R.hypoxicArrestSpo2?p.lowSpo2S+1:0;
-  g.oxygen=p.sao2*100;
 }
 export const hypoxicArrestDue=g=>g.phys.lowSpo2S>=R.hypoxicArrestS;
 // Fresh respiratory state from a legacy SpO2 value (createGame, v2 migration, scoring fixtures); PaCO2 starts settled.
-export function initRespiration(g,oxygen=g.oxygen){
+export function initRespiration(g,oxygen=NORMALS.spo2){
   const p=g.phys,s=bounded((Number.isFinite(oxygen)?oxygen:NORMALS.spo2)/100,0,.995);
   Object.assign(p,{fio2:R.fio2.air,vaFrac:1,paco2:NORMALS.paco2,sao2:s,pao2:invSeveringhaus(s),spo2Shown:s*100,shunt:R.shunt0,aaExtra:0,o2Debt:0,rr:NORMALS.rr,storeFio2:R.fio2.air,lowSpo2S:0,respProg:{},o2:{device:'none',flowLpm:0,litersLeft:0}});
   syncOxygen(g);settleRespiration(g);return p;
 }
-// Saves written before P2 (v3 without the respiratory fields) gain them from the legacy SpO2 without a version bump.
+// Saves written before P2 (v3 without the respiratory fields) gain them from the legacy SpO2 mirror without a version bump.
 export function ensureRespiration(g){
   const p=g.phys,s=bounded((Number.isFinite(g.oxygen)?g.oxygen:NORMALS.spo2)/100,0,.995),fresh=p.sao2===undefined;
   p.sao2??=s;p.spo2Shown??=p.sao2*100;p.pao2??=invSeveringhaus(p.sao2);p.paco2??=NORMALS.paco2;p.fio2??=R.fio2.air;p.vaFrac??=1;p.shunt??=R.shunt0;p.aaExtra??=0;p.o2Debt??=0;p.rr??=NORMALS.rr;p.storeFio2??=R.fio2.air;p.lowSpo2S??=0;p.respProg??={};
@@ -111,9 +112,8 @@ export function ensureRespiration(g){
 const syncOxygen=g=>{const left=Math.max(0,(g.oxygenUntil||0)-g.elapsed);if(left>0)g.phys.o2={device:'nrb',flowLpm:R.flowLpm,litersLeft:left*R.flowLpm/60};};
 // PaCO2 and RR start at their targets; saturation keeps its given value (the scenario's presentation).
 function settleRespiration(g){
-  const p=g.phys,keep={sao2:p.sao2,pao2:p.pao2,spo2Shown:p.spo2Shown,storeFio2:p.storeFio2,respProg:{...p.respProg},o2:{...p.o2},o2Debt:p.o2Debt,lowSpo2S:p.lowSpo2S},oxygen=g.oxygen;
+  const p=g.phys,keep={sao2:p.sao2,pao2:p.pao2,spo2Shown:p.spo2Shown,storeFio2:p.storeFio2,respProg:{...p.respProg},o2:{...p.o2},o2Debt:p.o2Debt,lowSpo2S:p.lowSpo2S};
   for(let i=0;i<120;i++){respire(g);Object.assign(p,{sao2:keep.sao2,pao2:keep.pao2,spo2Shown:keep.spo2Shown,storeFio2:keep.storeFio2,respProg:{...keep.respProg},o2:{...keep.o2},o2Debt:keep.o2Debt,lowSpo2S:keep.lowSpo2S});}
-  g.oxygen=oxygen;
 }
 const NUM=n=>Number.isFinite(n)&&n>=0;
 export const RESP_KEYS=['fio2','vaFrac','paco2','sao2','pao2','spo2Shown','shunt','aaExtra','o2Debt','rr','storeFio2','lowSpo2S'];

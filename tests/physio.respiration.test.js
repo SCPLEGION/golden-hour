@@ -122,7 +122,7 @@ test('GCS ≤ 8 without airway support adds soft-tissue obstruction (vaFrac × .
 
 test('legacy oxygen insults drop SpO2 now and leave a fading desaturation debt',()=>{
   const g=fresh(),before=spo2(g);applyInsult(g,{kind:'oxygen',pts:-12});
-  assert.ok(Math.abs(spo2(g)-(before-12))<1e-9);assert.equal(g.oxygen,spo2(g));assert.ok(Math.abs(g.phys.o2Debt-.12)<1e-12);
+  assert.ok(Math.abs(spo2(g)-(before-12))<1e-9);assert.equal(g.oxygen,undefined,'no mirror (P4)');assert.ok(Math.abs(g.phys.o2Debt-.12)<1e-12);
   run(g,120);assert.ok(spo2(g)<before-9&&g.phys.o2Debt<.12&&g.phys.o2Debt>.1);
   const onO2=act(g,'oxygen','head');assert.ok(spo2(advanceTime(onO2,60))>spo2(advanceTime(g,80))+4,'oxygen halves the debt');
 });
@@ -137,10 +137,11 @@ test('monitor: SpO2 is averaged (τ 6 s), RR comes from the model, GCS/AVPU/EtCO
 });
 
 test('saves: a v3 save without respiratory fields is defaulted from its SpO2; v2 oxygen points become PaO2',()=>{
-  const g=advanceTime(scenario('asthma'),30),old=structuredClone(g);
+  // A pre-P2 save still carried the legacy SpO2 mirror `oxygen`.
+  const g=advanceTime(scenario('asthma'),30),old={...structuredClone(g),oxygen:g.phys.sao2*100};
   for(const k of ['fio2','vaFrac','paco2','sao2','pao2','spo2Shown','shunt','aaExtra','o2Debt','rr','storeFio2','lowSpo2S','respProg','o2'])delete old.phys[k];
   const restored=restoreGame(JSON.stringify(old));
-  assert.ok(restored);assert.ok(Math.abs(restored.phys.sao2*100-g.oxygen)<1e-9);assert.ok(Math.abs(severinghaus(restored.phys.pao2)-restored.phys.sao2)<1e-6);
+  assert.ok(restored);assert.ok(Math.abs(restored.phys.sao2*100-old.oxygen)<1e-9);assert.equal(restored.oxygen,undefined);assert.ok(Math.abs(severinghaus(restored.phys.pao2)-restored.phys.sao2)<1e-6);
   assert.ok(restored.phys.paco2>50,'PaCO2 settles to the bronchospasm');assert.ok(advanceTime(restored,60).status==='active');
   const withO2=structuredClone(old);withO2.oxygenUntil=withO2.elapsed+300;assert.ok(Math.abs(restoreGame(withO2).phys.o2.litersLeft-75)<1e-9);
   for(const mutate of [s=>{s.phys.sao2=2;},s=>{s.phys.o2={device:'tank',flowLpm:15,litersLeft:1};},s=>{s.phys.respProg={x:-1};},s=>{s.phys.paco2='x';}]){const bad=structuredClone(g);mutate(bad);assert.equal(restoreGame(JSON.stringify(bad)),null,mutate.toString());}

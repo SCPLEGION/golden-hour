@@ -2,8 +2,8 @@
 // / (m·3.47 kJ/kg/°C). Qloss = BSA (Mosteller)·h·(33 − env)·(1 + 0.1·wind)·(1 + 3·wet)·exposure·(1 − insulation).
 // g.temperature stays the core temperature (saved field); the environment comes from the scenario. Game balance on
 // textbook relations (docs/PHYSIOLOGY-PLAN.md), not clinical guidance.
-import { THERMAL as T, DEFAULT_ENVIRONMENT, NORMALS, RESP_TUNING } from '../content/physiology-data.js';
-import { INJURIES } from '../content/injuries.js';
+import { THERMAL as T, DEFAULT_ENVIRONMENT, NORMALS, RESP_TUNING, BURN_TUNING as BT } from '../content/physiology-data.js';
+import { injuryPhysiology, segmentTbsa } from '../content/injury-physiology.js';
 import { supportDefinitions, bounded } from './modifiers.js';
 import { activeDrugDefinitions } from './selectors.js';
 import { hbOf, scaleOf } from './physio-model.js';
@@ -12,6 +12,23 @@ const NUM=(n,min,max)=>Number.isFinite(n)&&n>=min&&n<=max;
 export const validEnvironment=e=>Boolean(e&&typeof e==='object'&&NUM(e.tempC,-40,50)&&NUM(e.wet,0,1)&&NUM(e.wind,0,30));
 export const environmentOf=scenario=>validEnvironment(scenario?.environment)?{...DEFAULT_ENVIRONMENT,...scenario.environment}:{...DEFAULT_ENVIRONMENT};
 const anhidrosis=g=>g.injuries.some(i=>i.type==='heatStroke');
+// Burns (P4): %TBSA of one injury = segment TBSA × burned share; a spreading (chemical) burn progresses until an item in
+// `stoppedBy` is applied to it. Plasma leak by %TBSA, evaporative heat loss by %TBSA.
+export function injuryTbsa(g,i){
+  const b=injuryPhysiology(i.type)?.burn;if(!b)return 0;
+  const t=b.tauS?g.phys.burnProg?.[i.id]||0:0;
+  return segmentTbsa(i.part)*(b.frac[0]+(b.frac[1]-b.frac[0])*t);
+}
+export const burnTbsa=g=>{let n=0;for(const i of g.injuries)n+=injuryTbsa(g,i);return Math.min(100,n);};
+export function burnLeakMlMin(g){
+  let pct=0;for(const i of g.injuries){const b=injuryPhysiology(i.type)?.burn;if(b)pct+=injuryTbsa(g,i)*(b.superficial?BT.superficialLeak:1);}
+  return pct*BT.leakMlKgPctDay*BT.earlyFactor*g.profile.massKg/1440;
+}
+export const burnSpreading=(g,i)=>{const b=injuryPhysiology(i.type)?.burn;return Boolean(b?.tauS&&!(b.stoppedBy||[]).some(id=>i.treatments?.[id]!==undefined));};
+export function stepBurns(g){
+  const p=g.phys;
+  for(const i of g.injuries)if(burnSpreading(g,i)){const t=p.burnProg[i.id]||0;p.burnProg[i.id]=Math.min(1,t+(1-t)/injuryPhysiology(i.type).burn.tauS);}
+}
 // O2 delivery relative to normal (cardiac output × Hb × SaO2), the scale of metabolic heat.
 function deliveryOf(g){
   const p=g.phys;if(g.arrest)return g.resuscitating?.25:.1;
@@ -31,7 +48,8 @@ export function heatFlows(g){
   const exposure=1+T.examExposure*examined,insulation=g.warm?T.blanketInsulation:0;
   const loss=bsaOf(g.profile)*T.hW*(T.skinC-env.tempC)*(1+T.windK*env.wind)*(1+T.wetK*env.wet)*exposure*(1-insulation);
   const sweat=anhidrosis(g)||g.arrest?0:Math.min(T.sweatMaxW,Math.max(0,tc-T.sweatStartC)*T.sweatWPerC);
-  let burns=0;for(const i of g.injuries)if(INJURIES[i.type]?.tags.includes('burn'))burns+=T.burnW;
+  let burns=0;const bsaRel=bsaOf(g.profile)/1.9;
+  for(const i of g.injuries){const pct=injuryTbsa(g,i);if(pct>0)burns+=T.burnWPerPct*pct*bsaRel*(Object.keys(i.treatments||{}).length?T.burnDressed:1);}
   const active=g.supports?.length?supportDefinitions(g).reduce((n,s)=>n+(s.heatW||0),0):0;
   const fluid=(p.infusedMl||0)*T.waterKJ*(tc-T.fluidC); // J this second (mL × 4.18 J/mL/°C × ΔT)
   return {met,shiver,loss,sweat,burns,active,fluid,net:met+shiver+active-loss-sweat-burns-fluid};

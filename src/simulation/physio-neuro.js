@@ -2,10 +2,11 @@
 // glucose, core temperature, drug sedation and injury deficits (an unconscious presentation stays at GCS 6 until the
 // airway is opened; recovering deficits such as the post-ictal state fade with their own τ). AVPU follows the GCS.
 // Glucose is held in mmol/L. Game balance on textbook relations (docs/PHYSIOLOGY-PLAN.md), not clinical guidance.
-import { GLUCOSE, NEURO } from '../content/physiology-data.js';
+import { GLUCOSE, NEURO, METABOLIC } from '../content/physiology-data.js';
 import { INJURIES } from '../content/injuries.js';
 import { NEURO_INJURY } from '../content/injury-physiology.js';
-import { activeDrugDefinitions } from './selectors.js';
+import { activeDrugDefinitions, pain } from './selectors.js';
+import { bounded } from './modifiers.js';
 const band=(table,v)=>{for(const [lo,d] of table)if(v>=lo)return d;return table.at(-1)[1];};
 export const glucoseDeficit=mmol=>band(NEURO.glucose,mmol);
 export const coldDeficit=tc=>band(NEURO.cold,tc);
@@ -40,11 +41,13 @@ export const avpuOf=gcs=>gcs>=14?'A':gcs>=12?'V':gcs>=9?'P':'U';
 const A_GLU=1-Math.exp(-1/GLUCOSE.tauS),A_HYPO=1-Math.exp(-1/GLUCOSE.hypoTauS);
 const ALPHA=new Map();const alphaOf=tau=>{let a=ALPHA.get(tau);if(a===undefined)ALPHA.set(tau,a=1-Math.exp(-1/tau));return a;};
 export const hypoglycaemic=g=>g.injuries.some(i=>INJURIES[i.type]?.tags.includes('glucoseLow'));
-// One second: the glucose baseline drifts (slowly falling in hypoglycaemia), absorbed glucose adds on top;
-// recovering injury deficits progress.
+// Stress 0..1 (P4): haemorrhage beyond 10% EBV or severe pain → mild stress hyperglycaemia (up to +2 mmol/L).
+export const stressOf=g=>bounded(Math.max((g.phys.lostMl/g.profile.ebvMl-.1)/.3,(pain(g)-4)/6),0,1);
+// One second: the glucose baseline drifts (slowly falling in hypoglycaemia, rising a little under stress), absorbed
+// glucose adds on top; recovering injury deficits progress.
 export function stepNeuro(g){
   const p=g.phys,hypo=hypoglycaemic(g);
-  p.glucoseBase+=((hypo?GLUCOSE.hypoFloor:GLUCOSE.normal)-p.glucoseBase)*(hypo?A_HYPO:A_GLU);
+  p.glucoseBase+=((hypo?GLUCOSE.hypoFloor:GLUCOSE.normal+METABOLIC.stressGlucose*stressOf(g))-p.glucoseBase)*(hypo?A_HYPO:A_GLU);
   p.glucose=p.glucoseBase+activeDrugDefinitions(g).reduce((n,d)=>n+(d.glucoseRise||0),0);
   for(const i of g.injuries){const n=NEURO_INJURY[i.type];if(n?.tauS&&(g.airway||!INJURIES[i.type].unconscious)){const t=p.neuroProg[i.id]||0;p.neuroProg[i.id]=t+(1-t)*alphaOf(n.tauS);}}
 }

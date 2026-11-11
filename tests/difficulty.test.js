@@ -33,7 +33,7 @@ test('restoreGame defaults and validates difficulty',()=>{
   assert.equal(restoreGame({...make('normal'),difficulty:'nightmare'}),null);
 });
 test('hard bleeds faster than easy',()=>{
-  const lose=d=>{let g=make(d);const start=g.blood;g=act(g,'wait60');g=act(g,'wait60');return start-g.blood;};
+  const lose=d=>{let g=make(d);const start=g.phys.lostMl;g=act(g,'wait60');g=act(g,'wait60');return g.phys.lostMl-start;};
   assert.ok(lose('hard')>lose('easy'));
 });
 test('score multiplier is applied and clamped',()=>{

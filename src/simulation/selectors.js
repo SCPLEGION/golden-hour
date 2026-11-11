@@ -8,6 +8,9 @@ import { TOURNIQUET_PROCEDURE } from '../content/procedures.js';
 import { injuryPhysiology } from '../content/injury-physiology.js';
 import { clinicalSnapshot, scaleOf, noise } from './physio-model.js';
 import { drugDefinitions, drugEffects } from './physio-pharmacology.js';
+import { clotFactor, coagBleedFactor } from './physio-hemostasis.js';
+import { spo2Signal } from './physio-sensors.js';
+import { TUNING } from '../content/physiology-data.js';
 // Amputation injuries remove their segment and every more distal segment of the same limb.
 // Per-state memo for hot per-tick selectors; the key lists everything that may change in place.
 export function memoized(store,g,key,compute){const hit=store.get(g);if(hit&&hit.key.length===key.length&&hit.key.every((v,i)=>v===key[i]))return hit.value;const value=compute();store.set(g,{key,value});return value;}
@@ -64,7 +67,9 @@ export function injuryBleeding(g, injury) {
   return rate*woundModifiers(injury).bleedingMultiplier;
 }
 // Total nominal bleeding in mL/min (difficulty and drugs included).
-export function bleedingRate(g) { return g.injuries.reduce((sum,i)=>sum+injuryBleeding(g,i),0) * difficultyById(g.difficulty).bleedMultiplier * activeDrugDefinitions(g).reduce((n,d)=>n*(d.bleedingMultiplier??1),1); }
+export function bleedingRate(g) { return g.injuries.reduce((sum,i)=>sum+injuryBleeding(g,i),0) * difficultyById(g.difficulty).bleedMultiplier * TUNING.bleedScale * activeDrugDefinitions(g).reduce((n,d)=>n*(d.bleedingMultiplier??1),1); }
+// Present bleeding of one wound in mL/min at MAP 90: treatment × coagulopathy × a holding clot (P4).
+export const woundBleeding=(g,injury)=>injuryBleeding(g,injury)*coagBleedFactor(g)*clotFactor(g,injury);
 // A splint immobilises its own segment and the adjacent ones of the same limb.
 export const splinted=(g,id)=>{const map=memoized(SPLINTS,g,structureKey(g),()=>new Map());if(!map.has(id))map.set(id,computeSplinted(g,id));return map.get(id);};
 const computeSplinted=(g,id)=>{const p=bodyPart(id),missing=missingSegments(g);return Boolean(p?.limb&&BODY_PARTS.some(s=>splintReach(s.id,p.id)&&!missing.includes(s.id)&&g.body[s.id]?.treatments.splint!==undefined));};
@@ -91,15 +96,18 @@ export function condition(g) {
   if(s.perfusion<65 || s.spo2<88) return 'Blady, wyraźnie osłabiony';
   return 'Reaguje na głos';
 }
-// Monitor reading: HR/BP/RR/GCS from g.phys via the snapshot, SpO2 averaged (τ 6 s), deterministic waves and hashed noise.
+// Monitor reading: HR/RR/GCS from g.phys via the snapshot, deterministic waves and hashed noise. BP is the last NIBP cuff
+// reading (physio-sensors.js, every 180 s or on demand). SpO2 averaged (τ 6 s); without a signal `spo2` is '—' with
+// `spo2Note` "brak sygnału" while `oxygen` keeps the last valid number (trend history stays finite).
 export function vitals(g) {
   const s=clinicalSnapshot(g),c=s.perfusion,t=g.elapsed,dead=g.arrest||g.status==='lost';
   const respiratoryWave=Math.sin(t*1.27),slowWave=Math.sin(t*.24+1.1);
   const variability=1+(100-c)/100;
   const pulse=dead?0:Math.round(s.hr+respiratoryWave*1.7*variability+slowWave*1.3+noise(g,1));
-  const systolic=dead?0:Math.round(s.sbp+respiratoryWave*2+slowWave+noise(g,2));
-  const diastolic=dead?0:Math.round(s.dbp+slowWave*1.4+noise(g,3)*.6);
-  return {time:t,pulse,pressure:dead?'—':`${systolic}/${diastolic}`,systolic,diastolic,map:dead?0:Math.round(s.map),oxygen:Math.round(bounded(g.phys.spo2Shown+(dead?0:respiratoryWave*.25),0,100)*10)/10,breathing:dead?0:Math.round(Math.max(3,s.rr+slowWave*.8)*10)/10,gcs:s.gcs,avpu:s.avpu,etco2:Math.round(s.etco2),temperature:s.tempC.toFixed(1),pain:isConscious(g)?`${pain(g)}/10`:'Brak kontaktu',glucose:s.glucose,rhythm:g.status==='lost'?'Asystolia':g.arrest?RHYTHM_LABEL[g.arrest.rhythm]||'Asystolia':'Rytm zatokowy'};
+  const cuff=g.phys.nibp??{at:t,sys:Math.round(s.sbp),dia:Math.round(s.dbp),map:Math.round(s.map)};
+  const systolic=dead?0:cuff.sys,diastolic=dead?0:cuff.dia,signal=spo2Signal(g);
+  const oxygen=Math.round(bounded((signal?g.phys.spo2Shown+respiratoryWave*.25:g.phys.spo2Last??g.phys.spo2Shown),0,100)*10)/10;
+  return {time:t,pulse,pressure:dead||!systolic?'—':`${systolic}/${diastolic}`,systolic,diastolic,map:dead?0:cuff.map,pressureAt:cuff.at,oxygen,spo2:signal?oxygen:'—',spo2Note:signal?'%':'brak sygnału',breathing:dead?0:Math.round(Math.max(3,s.rr+slowWave*.8)*10)/10,gcs:s.gcs,avpu:s.avpu,etco2:Math.round(s.etco2),temperature:s.tempC.toFixed(1),pain:isConscious(g)?`${pain(g)}/10`:'Brak kontaktu',glucose:s.glucose,rhythm:g.status==='lost'?'Asystolia':g.arrest?RHYTHM_LABEL[g.arrest.rhythm]||'Asystolia':'Rytm zatokowy'};
 }
 export const RHYTHM_LABEL={vf:'Migotanie komór',pea:'PEA — bez tętna',asystole:'Asystolia'};
 // Thresholds as EBV fraction per minute (legacy .02 / .002 points per second).
@@ -107,7 +115,7 @@ const bleedingLabel=f=>f>.006?'Krwawi':f>.0006?'Niewielkie sączenie':'Krwawieni
 export function visibleInjuries(g,partId) { return g.injuries.filter(i=>i.part===partId && (INJURIES[i.type].visible || g.body[partId].examinedAt!==null)); }
 export function bodyObservation(g,partId) {
   const injuries=visibleInjuries(g,partId), part=g.body[partId];
-  return injuries.map(i=>({name:INJURIES[i.type].name, text:(part.examinedAt!==null?INJURIES[i.type].finding:INJURIES[i.type].visible)+(activeDrugDefinitions(g).some(drug=>INJURIES[i.type].tags.includes(drug.relievesTag))?' Objawy są łagodzone przez aktywny lek.':''), bleeding:INJURIES[i.type].tags.includes('external') && INJURIES[i.type].bleed>0 ? bleedingLabel(injuryBleeding(g,i)/g.profile.ebvMl):null}));
+  return injuries.map(i=>({name:INJURIES[i.type].name, text:(part.examinedAt!==null?INJURIES[i.type].finding:INJURIES[i.type].visible)+(activeDrugDefinitions(g).some(drug=>INJURIES[i.type].tags.includes(drug.relievesTag))?' Objawy są łagodzone przez aktywny lek.':''), bleeding:INJURIES[i.type].tags.includes('external') && injuryPhysiology(i.type)?.rate>0 ? bleedingLabel(woundBleeding(g,i)/g.profile.ebvMl):null}));
 }
 export function examination(g,partId) {
   const injuries=g.injuries.filter(i=>i.part===partId);

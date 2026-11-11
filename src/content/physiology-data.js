@@ -20,8 +20,8 @@ export const HEMORRHAGE_CLASSES = [
 export const hemorrhageClass=lossFrac=>HEMORRHAGE_CLASSES.find(c=>lossFrac<c.upTo)||HEMORRHAGE_CLASSES.at(-1);
 export const TUNING = {
   refEbvMl:5250,            // G: 75 kg × 70 mL/kg; legacy content was balanced for this patient
-  legacyPtMlFrac:.005,      // G: one legacy blood point = 0.5% EBV (blood 100 → 0 = 50% EBV)
-  legacyMlMinPerPtS:1575,   // G: 1 pt/s × 0.5% × 5250 mL × 60 s
+  legacyPtMlFrac:.005,      // G: one legacy blood point = 0.5% EBV (protocol consequences, v2 saves)
+  bleedScale:1,             // G: the single global knob on every bleeding rate (P4: realistic table, kept at 1)
   hypoxicStrainPts:.08,     // G: legacy "oxygen < 60" circulatory strain per second, as plasma deficit
   supportCapPts:12,         // G: cap of drug/support circulation bonuses (legacy points)
   bagMl:500,                // R: one crystalloid bag
@@ -46,6 +46,8 @@ export const CV_TUNING = {
   tauHrS:6, tauSvrS:15,     // reflex lag (τ ≥ 5 s)
   ppExp:.5,                 // PP = PP0·(SV/SV0)^ppExp
   pfMin:.1, pfMax:1.5,      // pressure factor range for bleeding
+  coldHrFromC:35.5, coldHrPerC:.07, coldHrMin:.4, // R: hypothermic bradycardia, HR −7%/°C below 35.5 °C (30 °C ≈ 45–50 bpm)
+  painSvr:.006,             // G: sympathetic tone of pain, SVR × (1 + .006·pain)
   reserveCrit:.85,          // coronary supply DBP/70 × Hb rel. below this drains the reserve
   reserveDrainS:40,         // full drain at zero supply
   reserveRecoverS:600,
@@ -73,7 +75,8 @@ export const RESP_TUNING = {
   insultTauS:1800,          // G: legacy "oxygen −N" consequence → SpO2 −N now and a desaturation debt of N points
                             //    (halved on high FiO2) fading over ~30 min — linear like the legacy points, no cliff
   hypoxicArrestSpo2:50, hypoxicArrestS:30, // R/G: SpO2 < 50 for 30 s → arrest
-  reserveSpo2:.96           // coronary supply term × min(1, SaO2/.96)
+  reserveSpo2:.96,          // coronary supply term × min(1, SaO2/.96)
+  anaphylaxisBroncho:.6     // G (P4): a bronchodilator relieves up to 60% of the anaphylactic bronchospasm (ventilation component)
 };
 // Pharmacology (P3, simulation/physio-pharmacology.js). One compartment with first-order absorption from a depot,
 // first-order elimination and an effect site with lag ke0; effect = Emax·Ce^n/(EC50^n + Ce^n). Ce is normalised so
@@ -89,20 +92,21 @@ export const HALF_LIFE_MIN = {veryShort:10, short:20, medium:60, long:150, veryL
 // Channels and the item field each one scales (`emax` absent → the item's legacy value is the single-porcja peak):
 // analgesia → painRelief, relief → strength of `relievesTag` relief 0..1, respDepression → respiratory burden (feeds the
 // central depression of physio-respiration), antagonism → respiratoryRelief of the opioid tag 0..1, sedation → GCS points,
-// hr → pulseIncrease bpm, volume → circulationSupport (virtual volume), oxygen → oxygenSupport, bleeding →
+// hr → pulseIncrease bpm, svr → SVR × (1 + value) (explicit emax), volume → circulationSupport (virtual volume), oxygen → oxygenSupport, bleeding →
 // bleedingMultiplier (TXA antifibrinolysis below 1, ibuprofen above), glucose → mmol/L rise.
 // The first channel decides whether a drug is "active" (> 10% of its Emax) and the support-panel bar.
 export const PHARMACOLOGY = {
-  morphine:{half:'long',ke0HalfS:600,channels:{analgesia:{ec50:.35,n:1.5},respDepression:{ec50:2.2,n:2},sedation:{emax:7,ec50:2.6,n:3}}},
-  fentanyl:{half:'short',ke0HalfS:180,channels:{analgesia:{ec50:.35,n:1.5},respDepression:{ec50:1.8,n:2},sedation:{emax:7,ec50:2.3,n:3}}},
-  ketamine:{half:'veryShort',ke0HalfS:60,channels:{analgesia:{ec50:.35,n:1.5},hr:{ec50:.5,n:1},respDepression:{ec50:3,n:2},sedation:{emax:8,ec50:2.2,n:3}}},
+  morphine:{half:'long',ke0HalfS:180,channels:{analgesia:{ec50:.35,n:1.5},respDepression:{ec50:2.2,n:2},sedation:{emax:7,ec50:2.6,n:3}}},
+  fentanyl:{half:'veryShort',ke0HalfS:180,channels:{analgesia:{ec50:.35,n:1.5},respDepression:{ec50:1.8,n:2},sedation:{emax:7,ec50:2.3,n:3}}},
+  ketamine:{half:'veryShort',ke0HalfS:60,channels:{analgesia:{ec50:.35,n:1.5},hr:{ec50:.5,n:1},svr:{emax:.12,ec50:.5,n:1.5},respDepression:{ec50:3,n:2},sedation:{emax:8,ec50:2.2,n:3}}},
   paracetamol:{half:'long',ke0HalfS:600,channels:{analgesia:{ec50:.4,n:1.5}}},
   ibuprofen:{half:'long',ke0HalfS:600,channels:{analgesia:{ec50:.4,n:1.5},bleeding:{ec50:.4,n:1}}},
   metamizole:{half:'long',ke0HalfS:600,channels:{analgesia:{ec50:.4,n:1.5}}},
   txa:{half:'long',ke0HalfS:120,channels:{bleeding:{ec50:.15,n:1}}},
-  salbutamol:{half:'veryLong',ke0HalfS:120,channels:{relief:{ec50:.3,n:1.5},hr:{ec50:.8,n:1.5}}},
+  salbutamol:{half:'medium',ke0HalfS:120,channels:{relief:{ec50:.3,n:1.5},hr:{ec50:.8,n:1.5}}},
   ipratropium:{half:'veryLong',ke0HalfS:900,channels:{relief:{ec50:.3,n:1.5},hr:{ec50:.8,n:1.5}}},
-  adrenaline:{half:'veryShort',ke0HalfS:60,channels:{relief:{ec50:.3,n:1.5},volume:{ec50:.5,n:1.5},hr:{ec50:.6,n:1.5}}},
+  // P4: vasoconstriction as an SVR channel (× (1 + effect)) instead of the P1 virtual volume.
+  adrenaline:{half:'veryShort',ke0HalfS:60,channels:{relief:{ec50:.3,n:1.5},svr:{emax:.35,ec50:.5,n:1.5},hr:{ec50:.6,n:1.5}}},
   naloxone:{half:'short',ke0HalfS:60,channels:{antagonism:{ec50:.25,n:2}}},
   ondansetron:{half:'veryLong',ke0HalfS:300,channels:{relief:{ec50:.3,n:1.5},analgesia:{ec50:.4,n:1.5}}},
   // R: corticosteroid effects need hours (gene transcription): modelled as a 90-minute lag — nothing within one run.
@@ -127,11 +131,48 @@ export const THERMAL = {
   windK:.1, wetK:3, examExposure:.4, // examining every segment exposes the patient (+40%)
   blanketInsulation:.65,    // R/G
   sweatStartC:37.2, sweatWPerC:60, sweatMaxW:250, // G: evaporative cooling while sweating (heat stroke: anhidrosis)
-  burnW:10,                 // G: minimal evaporative loss per burn (no %TBSA data until P4)
+  burnWPerPct:2,            // R: evaporation from an open burn ≈ 2.5–3 L/m² burned/day ≈ 2 W per %TBSA (BSA 1.9 m²)
+  burnDressed:.6,           // G: a covered burn (gel, dressing) evaporates less
   fluidC:20, waterKJ:4.18,  // R: bags at room temperature, 4.18 kJ/L/°C
   minC:20, maxC:44,
   vfC:28, roscC:30          // R: < 28 °C → VF; defibrillation succeeds only above 30 °C
 };
+// Body surface by segment (% TBSA, rule of nines spread over the 31 segments; sums to 100; side prefix stripped).
+export const TBSA = {head:3.5,face:3.5,neck:2,chest:9,abdomen:6,pelvis:4,back:18,
+  Shoulder:1,UpperArm:2.5,Elbow:.5,Forearm:2,Wrist:.5,Hand:2.5,Hip:1.5,Thigh:8,Knee:1,Shin:5,Ankle:.5,Foot:2};
+// Burns (P4): plasma leak R ≈ 4 mL/kg/%TBSA per 24 h (half in the first 8 h; G: the early half-day rate), superficial burns ×.4.
+export const BURN_TUNING = {leakMlKgPctDay:4, earlyFactor:1.5, superficialLeak:.4};
+// Lethal triad and haemostasis (P4, simulation/physio-hemostasis.js).
+export const HEMOSTASIS = {
+  clotFlowMlMin:30,         // R/G: a wound clot grows only while its residual flow is below ~30 mL/min (75 kg, × EBV/5250)
+  clotTauS:{venous:240,mixed:240,capillary:300,arterial:480}, // R: venous ~4 min, arterial ~8 min, capillary ~5 min
+  capillaryCoag:.7,         // capillary oozing self-clots only while coag > .7
+  arterialClotMap:60,       // R (plan): an arterial wound does not clot while MAP > 60
+  clotHold:.8, clotEffect:.9, // clot ≥ .8 holds: flow × (1 − .9·clot)
+  holdMarginMmHg:15,        // a holding clot withstands MAP up to (MAP at formation) + 15·clot
+  rebleedKeep:.5,           // MAP above that → the clot halves and the wound bleeds again
+  washTauS:240,             // a soft clot washes out under flow at or above the threshold
+  coagBleedGain:1,          // G: bleeding of every open source × (1 + gain·(1 − coag))
+  coldFromC:36, coldPerC:.1, // R (plan): −10%/°C below 36 °C
+  acidPh:7.2, acidPerPh:2.5, // R/G: below pH 7.2, −25% per 0.1
+  consumptionFrom:.3, consumptionPer:1.5, // R/G: consumption above 30% EBV loss
+  coagMin:.15,
+  txaClotGain:2             // G: antifibrinolysis (TXA bleeding channel) speeds clot growth × (1 + 2·effect)
+};
+export const METABOLIC = {
+  lactate0:1,               // R: mmol/L
+  do2Crit:.6,               // R: anaerobic threshold ≈ 55–60% of normal O2 delivery
+  lacPerMin:.6,             // G: mmol/L/min at zero delivery, linear up to the threshold (class IV ≈ +5–10 mmol/L/h)
+  tourniquetLacMin:.01,     // G: ischaemic limb under a tourniquet adds a little systemic lactate
+  clearHalfMin:60,          // R: clearance t½ ~60 min once perfused (full above 80% delivery)
+  do2Clear:.8,
+  initialPerLoss:6,         // G: lactate at arrival 1 + 6·(loss − 15%) — the minutes of bleeding before the call
+  phPerLac:.03, phPerCo2:.008, // R (plan): pH ≈ 7.40 − 0.03·(lactate − 1) − 0.008·(PaCO2 − 40)
+  phMin:6.6, phMax:7.7,
+  stressGlucose:2           // R: mild stress hyperglycaemia, up to +2 mmol/L with shock or severe pain
+};
+// Monitor sensors (P4, simulation/physio-sensors.js).
+export const SENSORS = {nibpCycleS:180, spo2MinMap:50, spo2MinC:33};
 // Default environment when a scenario declares none (G).
 export const DEFAULT_ENVIRONMENT = {tempC:18,wet:0,wind:0};
 // Glucose (P3): mmol/L. R: normal 4–7, < 3.9 hypoglycaemia, < 3.0 neuroglycopenia, < 2.2 coma.

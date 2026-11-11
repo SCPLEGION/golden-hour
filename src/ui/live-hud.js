@@ -21,7 +21,7 @@ export function updateLiveHUD(root,g,{suspended=false}={}){
   const state=g.status!=='active'?'Zakończono':g.paused||suspended?'Pauza':g.monitoring?'Na żywo':'Odczyt zatrzymany';
   root.querySelectorAll('[data-monitor-status]').forEach(el=>el.textContent=state);
   root.querySelectorAll('[data-monitor-led]').forEach(el=>el.classList.toggle('on',live));
-  root.querySelectorAll('[data-monitor-caption]').forEach(el=>el.textContent=!g.monitoring?'Monitor odłączony — ostatni zapis.':g.paused||suspended?'Zegar automatyczny wstrzymany.':'Ciągły pomiar · historia ostatnich 60 sekund.');
+  root.querySelectorAll('[data-monitor-caption]').forEach(el=>el.textContent=!g.monitoring?'Monitor odłączony — ostatni zapis.':g.paused||suspended?'Zegar automatyczny wstrzymany.':'Ciągły pomiar · ciśnienie (NIBP) co 3 min · historia 60 s.');
   root.querySelector('.vitals')?.classList.toggle('monitor-off',!g.monitoring);
   const journal=root.querySelector('.log ol');
   if(journal&&journal.dataset.count!==String(g.log.length)){journal.innerHTML=[...g.log].reverse().map(e=>`<li><time>${time(e.time)}</time><span>${escape(e.text)}</span></li>`).join('');journal.dataset.count=String(g.log.length);}

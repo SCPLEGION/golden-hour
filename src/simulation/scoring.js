@@ -5,16 +5,23 @@ import { clinicalSnapshot } from './physio-model.js';
 const clamp=(v,min=0,max=1)=>Math.min(max,Math.max(min,Number.isFinite(v)?v:min));
 const GRADES=[['S',90],['A',75],['B',60],['C',40]];
 const pl=(n,d=1)=>n.toFixed(d).replace('.',',');
-// Handover state from the clinical snapshot: shock index HR/SBP (≤0.7 full, ≥1.3 zero) 10 pts,
-// SpO2 (≥94 full, ≤80 zero) 7.5 pts, temperature (36–38 full, 0 at ≤34 or ≥40) 7.5 pts.
-function handover(g){
-  const s=clinicalSnapshot(g),loss=`Utrata krwi ~${pl(s.lostMl/1000)} l (klasa ${s.hemorrhageLabel}).`;
-  if(g.status==='lost')return {points:0,decent:false,note:`Brak oznak życia. ${loss}`};
+// Handover state (P4) from the clinical snapshot alone: perfusion by shock index HR/SBP (≤ 0.7 full, ≥ 1.3 zero; 10 pts),
+// oxygenation SpO2 (≥ 94 full, ≤ 80 zero; 7.5 pts) and secondary insults (7.5 pts) = temperature (36–38 full, zero at
+// ≤ 34 / ≥ 40) × GCS (15 full, halved at ≤ 8) × lactate (≤ 2 full, halved at ≥ 6 mmol/L). `decent` needs half the points
+// and neither perfusion nor oxygenation fully failed (decompensated shock is not a decent handover).
+export function handoverQuality(s){
   const index=s.sbp>0?s.hr/s.sbp:Infinity;
-  const perfusion=clamp((1.3-index)/.6),oxygen=clamp((s.spo2-80)/14),temperature=s.tempC<36?clamp((s.tempC-34)/2):clamp((40-s.tempC)/2);
-  const points=Math.round(10*perfusion+7.5*oxygen+7.5*temperature);
-  // At least half the points, and neither perfusion nor oxygenation fully failed (decompensated shock is not a decent handover).
-  return {points,decent:points>=12.5&&perfusion>0&&oxygen>0,note:`Indeks wstrząsowy ${Number.isFinite(index)?pl(index,2):'—'}, SpO₂ ${Math.round(s.spo2)}%, ${pl(s.tempC)} °C. ${loss}`};
+  const perfusion=clamp((1.3-index)/.6),oxygen=clamp((s.spo2-80)/14);
+  const temperature=s.tempC<36?clamp((s.tempC-34)/2):clamp((40-s.tempC)/2),gcs=.5+.5*clamp((s.gcs-8)/7),lactate=.5+.5*clamp((6-(s.lactate??1))/4);
+  const points=Math.round(10*perfusion+7.5*oxygen+7.5*temperature*gcs*lactate);
+  return {points,index,perfusion,oxygen,secondary:temperature*gcs*lactate,decent:points>=12.5&&perfusion>0&&oxygen>0};
+}
+const lossNote=s=>`Utrata krwi ok. ${pl(s.lostMl/1000)} l (klasa ${s.hemorrhageLabel})`;
+function handover(g){
+  const s=clinicalSnapshot(g);
+  if(g.status==='lost')return {points:0,decent:false,note:`Brak oznak życia. ${lossNote(s)}.`};
+  const q=handoverQuality(s);
+  return {...q,note:`${lossNote(s)}, SpO₂ ${Math.round(s.spo2)}%, ${pl(s.tempC)} °C, GCS ${s.gcs}, mleczany ${pl(s.lactate??1)} mmol/l, indeks wstrząsowy ${Number.isFinite(q.index)?pl(q.index,2):'—'}.`};
 }
 // Pure end-of-run score. Economy and call speed count only for a patient handed over alive in at least half-good state.
 export function scoreRun(g) {

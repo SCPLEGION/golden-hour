@@ -32,7 +32,7 @@ test('state part uses shock index, SpO2 and temperature from the snapshot and na
   assert.ok(good.points>=22&&good.max===25,`${good.points}`);
   assert.ok(shocked.points<=good.points-8,`${shocked.points}`);
   for(const worse of [hypoxic,cold])assert.ok(Math.abs(good.points-worse.points-7.5)<=.5,`${worse.points}`);
-  assert.match(shocked.note,/Utrata krwi ~2,3 l \(klasa III\)/);assert.match(good.note,/klasa I\)/);
+  assert.match(shocked.note,/Utrata krwi ok\. 2,3 l \(klasa III\), SpO₂ \d+%, [\d,]+ °C, GCS \d+, mleczany [\d,]+ mmol\/l/);assert.match(good.note,/klasa I\)/);
 });
 test('a neglected survivor no longer scores like good care: economy and call speed need a decent handover',()=>{
   const g={...initial(0),status:'saved',transportCalledAt:30};
@@ -40,7 +40,8 @@ test('a neglected survivor no longer scores like good care: economy and call spe
   for(const id of ['economy','reaction']){assert.equal(poor.parts.find(p=>p.id===id).points,0,id);assert.match(poor.parts.find(p=>p.id===id).note,/Nie liczono/);}
   assert.ok(poor.total<=50,`${poor.total}`);assert.ok(fine.total>=90,`${fine.total}`);
   // Decompensated shock with good SpO2 and temperature still has half the state points, but is not a decent handover.
-  const shock=scoreRun(shaped(g,{blood:16}));assert.ok(shock.parts.find(p=>p.id==='state').points>=12.5);assert.equal(shock.parts.find(p=>p.id==='economy').points,0);assert.ok(shock.total<60,`${shock.total}`);
+  // P4: at 42% loss the GCS and lactate (secondary insults) also cost points; 39% still shows the perfusion gate.
+  const shock=scoreRun(shaped(g,{blood:22}));assert.ok(shock.parts.find(p=>p.id==='state').points>=12.5);assert.equal(shock.parts.find(p=>p.id==='economy').points,0);assert.ok(shock.total<60,`${shock.total}`);
   const lost=scoreRun(shaped(g,{status:'lost'}));assert.equal(lost.parts.find(p=>p.id==='economy').points,0);assert.match(lost.parts.find(p=>p.id==='economy').note,/przekazany żywy/);
 });
 test('never-called transport gives zero reaction points',()=>{

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { act } from './support.js';
+import { act, respiratory, bloodIndex, spo2Of } from './support.js';
 import { createGame, restoreGame, SCENARIOS, ITEMS, scenarioFor, pickCondition } from '../src/engine.js';
 import { CATEGORIES, CONDITIONS, CONDITION_SCENARIOS, conditionById } from '../src/content/conditions.js';
 import { DIFFICULTIES } from '../src/content/difficulty.js';
@@ -9,6 +9,7 @@ import { GUIDES } from '../src/content/guides.js';
 import { bodyPart, matchesRegion, proximalTourniquetSite } from '../src/content/body.js';
 import { CHECKS, CONSEQUENCES, protocolStatus, validateConditions, checkProtocol } from '../src/simulation/protocol.js';
 import { isMissing, pain } from '../src/simulation/selectors.js';
+import { ivSiteFor } from '../src/simulation/vascular.js';
 import { scoreRun } from '../src/simulation/scoring.js';
 import { loadProgress } from '../src/storage.js';
 
@@ -28,6 +29,8 @@ function use(g,id){
     return i?act(g,id,i.part,i.id):g;
   }
   const site=SITES.find(p=>(!it.regions||matchesRegion(it.regions,p))&&!isMissing(g,p));
+  // An IV medicine first needs a cannula on that arm (calmDriver: TXA).
+  if(it.requires==='iv'&&!ivSiteFor(g,site))g=act(g,'iv',site.startsWith('left')?'leftForearm':'rightForearm');
   return act(g,id,site);
 }
 function care(g,injury){
@@ -54,7 +57,7 @@ function solve(g,check){
 }
 const finish=(g,{oxygen=true}={})=>{
   for(let n=0;n<40&&g.status==='active';n++){
-    if(oxygen&&g.oxygenUntil<=g.elapsed&&g.supplies.oxygen>0&&g.injuries.some(i=>INJURIES[i.type].oxygenLoss))g=act(g,'oxygen','head');
+    if(oxygen&&g.oxygenUntil<=g.elapsed&&g.supplies.oxygen>0&&g.injuries.some(respiratory))g=act(g,'oxygen','head');
     g=act(g,'wait60');
   }
   return g;
@@ -156,7 +159,8 @@ test('scoring adds a protocol part and still tops out at 100; without protocol i
   assert.equal(scoreRun(legacy).parts.length,4);assert.equal(scoreRun(legacy).parts.reduce((n,p)=>n+p.max,0),100);
   const r=scoreRun(g);assert.equal(r.parts.reduce((n,p)=>n+p.max,0),100);
   assert.equal(r.parts.find(p=>p.id==='protocol').max,15);
-  const done={...structuredClone(g),status:'saved',blood:100,oxygen:100,transportCalledAt:0};
+  // P4: the handover also scores GCS and lactate; a flawless handover has no residual head-injury deficit.
+  const done={...structuredClone(g),status:'saved',transportCalledAt:0,injuries:[]};
   for(const s of Object.values(done.protocol.steps))s.doneAt=0;
   assert.equal(scoreRun(done).total,100);
   const late=structuredClone(done);for(const s of Object.values(late.protocol.steps))s.doneAt=999;
@@ -194,10 +198,11 @@ test('every state is rescuable at a 25-minute evacuation with prompt protocol ca
     const {mid,end}=goodPlay(c.id);
     assert.equal(end.transportDelay,1500,c.id);
     assert.ok(protocolStatus(mid).every(s=>s.onTime),`${c.id}: ${JSON.stringify(protocolStatus(mid))}`);
-    assert.equal(end.status,'saved',`${c.id}: blood ${end.blood} oxygen ${end.oxygen}`);
+    assert.equal(end.status,'saved',`${c.id}: blood ${bloodIndex(end)} oxygen ${spo2Of(end)}`);
     if(c.category==='zagadka'){
       const bad=ignoringPlay(c.id);
-      assert.ok(bad.status==='lost'||bad.blood+bad.oxygen<=end.blood+end.oxygen-10,`${c.id}: ignored ${bad.status} ${bad.blood}/${bad.oxygen} vs ${end.blood}/${end.oxygen}`);
+      const sum=g=>bloodIndex(g)+spo2Of(g);
+      assert.ok(bad.status==='lost'||sum(bad)<=sum(end)-10,`${c.id}: ignored ${bad.status} ${bloodIndex(bad)}/${spo2Of(bad)} vs ${bloodIndex(end)}/${spo2Of(end)}`);
       assert.ok(scoreRun(bad).total<scoreRun(end).total,c.id);
     }
   }

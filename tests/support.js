@@ -1,8 +1,15 @@
 // Test helper (not a test file): act() that fills a deterministic procedure attempt when none is given.
 import { act as engineAct, ITEMS } from '../src/engine.js';
 import { autoInput } from '../src/simulation/procedures.js';
+import { respiratoryInjury } from '../src/content/injury-physiology.js';
 // mL/min equivalent of a legacy bleeding rate in points/s for this patient (1 pt = 0.5% EBV).
 export const legacyRate=(g,pts)=>pts*1575*g.profile.ebvMl/5250;
+// A respiratory injury (RESPIRATORY entry): the care policies give oxygen for it (was the legacy `oxygenLoss` field).
+export const respiratory=i=>respiratoryInjury(i.type);
+// Test readouts in the old mirror scales (P4 removed g.blood/g.oxygen from the state): 100 = no loss, 0 = 50% EBV incl.
+// plasma deficit; SpO2 = SaO2 × 100.
+export const bloodIndex=g=>Math.max(0,Math.min(100,100-200*(g.phys.lostMl+g.phys.plasmaDeficitMl)/g.profile.ebvMl));
+export const spo2Of=g=>g.phys.sao2*100;
 export const perfectIV={point:{x:400,y:132.42105263157896},approach:42,depth:.62,aborted:false};
 export const procedureFor=id=>ITEMS.find(i=>i.id===id)?.procedure||null;
 export const act=(g,id,part='chest',wound=null,input=undefined)=>{
@@ -32,7 +39,9 @@ export function useItem(g,id){
     const i=g.injuries.find(i=>wanted.some(t=>tagsOf(i).includes(t))&&(!it.regions||matchesRegion(it.regions,i.part))&&!i.treatments?.[id]);
     return i?act(g,id,i.part,i.id):g;
   }
-  return act(g,id,SITES.find(p=>(!it.regions||matchesRegion(it.regions,p))&&!isMissing(g,p)));
+  const site=SITES.find(p=>(!it.regions||matchesRegion(it.regions,p))&&!isMissing(g,p));
+  if(it.requires==='iv'&&!ivSiteFor(g,site))g=act(g,'iv',site.startsWith('left')?'leftForearm':'rightForearm');
+  return act(g,id,site);
 }
 function woundCare(g,injury){
   const d=INJURIES[injury.type],limb=bodyPart(injury.part).limb;
@@ -71,15 +80,17 @@ export function referenceCare(g,{trace=null}={}){
   for(const i of [...g.injuries].sort((a,b)=>injuryBleeding(g,b)-injuryBleeding(g,a)))g=woundCare(g,i);
   for(const [tag,id] of MEDICAL)if(has(g,tag)&&!g.injuries.some(i=>i.treatments?.[id]!==undefined)&&!g.medications.some(m=>m.id===id))g=useItem(g,id);
   if(has(g,'foreignBody'))g=useItem(g,'impaledSupport');
-  if(g.injuries.some(i=>tagsOf(i).some(t=>t==='internal'||t==='crush')&&['abdomen','pelvis'].includes(i.part)))g=useItem(g,'pelvicBinder');
+  // P4: the binder acts only on the pelvis (hidden pelvic loss, pelvic crush/internal bleeding).
+  if(g.injuries.some(i=>tagsOf(i).some(t=>t==='internal'||t==='crush'||t==='fracture')&&i.part==='pelvis'))g=useItem(g,'pelvicBinder');
   for(const i of g.injuries.filter(i=>tagsOf(i).includes('fracture')&&bodyPart(i.part).limb))g=act(g,g.supplies.splint>0?'splint':'armSling',i.part,g.supplies.splint>0?null:i.id);
   const bleeding=has(g,'internal')||has(g,'massive')||clinicalSnapshot(g).lossFrac>.2,arm=ivArm(g);
   if(bleeding&&arm){g=act(g,'iv',arm);g=act(g,'txa',arm);if(circulation(g)<75)g=act(g,'fluid',arm);}
-  if(g.injuries.some(i=>INJURIES[i.type].oxygenLoss))g=act(g,'oxygen','head');
+  if(g.injuries.some(respiratory))g=act(g,'oxygen','head');
   g=act(g,'blanket','chest');
   while(g.status==='active'){
     if(g.arrest){g=act(g,'airway','head');g=act(g,'oxygen','head');g=act(g,'cpr','chest',null,goodCPR);continue;}
-    if(g.oxygenUntil<=g.elapsed&&g.supplies.oxygen>0&&g.injuries.some(i=>INJURIES[i.type].oxygenLoss))g=act(g,'oxygen','head');
+    // The second cylinder is saved until the saturation falls (it would run out before a 25-minute handover).
+    if(g.oxygenUntil<=g.elapsed&&g.supplies.oxygen>0&&g.injuries.some(respiratory)&&clinicalSnapshot(g).spo2<92)g=act(g,'oxygen','head');
     // A bronchodilator that wore off is repeated (another one when the first runs out).
     if(has(g,'bronchospasm')&&!working(g,'salbutamol')&&!working(g,'ipratropium')&&g.supplies.salbutamol+g.supplies.ipratropium>0)g=useItem(g,g.supplies.salbutamol>0?'salbutamol':'ipratropium');
     // Anaphylaxis can return when adrenaline wears off: a second porcja.

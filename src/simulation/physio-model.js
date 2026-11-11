@@ -6,6 +6,9 @@ import { INJURIES } from '../content/injuries.js';
 import { activeModifiers, activeDrugDefinitions, pain } from './selectors.js';
 import { initRespiration } from './physio-respiration.js';
 import { gcsOf, avpuOf, initNeuro } from './physio-neuro.js';
+import { initHemostasis } from './physio-hemostasis.js';
+import { burnTbsa } from './physio-thermal.js';
+import { initSensors } from './physio-sensors.js';
 import { bounded } from './modifiers.js';
 // Profile is drawn from the game's random source after every legacy draw. The patient names are male,
 // so random patients are men; tests and options may pass {sex:'F',massKg,…}.
@@ -23,35 +26,39 @@ export const hbOf=g=>g.phys.hbMassG/(vascularVolume(g)/100);
 export const supportPts=g=>Math.min(TUNING.supportCapPts,activeModifiers(g).reduce((n,d)=>n+(d.circulationSupport||0),0));
 // Effective preload volume: blood + crystalloid − plasma deficit + drug/support bonus as virtual volume.
 export const effectiveVolume=(g,support=supportPts(g))=>g.profile.ebvMl-g.phys.lostMl+g.phys.crystIvMl-g.phys.plasmaDeficitMl+ptsToMl(g,support);
-export const bloodMirror=g=>bounded(100-200*(g.phys.lostMl+g.phys.plasmaDeficitMl)/g.profile.ebvMl,0,100);
 const A_HR=1-Math.exp(-1/CV_TUNING.tauHrS),A_SVR=1-Math.exp(-1/CV_TUNING.tauSvrS);
 // Relief 0..1 of an injury by a drug whose `relievesTag` matches its tags (adrenaline → anaphylaxis).
 export const drugRelief=(g,injury,defs=activeDrugDefinitions(g))=>{const tags=INJURIES[injury.type]?.tags||[];let r=0;for(const d of defs)if(d.relievesTag&&tags.includes(d.relievesTag))r=Math.max(r,d.reliefStrength||0);return Math.min(1,r);};
 // Severity of an injury: its `scale` (an allergy created by a drug, by delivered amount) ramped in over `rampS` seconds.
 export const injuryScale=(g,i)=>(i.scale??1)*(i.rampS>0&&Number.isFinite(i.at)?Math.min(1,Math.max(0,g.elapsed-i.at)/i.rampS):1);
-// Vasoplegia of anaphylaxis (CIRCULATORY): SVR target × Π(1 − (1 − svr)·scale·(1 − relief)).
+// SVR target factor: vasoplegia of anaphylaxis (CIRCULATORY) Π(1 − (1 − svr)·scale·(1 − relief)), × vasoconstricting
+// drugs (svr channel: adrenaline, ketamine) and the sympathetic tone of pain.
 export function svrFactorOf(g){
   let f=1;for(const i of g.injuries){const c=CIRCULATORY[i.type];if(c)f*=1-(1-c.svr)*injuryScale(g,i)*(1-drugRelief(g,i));}
-  return f;
+  if(g.medications.length)for(const d of activeDrugDefinitions(g))f*=1+(d.svrBoost||0);
+  return f*(1+CV_TUNING.painSvr*pain(g));
 }
+// Hypothermic bradycardia: the reflex HR range shrinks −7%/°C below 35.5 °C.
+export const coldHrFactor=g=>bounded(1-CV_TUNING.coldHrPerC*Math.max(0,CV_TUNING.coldHrFromC-g.temperature),CV_TUNING.coldHrMin,1);
 // One baroreflex step: lagged HR/SVR follow the MAP error; MAP = CO·SVR (all relative to the normals).
 export function circulate(g,support,svrF=svrFactorOf(g)){
   const T=CV_TUNING,p=g.phys,pre=effectiveVolume(g,support)/g.profile.ebvMl;
   const sv=Math.pow(bounded((pre-T.p0)/(1-T.p0),0,T.svMax),T.gamma);
   const pressure=()=>p.hr/NORMALS.hr*sv*p.svrIdx*NORMALS.map;
-  const e=bounded((NORMALS.map-pressure())/NORMALS.map,-.3,1);
-  const hrTarget=e>=0?NORMALS.hr+(T.hrMax-NORMALS.hr)*Math.tanh(e/T.e0):NORMALS.hr*(1+e);
+  const e=bounded((NORMALS.map-pressure())/NORMALS.map,-.3,1),cold=coldHrFactor(g),hr0=NORMALS.hr*cold;
+  const hrTarget=e>=0?hr0+(T.hrMax*cold-hr0)*Math.tanh(e/T.e0):hr0*(1+e);
   p.hr+=(hrTarget-p.hr)*A_HR;p.svrIdx+=(bounded(1+T.kSvr*e,T.svrMin,T.svrCap)*svrF-p.svrIdx)*A_SVR;
   const map=pressure(),pp=NORMALS.pp*Math.pow(sv,T.ppExp);
   p.sv=sv*NORMALS.svMl*scaleOf(g);p.map=map;p.sbp=map+2*pp/3;p.dbp=Math.max(0,map-pp/3);
 }
 export function settleCirculation(g,steps=400){const support=supportPts(g),svrF=svrFactorOf(g);for(let i=0;i<steps;i++)circulate(g,support,svrF);g.phys.lowMapS=0;}
-// `oxygen` (legacy SpO2 scale) seeds the respiratory state: SaO2 = oxygen, PaO2 by inverted Severinghaus.
-export function initPhys(g,blood=100,oxygen=g.oxygen){
+// `blood`/`oxygen` (the scenario's legacy presentation scale) seed the state: lostMl = (100 − blood)·0.5%·EBV,
+// SaO2 = oxygen, PaO2 by inverted Severinghaus. Without `oxygen` the present saturation (or 98%) is kept.
+export function initPhys(g,blood=100,oxygen=Number.isFinite(g.oxygen)?g.oxygen:Number.isFinite(g.phys?.sao2)?g.phys.sao2*100:NORMALS.spo2){
   const ebv=g.profile.ebvMl,lostMl=Math.max(0,100-blood)*TUNING.legacyPtMlFrac*ebv,env=g.phys?.env;
-  g.phys={lostMl,hbMassG:g.profile.hb0*(ebv-lostMl)/100,crystIvMl:0,crystInMl:0,plasmaDeficitMl:0,hr:NORMALS.hr,svrIdx:1,map:NORMALS.map,sbp:NORMALS.sbp,dbp:NORMALS.dbp,sv:NORMALS.svMl,reserve:1,lowMapS:0,injuryMl:{},boneMl:{},drugActive:{},drugExcess:0,infusedMl:0};
+  g.phys={lostMl,hbMassG:g.profile.hb0*(ebv-lostMl)/100,crystIvMl:0,crystInMl:0,plasmaDeficitMl:0,hr:NORMALS.hr,svrIdx:1,map:NORMALS.map,sbp:NORMALS.sbp,dbp:NORMALS.dbp,sv:NORMALS.svMl,reserve:1,lowMapS:0,injuryMl:{},boneMl:{},burnProg:{},drugActive:{},drugExcess:0,infusedMl:0};
   if(env)g.phys.env=env;
-  initNeuro(g);settleCirculation(g);initRespiration(g,oxygen);
+  initNeuro(g);settleCirculation(g);initRespiration(g,oxygen);initHemostasis(g);initSensors(g);
   return g.phys;
 }
 // Changes to blood/oxygen from content (protocol consequences, toxicity, allergy, hypoxic strain).
@@ -61,12 +68,11 @@ export function applyInsult(g,insult){
   const p=g.phys,amount=insult.ml??(Number.isFinite(insult.pts)?ptsToMl(g,insult.pts):0);
   if(insult.kind==='bleed'&&amount>0){p.hbMassG=Math.max(0,p.hbMassG-amount*hbOf(g)/100);p.lostMl+=amount;}
   else if(insult.kind==='plasma'&&amount>0)p.plasmaDeficitMl+=amount;
-  else if(insult.kind==='oxygen'&&Number.isFinite(insult.pts)){p.sao2=bounded(p.sao2+insult.pts/100,0,1);if(insult.pts<0)p.o2Debt=Math.min(.5,p.o2Debt-insult.pts/100);g.oxygen=p.sao2*100;}
+  else if(insult.kind==='oxygen'&&Number.isFinite(insult.pts)){p.sao2=bounded(p.sao2+insult.pts/100,0,1);if(insult.pts<0)p.o2Debt=Math.min(.5,p.o2Debt-insult.pts/100);}
   else if(insult.kind==='temperature')g.temperature=bounded(g.temperature+insult.delta,THERMAL.minC,THERMAL.maxC);
-  g.blood=bloodMirror(g);
 }
 const memo=new WeakMap();
-const keyOf=g=>[g.elapsed,g.actions,g.phys.sao2,g.phys.paco2,g.phys.rr,g.initialUnconscious,g.injuries.length,g.temperature,g.status,Boolean(g.arrest),Boolean(g.resuscitating),g.airway,g.medications.length,(g.supports||[]).length,g.phys.glucose,g.phys.lostMl,g.phys.crystIvMl,g.phys.plasmaDeficitMl,g.phys.hr,g.phys.map];
+const keyOf=g=>[g.elapsed,g.actions,g.phys.sao2,g.phys.paco2,g.phys.rr,g.initialUnconscious,g.injuries.length,g.temperature,g.status,Boolean(g.arrest),Boolean(g.resuscitating),g.airway,g.medications.length,(g.supports||[]).length,g.phys.glucose,g.phys.lostMl,g.phys.crystIvMl,g.phys.plasmaDeficitMl,g.phys.hr,g.phys.map,g.phys.lactate,g.phys.coag];
 const same=(a,b)=>a.length===b.length&&a.every((v,i)=>v===b[i]);
 // Pure, memoised per state object (keyed by elapsed, actions and the physiology it reads).
 export function clinicalSnapshot(g){
@@ -86,7 +92,7 @@ function computeSnapshot(g){
     hr:dead?0:p.hr+extra,map:dead?(g.arrest?p.map:0):p.map,sbp:dead?(g.arrest?p.sbp:0):p.sbp,dbp:dead?(g.arrest?p.dbp:0):p.dbp,
     spo2,pao2:p.pao2,paco2:p.paco2,etco2:dead&&!g.resuscitating?0:Math.max(0,p.paco2-4),fio2:p.fio2,vaFrac:p.vaFrac,shunt:p.shunt,aaExtra:p.aaExtra,
     rr:dead?0:p.rr,tempC,conscious,gcs,avpu:avpuOf(gcs),canSwallow:gcs>=14,toleratesOPA:gcs<=8,
-    glucose,lactate:null,rhythm:g.arrest?g.arrest.rhythm||'asystole':null,
+    glucose,lactate:p.lactate??1,ph:p.ph??7.4,coag:p.coag??1,tbsa:burnTbsa(g),rhythm:g.arrest?g.arrest.rhythm||'asystole':null,
     causes:{hypovolaemia:lossFrac>=.3||perfusion<55,hypoxia:spo2<88,hypothermia:tempC<35,hyperthermia:tempC>40,hypoglycaemia:glucose<3.9,obstruction:g.injuries.some(i=>INJURIES[i.type]?.tags.includes('airway'))&&!g.airway,hypercapnia:p.paco2>55}};
 }
 // Deterministic monitor noise in [-1, 1]: hash of the patient seed and the second.

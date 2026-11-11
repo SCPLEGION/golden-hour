@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {SCENARIOS,createGame,validateCatalogs,restoreGame} from '../src/engine.js';
-import {act} from './support.js';
+import { act, respiratory, bloodIndex, spo2Of } from './support.js';
 import {INJURIES} from '../src/content/injuries.js';
 import {BODY_PARTS,resolvePart} from '../src/content/body.js';
 import {ITEMS} from '../src/content/items.js';
@@ -16,8 +16,8 @@ const NEW={
 };
 const perfectIV={point:{x:400,y:132.42105263157896},approach:42,depth:.62,aborted:false};
 const finite=g=>{
-  for(const k of ['blood','oxygen','temperature','elapsed'])assert.ok(Number.isFinite(g[k]),k);
-  for(const k of ['blood','oxygen'])assert.ok(g[k]>=0&&g[k]<=100,k);
+  for(const k of ['temperature','elapsed'])assert.ok(Number.isFinite(g[k]),k);
+  for(const [k,v] of [['blood',bloodIndex(g)],['oxygen',spo2Of(g)]])assert.ok(Number.isFinite(v)&&v>=0&&v<=100,k);
 };
 
 test('round 2 ids are unique across catalogs and present',()=>{
@@ -61,7 +61,7 @@ test('every round 2 scenario can be saved with 25-minute transport',()=>{
     }
     g=act(g,'blanket','chest');
     for(let n=0;n<40&&g.status==='active';n++){
-      if(g.oxygenUntil<=g.elapsed&&g.supplies.oxygen>0&&g.injuries.some(i=>INJURIES[i.type].oxygenLoss))g=act(g,'oxygen','head');
+      if(g.oxygenUntil<=g.elapsed&&g.supplies.oxygen>0&&g.injuries.some(respiratory))g=act(g,'oxygen','head');
       g=act(g,'wait60');
     }
     assert.equal(g.status,'saved',id);assert.equal(g.elapsed,g.transportAt,id);

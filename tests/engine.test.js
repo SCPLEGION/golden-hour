@@ -4,7 +4,7 @@ import { createGame, act as engineAct, advanceTime, SCENARIOS, ITEMS, restoreGam
 import { bleedingRate, pain, visibleInjuries, activeMedicines, respiratoryBurden } from '../src/simulation/selectors.js';
 import { loadProgress, saveProgress } from '../src/storage.js';
 const perfectIV={point:{x:400,y:132.42105263157896},approach:42,depth:.62,aborted:false};
-import { act, legacyRate } from './support.js';
+import { act, legacyRate, bloodIndex, spo2Of } from './support.js';
 const initial = index => createGame(index,()=>.99);
 const wait = (g,n=1) => {for(let i=0;i<n&&g.status==='active';i++)g=act(g,'wait60');return g;};
 test('catalog references resolve and every item has a registered effect',validateCatalogs);
@@ -55,7 +55,8 @@ test('medicines have delayed, expiring effects and repeated porcje stack (P3 PK/
   g=act(g,'wait60');assert.equal(activeMedicines(g).length,1);assert.ok(respiratoryBurden(g)>0);assert.ok(pain(g)<9);
   // Two more porcje stack in the depot: the respiratory burden grows far more than one porcja's.
   const single=advanceTime(g,1200),stacked=advanceTime(act(act(g,'morphine','rightArm'),'morphine','rightArm'),1150);
-  assert.ok(respiratoryBurden(stacked)>2.5*respiratoryBurden(single),`${respiratoryBurden(stacked)} vs ${respiratoryBurden(single)}`);
+  // P4: morphine peaks at ~17 min and this patient is in deeper shock, so the curve is nearer saturation (was 2.5×).
+  assert.ok(respiratoryBurden(stacked)>2*respiratoryBurden(single),`${respiratoryBurden(stacked)} vs ${respiratoryBurden(single)}`);
   assert.ok(stacked.log.some(e=>/Nadmierne działanie leków/.test(e.text)));assert.ok(!single.log.some(e=>/Nadmierne/.test(e.text)));
   // A short-acting opioid wears off.
   let safe=act(initial(SCENARIOS.findIndex(s=>s.id==='footballPitch')),'iv','rightArm');safe=act(safe,'fentanyl','rightArm');safe=act(safe,'wait60');
@@ -68,13 +69,13 @@ test('history exposes allergy and ignoring it adds an anaphylactic reaction',()=
   const reaction=given.injuries.find(i=>i.type==='allergicReaction');
   assert.ok(reaction&&reaction.scale===.5&&reaction.rampS===300&&reaction.part==='chest');assert.match(given.log.at(-1).text,/uczuleniowa/);
   const later=advanceTime(given,180),calm=advanceTime(control,165);
-  assert.ok(later.oxygen<calm.oxygen-2&&later.phys.plasmaDeficitMl>calm.phys.plasmaDeficitMl+5,`${later.oxygen} vs ${calm.oxygen}`);
+  assert.ok(spo2Of(later)<spo2Of(calm)-2&&later.phys.plasmaDeficitMl>calm.phys.plasmaDeficitMl+5,`${spo2Of(later)} vs ${spo2Of(calm)}`);
 });
 test('oxygen expires and can be replaced, IV fluid adds volume without creating blood',()=>{
   let g=act(initial(0),'hemostatic','leftLeg');g=act(g,'oxygen');assert.equal(g.supplies.oxygen,1);
   assert.equal(act(g,'oxygen'),g);g=wait(g,10);assert.ok(g.oxygenUntil<=g.elapsed);
   g=act(g,'oxygen');assert.equal(g.supplies.oxygen,0);
-  g=act(g,'iv','rightArm');const blood=g.blood,lost=g.phys.lostMl;g=act(g,'fluid','rightArm');g=wait(g,2);assert.ok(g.phys.crystIvMl>150);assert.ok(g.blood<=blood);assert.ok(g.phys.lostMl>=lost);
+  g=act(g,'iv','rightArm');const blood=bloodIndex(g),lost=g.phys.lostMl;g=act(g,'fluid','rightArm');g=wait(g,2);assert.ok(g.phys.crystIvMl>150);assert.ok(bloodIndex(g)<=blood);assert.ok(g.phys.lostMl>=lost);
 });
 test('disconnected monitor preserves timestamped snapshots until an explicit measurement',()=>{
   const disconnected=initial(0);disconnected.monitoring=false;

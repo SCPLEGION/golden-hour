@@ -22,7 +22,7 @@ export function peakOf(curve,horizonS){
   return {t:bestT,value:best};
 }
 // Item value each channel scales (single full porcja at its peak = this value), when the channel has no explicit emax.
-const LEGACY={analgesia:d=>d.painRelief||0,relief:()=>1,respDepression:d=>d.respiratoryBurden||0,antagonism:d=>d.respiratoryRelief??1,hr:d=>d.pulseIncrease||0,volume:d=>d.circulationSupport||0,oxygen:d=>d.oxygenSupport||0,bleeding:d=>1-(d.bleedingMultiplier??1),sedation:()=>0,glucose:()=>0};
+const LEGACY={analgesia:d=>d.painRelief||0,relief:()=>1,respDepression:d=>d.respiratoryBurden||0,antagonism:d=>d.respiratoryRelief??1,hr:d=>d.pulseIncrease||0,svr:()=>0,volume:d=>d.circulationSupport||0,oxygen:d=>d.oxygenSupport||0,bleeding:d=>1-(d.bleedingMultiplier??1),sedation:()=>0,glucose:()=>0};
 export const CHANNELS=Object.keys(LEGACY);
 const CAPPED=new Set(['relief','antagonism']);
 const PROFILES=new Map();
@@ -91,7 +91,7 @@ function computeEffects(g){
 export function drugDefinitions(g){
   return drugEffects(g).filter(e=>e.active||e.fraction>.02).map(({def,values,fraction})=>({...def,
     painRelief:values.analgesia,reliefStrength:values.relief,respiratoryRelief:values.antagonism,pulseIncrease:values.hr,
-    circulationSupport:values.volume,oxygenSupport:values.oxygen,bleedingMultiplier:Math.max(0,1-values.bleeding),
+    svrBoost:values.svr,circulationSupport:values.volume,oxygenSupport:values.oxygen,bleedingMultiplier:Math.max(0,1-values.bleeding),
     burden:values.respDepression,sedation:values.sedation,glucoseRise:values.glucose,fraction}));
 }
 // Qualitative status for the UI: first-channel fraction relative to one porcja at its peak (≥ 1 = at or above one porcja).

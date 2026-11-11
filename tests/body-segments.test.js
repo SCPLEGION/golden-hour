@@ -85,7 +85,7 @@ test('a v0.6 save with the old seven part ids restores and keeps playing',()=>{
   assert.equal(Object.keys(restored.body).length,31);
   let next=act(restored,'wait60');next=act(next,'morphine','leftArm');next=act(next,'wait60');
   assert.ok(next.elapsed>restored.elapsed);assert.equal(next.medications.length,1);
-  for(const k of ['blood','oxygen'])assert.ok(Number.isFinite(next[k]));
+  for(const k of ['lostMl','sao2'])assert.ok(Number.isFinite(next.phys[k]));
 });
 
 test('every item on every segment never throws and keeps vitals finite',()=>{

@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {SCENARIOS,createGame,validateCatalogs} from '../src/engine.js';
-import {act} from './support.js';
+import { act, respiratory, bloodIndex, spo2Of } from './support.js';
 import {INJURIES} from '../src/content/injuries.js';
 import {BODY_PARTS,resolvePart,proximalTourniquetSite} from '../src/content/body.js';
 import {ITEMS} from '../src/content/items.js';
@@ -58,7 +58,7 @@ test('every case remains rescuable with a 25-minute evacuation using core care',
     }
     g=act(g,'blanket','chest');
     for(let n=0;n<40&&g.status==='active';n++){
-      if(g.oxygenUntil<=g.elapsed&&g.supplies.oxygen>0&&g.injuries.some(i=>INJURIES[i.type].oxygenLoss))g=act(g,'oxygen','head');
+      if(g.oxygenUntil<=g.elapsed&&g.supplies.oxygen>0&&g.injuries.some(respiratory))g=act(g,'oxygen','head');
       g=act(g,'wait60');
     }
     assert.equal(g.status,'saved',SCENARIOS[index].id);
@@ -119,5 +119,5 @@ test('clearing the fluid airway obstruction permits recovery of consciousness as
   let g=initial('pondRescue');const aspiration=g.injuries.find(i=>i.type==='aspiration');
   assert.equal(isConscious(g),false);
   g=act(g,'suction','head',aspiration.id);g=wait(g,3);
-  assert.ok(g.oxygen>90);assert.equal(isConscious(g),true);
+  assert.ok(spo2Of(g)>90);assert.equal(isConscious(g),true);
 });

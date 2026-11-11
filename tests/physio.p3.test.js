@@ -31,7 +31,8 @@ test('PK: the effect-site peak comes later IV < IM < inhaled < oral for the same
   // The curve rises, peaks and falls; a single full porcja of morphine peaks at a normalised level of 1.
   let g=withIV(fresh());g=act(g,'morphine','rightArm');
   const level=t=>drugEffects(later(g,t)).find(e=>e.id==='morphine').level;
-  const [early,peak,tail]=[level(120),level(2400),level(14400)];
+  // P4: IV morphine peaks at ~17 min (was ~42).
+  const [early,peak,tail]=[level(120),level(1050),level(14400)];
   assert.ok(early<peak&&tail<peak&&Math.abs(peak-1)<.05,`${early} ${peak} ${tail}`);
   assert.deepEqual(drugStatus(later(g,120)).map(d=>d.phase),['narasta']);assert.deepEqual(drugStatus(later(g,10800)).map(d=>d.phase),['słabnie']);
 });
@@ -79,7 +80,8 @@ test('an ignored allergy creates an anaphylactic reaction; adrenaline reverses i
   const treated=later(act(g,'adrenaline','leftThigh'),600),untreated=later(act(g,'wait30'),595);
   assert.ok(treated.phys.respProg[reaction.id]<untreated.phys.respProg[reaction.id]-.2);
   assert.ok(treated.phys.plasmaDeficitMl<untreated.phys.plasmaDeficitMl-100,`${treated.phys.plasmaDeficitMl} vs ${untreated.phys.plasmaDeficitMl}`);
-  assert.ok(treated.phys.svrIdx>untreated.phys.svrIdx&&clinicalSnapshot(treated).spo2>clinicalSnapshot(untreated).spo2+2);
+  // P4: salbutamol now also eases the anaphylactic bronchospasm in both arms, so the SpO2 gap is smaller (was +2).
+  assert.ok(treated.phys.svrIdx>untreated.phys.svrIdx&&clinicalSnapshot(treated).spo2>clinicalSnapshot(untreated).spo2+1.5);
 });
 
 test('CPR on a patient with a pulse adds a rib fracture and pain, not a blood penalty',()=>{

@@ -10,7 +10,7 @@ const index=id=>SCENARIOS.findIndex(s=>s.id===id);
 function v2Fixture({blood=50,fluidSupport=4}={}){
   let g=act(createGame(index('gunshot'),()=>.99),'iv','rightArm');g=act(g,'fluid','rightArm');
   const old=structuredClone(g);delete old.profile;delete old.phys;
-  Object.assign(old,{version:2,blood,fluidSupport});
+  Object.assign(old,{version:2,blood,oxygen:96,fluidSupport});
   old.infusions=[{site:'rightForearm',end:old.elapsed+60}];
   return JSON.parse(JSON.stringify(old));
 }
@@ -22,7 +22,8 @@ test('v2 → v3: blood points become mL of loss on a deterministic 80 kg profile
   assert.equal(g.profile.ageY,Number(/(\d+) lat/.exec(v2.patient)[1]));
   const s=clinicalSnapshot(g);
   assert.equal(s.lossFrac,.25);assert.equal(s.lostMl,1400);assert.equal(s.hemorrhageClass,2);
-  assert.equal(g.blood,50,'the legacy mirror keeps its value');assert.equal(g.oxygen,v2.oxygen);
+  // P4: the point-scale mirrors seed the migration and are then dropped from the state.
+  assert.equal(g.blood,undefined);assert.equal(g.oxygen,undefined);
   // P2: oxygen points become SaO2, PaO2 by inverted Severinghaus.
   assert.ok(Math.abs(g.phys.sao2*100-v2.oxygen)<1e-9&&Math.abs(severinghaus(g.phys.pao2)-g.phys.sao2)<1e-6,`${g.phys.pao2}`);
   assert.equal(g.phys.crystIvMl,4*.005*5600);assert.ok(Math.abs(s.hb-15)<1e-9||s.hb<15,'Hb only dilutes');
@@ -36,7 +37,7 @@ test('migrated saves keep playing, other blood values map linearly and finished 
   for(const [blood,frac] of [[100,0],[83,.085],[20,.4],[0,.5]]){
     const g=restoreGame(v2Fixture({blood,fluidSupport:0}));
     assert.ok(Math.abs(clinicalSnapshot(g).lossFrac-frac)<1e-12,`${blood}`);
-    const next=advanceTime(g,60);assert.ok(next.elapsed===g.elapsed+60||next.status!=='active');assert.ok(Number.isFinite(next.blood)&&Number.isFinite(next.phys.map));
+    const next=advanceTime(g,60);assert.ok(next.elapsed===g.elapsed+60||next.status!=='active');assert.ok(Number.isFinite(next.phys.lostMl)&&Number.isFinite(next.phys.map));
   }
   const done=v2Fixture();done.infusions=[{site:'rightForearm',end:done.elapsed-5}];
   const g=restoreGame(done);assert.equal(g.infusions[0].ml,0);assert.ok(g.infusions[0].end<=g.elapsed);

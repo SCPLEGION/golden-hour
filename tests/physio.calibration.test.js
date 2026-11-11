@@ -69,7 +69,8 @@ test('pressure-dependent bleeding: hypotension slows a wound, the nominal rate s
 });
 
 test('the monitor shows the modelled HR and BP with deterministic noise and a MAP field',()=>{
-  const g=bleedTo(fresh(),.3),v=g.vitals,s=clinicalSnapshot(g);
+  // P4: BP is the NIBP cuff reading — a manual measurement takes it now.
+  const g=act(bleedTo(fresh(),.3),'vitals'),v=g.vitals,s=clinicalSnapshot(g);
   assert.ok(Math.abs(v.pulse-s.hr)<=4&&Math.abs(v.systolic-s.sbp)<=4&&Math.abs(v.diastolic-s.dbp)<=3,JSON.stringify(v));
   assert.equal(v.map,Math.round(s.map));assert.equal(v.pressure,`${v.systolic}/${v.diastolic}`);
   for(const k of ['time','pulse','pressure','systolic','diastolic','oxygen','breathing','temperature','pain','glucose','rhythm'])assert.ok(k in v,k);
