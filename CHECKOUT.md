@@ -1,10 +1,10 @@
-# Field Medic — checkpoint projektu
+# Golden Hour — checkpoint projektu
 
 Ostatnia aktualizacja: 2026-11-11 · wersja aplikacji: 0.9.0
 
 ## Co to jest
 
-Field Medic to lokalna gra przeglądarkowa o opiece nad poszkodowanym do czasu przyjazdu ewakuacji. Gracz jest ratownikiem medycznym przy poziomym stole zabiegowym. Wskazuje część ciała lub ranę, wybiera sprzęt z torby i używa go przez menu kontekstowe, skrót lub przeciągnięcie. Założony sprzęt jest widoczny na sylwetce.
+Golden Hour to lokalna gra przeglądarkowa o opiece nad poszkodowanym do czasu przyjazdu ewakuacji. Gracz jest ratownikiem medycznym przy poziomym stole zabiegowym. Wskazuje część ciała lub ranę, wybiera sprzęt z torby i używa go przez menu kontekstowe, skrót lub przeciągnięcie. Założony sprzęt jest widoczny na sylwetce.
 
 To fikcyjna symulacja gry, nie instruktaż ani narzędzie kliniczne. Dawki, wyniki i działanie leczenia są umownym balansem.
 

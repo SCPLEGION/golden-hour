@@ -1,6 +1,8 @@
-# Field Medic
+# Golden Hour — Złota godzina
 
-Przeglądarkowy symulator ratownika dla projektu `fivem-arma3-healing-system`. Ty, poszkodowany i torba medyczna. Ewakuacja dotrze za 15–25 minut czasu gry — utrzymaj pacjenta przy życiu.
+Golden Hour to przeglądarkowa symulacja ratownictwa w terenie. Poszkodowany leży na poziomym stole zabiegowym, a ty go badasz, leczysz prawdziwym sprzętem z torby i utrzymujesz przy życiu do przyjazdu ewakuacji. Gra modeluje fizjologię w rzeczywistych jednostkach: objętość krwi w mL, klasy krwotoku, SpO₂ wynikające z wentylacji i przecieku płucnego, kinetykę leków oraz temperaturę ciała. Ciało ma 31 segmentów, w tym amputacje. Sześć kategorii wezwań prowadzi do 51 stanów pacjenta, a tryb pełny proceduralny losuje cały przypadek. Minigry obejmują wkłucie IV, opaskę uciskową, RKO, tamponadę rany i uszczelnienie klatki piersiowej. Poziomy trudności wahają się od Łatwego do Eksperta, a w trakcie dyżuru mogą pojawić się powikłania.
+
+> **To gra i fikcyjny model — nie jest instrukcją medyczną ani narzędziem klinicznym. W prawdziwym zagrożeniu dzwoń na 112.**
 
 ## Uruchomienie
 
@@ -11,6 +13,13 @@ npm start
 ```
 
 Otwórz http://localhost:5173.
+
+Testy i sprawdzenie projektu:
+
+```sh
+npm test
+npm run check
+```
 
 ## Rozgrywka
 
