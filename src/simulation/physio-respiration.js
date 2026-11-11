@@ -39,6 +39,8 @@ const lerp=(v,t)=>v?v[0]+(v[1]-v[0])*t:0;
 export const bagging=g=>(g.ventilatingUntil>0&&g.ventilatingUntil>=g.elapsed)||Boolean(g.resuscitating);
 // Oxygen item = a non-rebreather on a fresh game cylinder; g.oxygenUntil mirrors the litres left for UI and protocol.
 export function connectOxygen(g){g.phys.o2={device:'nrb',flowLpm:R.flowLpm,litersLeft:R.cylinderL};g.oxygenUntil=g.elapsed+Math.round(R.cylinderL/R.flowLpm*60);}
+// A displaced mask (complications) goes back on the cylinder it was on.
+export function reattachOxygen(g){const o2=g.phys.o2;Object.assign(o2,{device:'nrb',flowLpm:R.flowLpm});g.oxygenUntil=g.elapsed+Math.round(o2.litersLeft/R.flowLpm*60);}
 const bronchodilation=drugs=>{let r=0;for(const d of drugs)if(d.relievesTag==='bronchospasm')r=Math.max(r,d.reliefStrength||0);return Math.min(1,r);};
 const airwayInjury=g=>g.injuries.some(i=>INJURIES[i.type]?.tags.includes('airway')&&!g.airway);
 // Relief of one injury's respiratory components: matching drug, chest seal quality, airway-fluid/irrigation items.
@@ -50,7 +52,7 @@ function reliefOf(g,injury,def,resp,drugs){
 }
 export function respire(g){
   const p=g.phys,dead=Boolean(g.arrest),bvm=bagging(g),o2=p.o2;
-  const on=o2.litersLeft>0,fio2=bvm?(on?R.fio2.bvm:R.fio2.air):on?R.fio2.nrb:R.fio2.air;
+  const on=o2.litersLeft>0&&o2.device!=='none',fio2=bvm?(on?R.fio2.bvm:R.fio2.air):on?R.fio2.nrb:R.fio2.air;
   if(on){o2.litersLeft=Math.max(0,o2.litersLeft-o2.flowLpm/60);if(o2.litersLeft<=1e-9)Object.assign(o2,{device:'none',flowLpm:0,litersLeft:0});}
   let obstruct=1,va=1,depress=1,aa=R.aa0,shunt=R.shunt0,airwayTagged=false;
   const drugs=activeDrugDefinitions(g);

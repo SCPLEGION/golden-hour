@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { act, respiratory, bloodIndex, spo2Of } from './support.js';
-import { createGame, restoreGame, SCENARIOS, ITEMS, scenarioFor, pickCondition } from '../src/engine.js';
+import { act, respiratory, bloodIndex, spo2Of, createGame } from './support.js';
+import { restoreGame, SCENARIOS, ITEMS, scenarioFor, pickCondition } from '../src/engine.js';
 import { CATEGORIES, CONDITIONS, CONDITION_SCENARIOS, conditionById } from '../src/content/conditions.js';
 import { DIFFICULTIES } from '../src/content/difficulty.js';
 import { INJURIES } from '../src/content/injuries.js';
@@ -150,7 +150,7 @@ test('missed deadline applies its consequence exactly once and logs it',()=>{
 
 test('difficulty scales deadlines',()=>{
   const deadline=d=>make('arterialMachine',d).protocol.steps.tourniquet.deadline;
-  assert.equal(deadline('normal'),60);assert.equal(deadline('easy'),90);assert.equal(deadline('hard'),45);
+  assert.equal(deadline('normal'),60);assert.equal(deadline('easy'),90);assert.equal(deadline('hard'),36);assert.equal(deadline('expert'),30);
   for(const d of DIFFICULTIES)assert.ok(Number.isFinite(d.deadlineMultiplier),d.id);
 });
 

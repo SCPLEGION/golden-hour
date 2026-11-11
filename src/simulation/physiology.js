@@ -13,6 +13,7 @@ import { applyInsult, settleCirculation } from './physio-model.js';
 import { stepCirculation, arrestDue } from './physio-circulation.js';
 import { TUNING, CV_TUNING, THERMAL } from '../content/physiology-data.js';
 import { checkProtocol } from './protocol.js';
+import { stepComplications } from './complications.js';
 // Rhythm at the onset of an arrest: deep hypothermia or an electrical injury → VF (shockable); hypoxia → asystole;
 // otherwise (hypovolaemia, exhausted reserve) → PEA. Neither of the last two is shockable.
 export function arrestRhythm(g){
@@ -54,6 +55,8 @@ export function tick(g) {
   }
   for(const support of g.supports||[])if(support.until===g.elapsed)g.log.push({time:g.elapsed,text:`Kończy się wsparcie: ${itemById(support.id)?.name||support.id}.`});
   if(g.protocol)checkProtocol(g);
+  // Seeded in-run complications (complications.js): resolution checks and the next scheduled draw.
+  stepComplications(g);
   if(g.status==='active' && g.transportAt!==null && g.elapsed>=g.transportAt && !g.arrest) {
     g.status='saved';g.log.push({time:g.elapsed,text:'Zespół dociera na miejsce. Przekazujesz żywego pacjenta do dalszej opieki.'});
   }

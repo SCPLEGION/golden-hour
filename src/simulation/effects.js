@@ -1,7 +1,7 @@
 import { INJURIES } from '../content/injuries.js';
 import { bodyPart, matchesRegion, sameGroup, resolvePart, splintReach } from '../content/body.js';
 import { isConscious, canSwallow, toleratesOPA, circulation, vitals, examination, isMissing } from './selectors.js';
-import { connectOxygen } from './physio-respiration.js';
+import { connectOxygen, reattachOxygen } from './physio-respiration.js';
 import { hasAccess, hasFlow, flowEfficiency, accessSites, tourniquetOver, ivSiteFor } from './vascular.js';
 import { endArrest, roscPossible } from './physiology.js';
 import { THERMAL } from '../content/physiology-data.js';
@@ -62,7 +62,10 @@ export const EFFECTS = {
     g.body[target].treatments.splint=g.elapsed;return `${p.name}: unieruchomiono złamanie. Rana wymaga osobnej opieki.`;
   },
   seal:treatment('seal','chest',p=>`założono opatrunek na ranę klatki piersiowej.${p&&p.quality<1?` Przyłożony poza wydechem — szczelność ${Math.round(p.quality*100)}%.`:''}${p?.attempts>1?' Druga próba wydłużyła czynność.':''}`,'sealQuality'),
-  oxygen:({g})=>{connectOxygen(g);return 'Podłączono maskę z rezerwuarem i butlę tlenową. Zapas wystarczy na 10 minut symulacji.';},
+  oxygen:({g,item,target})=>{
+    if(reusesDevice(g,item,target)){reattachOxygen(g);return `Ponownie założono maskę tlenową na tę samą butlę. Zapas wystarczy na ${Math.max(1,Math.round((g.oxygenUntil-g.elapsed)/60))} min symulacji.`;}
+    connectOxygen(g);return 'Podłączono maskę z rezerwuarem i butlę tlenową. Zapas wystarczy na 10 minut symulacji.';
+  },
   airway:({g})=>{g.airway=true;return 'Udrożniono i zabezpieczono drogi oddechowe.';},
   ventilate:({g,item})=>{g.ventilatingUntil=g.elapsed+item.time;return 'Wykonano ręczną wentylację przez czas czynności.';},
   blanket:({g})=>{g.warm=true;return 'Okryto poszkodowanego. Ograniczono utratę ciepła.';},
@@ -83,7 +86,7 @@ export const EFFECTS = {
     if(!hasFlow(g,target))return `${bodyPart(target).name}: płyn zużyty bez efektu — staza odcina ten dostęp IV.`;
     g.infusions.push({site:target,end:g.elapsed+TUNING.infusionMaxS,ml:TUNING.bagMl});return `${bodyPart(target).name}: podłączono worek płynu (${TUNING.bagMl} ml) do tego wenflonu. Przy pełnym przepływie wlew trwa około ${Math.round(TUNING.bagMl/TUNING.infusionMlMin)} minut gry, dopóki dostęp pozostaje drożny.`;
   },
-  monitor:({g})=>{g.monitoring=true;return 'Podłączono monitor ciągły. Parametry są aktualizowane na żywo.';},
+  monitor:({g})=>{g.monitoring=true;g.monitorAttached=true;return 'Podłączono monitor ciągły. Parametry są aktualizowane na żywo.';},
   cpr:({g,procedure})=>{
     // Compressions on a beating heart: a rib fracture (pain, splinting, hidden chest loss) instead of a point penalty.
     if(!g.arrest) {
@@ -115,12 +118,19 @@ export const EFFECTS = {
     return `Podano ${item.name}: 1 porcja gry (${item.route}).${item.requires==='iv'?` Dostarczono ${Math.round(delivery*100)}% porcji gry.`:''} Narastanie działania: ${profile.onset}.${repeated?' Poprzednia porcja nadal działa — porcje kumulują się, rośnie ryzyko działań niepożądanych.':''}${allergy?' Wystąpiła reakcja uczuleniowa; stan pacjenta pogarsza się.':''}`;
   }
 };
+// A device already in place is reused: a placed tourniquet is re-tightened, a displaced mask goes back on the same
+// cylinder. Neither takes a new item from the bag.
+export function reusesDevice(g,item,target){
+  if(item.effect==='tourniquet')return g.body[resolvePart(target)]?.treatments.tourniquet!==undefined;
+  if(item.effect==='oxygen')return g.phys?.o2?.device==='none'&&g.phys.o2.litersLeft>0;
+  return false;
+}
 export const MISSING_PART='Tej części brak — wybierz wyżej';
 export const STUMP_CARE=['dressing','hemostatic'];
 export function itemUnavailable(g,item,target,injuryId=null) {
   target=resolvePart(target);
   if(g.status!=='active') return 'Interwencja zakończona';
-  if(item.count!==null && g.supplies[item.id]<=0) return 'Brak w torbie';
+  if(item.count!==null && g.supplies[item.id]<=0 && !reusesDevice(g,item,target)) return 'Brak w torbie';
   if(item.target && !bodyPart(target)) return 'Wybierz okolicę ciała';
   // Missing (amputated) segments accept only a dressing or packing on the stump's own injury.
   if(isMissing(g,target)&&!(STUMP_CARE.includes(item.id)&&injuryId&&g.injuries.some(i=>i.id===injuryId&&i.part===target&&INJURIES[i.type].tags.includes('amputation'))))return MISSING_PART;

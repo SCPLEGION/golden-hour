@@ -17,7 +17,7 @@ export function memoized(store,g,key,compute){const hit=store.get(g);if(hit&&hit
 const MISSING=new WeakMap(),DRUGS=new WeakMap(),SPLINTS=new WeakMap(),PAIN=new WeakMap();
 // Treatments change only inside act() (before `actions` increments), so elapsed+actions keys them.
 const structureKey=g=>[g.actions,g.injuries?.length,g.injuries];
-const stateKey=g=>[g.elapsed,g.actions,g.injuries.length,g.medications.length,(g.supports||[]).length,g.protocol?.pain,g.status];
+const stateKey=g=>[g.elapsed,g.actions,g.injuries.length,g.medications.length,(g.supports||[]).length,g.protocol?.pain,g.status,g.complications?.log.length];
 export function missingSegments(g){return memoized(MISSING,g,structureKey(g),()=>computeMissing(g));}
 function computeMissing(g){
   const out=new Set();
@@ -85,7 +85,9 @@ function computePain(g) {
   // An over-tightened tourniquet adds its own pressure pain while it stays on.
   result += TOURNIQUET_PROCEDURE.strainPain * Math.max(0, ...Object.values(g.body).filter(p => p.treatments.tourniquet !== undefined).map(p => p.tourniquetStrain || 0));
   const relief=activeDrugDefinitions(g).reduce((n,d)=>n+d.painRelief,0);
-  return Math.round(Math.max(0,result-relief+(g.protocol?.pain||0))*10)/10;
+  // Open pain spikes (complications.js) add their points until treated or expired.
+  const spike=(g.complications?.log||[]).reduce((n,e)=>n+(e.pain&&e.resolvedAt===null&&g.elapsed<e.until?e.pain:0),0);
+  return Math.round(Math.max(0,result-relief+(g.protocol?.pain||0)+spike)*10)/10;
 }
 export function condition(g) {
   if(g.status==='lost') return 'Brak oznak życia';
@@ -112,7 +114,10 @@ export function vitals(g) {
 export const RHYTHM_LABEL={vf:'Migotanie komór',pea:'PEA — bez tętna',asystole:'Asystolia'};
 // Thresholds as EBV fraction per minute (legacy .02 / .002 points per second).
 const bleedingLabel=f=>f>.006?'Krwawi':f>.0006?'Niewielkie sączenie':'Krwawienie zabezpieczone';
-export function visibleInjuries(g,partId) { return g.injuries.filter(i=>i.part===partId && (INJURIES[i.type].visible || g.body[partId].examinedAt!==null)); }
+// On a `hideVisible` level a normally visible injury shows only after examining its segment — except massive bleeding,
+// amputations and what a complication just caused (it is announced anyway).
+export const obviousInjury=(g,i)=>{const d=INJURIES[i.type];return Boolean(d.visible)&&(!difficultyById(g.difficulty).hideVisible||d.tags.includes('massive')||d.tags.includes('amputation')||i.id.startsWith('complication-'));};
+export function visibleInjuries(g,partId) { return g.injuries.filter(i=>i.part===partId && (obviousInjury(g,i) || g.body[partId].examinedAt!==null)); }
 export function bodyObservation(g,partId) {
   const injuries=visibleInjuries(g,partId), part=g.body[partId];
   return injuries.map(i=>({name:INJURIES[i.type].name, text:(part.examinedAt!==null?INJURIES[i.type].finding:INJURIES[i.type].visible)+(activeDrugDefinitions(g).some(drug=>INJURIES[i.type].tags.includes(drug.relievesTag))?' Objawy są łagodzone przez aktywny lek.':''), bleeding:INJURIES[i.type].tags.includes('external') && injuryPhysiology(i.type)?.rate>0 ? bleedingLabel(woundBleeding(g,i)/g.profile.ebvMl):null}));

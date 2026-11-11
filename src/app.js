@@ -7,6 +7,7 @@ import { scoreRun, survivalResult } from './simulation/scoring.js';
 import { updateLiveHUD } from './ui/live-hud.js';
 import { difficultyById } from './content/difficulty.js';
 import { itemById } from './content/items.js';
+import { complicationById } from './content/complications.js';
 import { renderGame } from './ui/game-screen.js';
 import { mountGuide } from './ui/guide.js';
 import { createContextMenu } from './ui/context-menu.js';
@@ -62,6 +63,12 @@ function recordRun(){
   stats.history=sanitizeHistory([...(stats.history||[]),{scenarioId:game.scenarioId,status:game.status,total:r.total,grade:r.grade,difficulty:game.difficulty,...(proc?{mode:'procedural',survival:seconds}:{})}]);
 }
 function persist(){saved=saveProgress(game,stats);}
+// Complications (simulation/complications.js) are announced through the feedback box as they happen.
+const complicationCount=g=>g.complications?.log.length??0;
+function newComplication(g,before){
+  const added=(g.complications?.log||[]).slice(before);if(!added.length)return null;
+  return `Komplikacja: ${added.map(e=>complicationById(e.id)?.text).filter(Boolean).join(' ')}`;
+}
 function feedback(text){announce(text);const box=document.querySelector('#feedback');box.textContent=text;box.hidden=false;clearTimeout(feedback.timer);feedback.timer=setTimeout(()=>box.hidden=true,6500);}
 // On a missing (amputated) segment the only thing to act on is its stump injury.
 const stumpWound=(part,wound)=>wound??(isMissing(game,part)?game.injuries.find(i=>i.part===part)?.id??null:null);
@@ -81,7 +88,7 @@ async function executeAction(id,site=target,wound=selectedWound){
     try{input=await launchProcedure(item.procedure,game,site,woundTarget);}catch(error){feedback(error.message);return;}finally{procedureBusy=false;driver?.reset();}
     if(!input)return;
   }
-  const before=game.status,stepBefore=tutorialProgress(game).index,next=act(game,id,site,woundTarget,input);
+  const before=game.status,stepBefore=tutorialProgress(game).index,events=complicationCount(game),logged=game.log.length,next=act(game,id,site,woundTarget,input);
   if(next===game)return;
   game=next;heldItem=null;
   let tutorialNote='';
@@ -91,7 +98,9 @@ async function executeAction(id,site=target,wound=selectedWound){
     else if(t.index!==stepBefore)tutorialNote=`Samouczek ${t.index+1} z ${t.total}: ${t.step.title}.`;
   }
   if(before==='active'&&game.status!=='active')recordRun();
-  driver?.reset();persist();render();feedback(game.log.at(-1).text);
+  // A complication during the action is announced together with the action's own result.
+  const complication=newComplication(game,events);
+  driver?.reset();persist();render();feedback(complication?`${complication} ${game.log[logged]?.text??''}`.trim():game.log.at(-1).text);
   if(tutorialNote)setTimeout(()=>announce(tutorialNote),400);
   if(tutorialNote==='Samouczek ukończony.')setTimeout(()=>feedback(tutorialNote),400);
 }
@@ -125,7 +134,8 @@ function render(focus=null) {
   root.querySelectorAll('[data-tutorial-toggle]').forEach(b=>b.onclick=()=>{stats.tutorial=stats.tutorial==='on'?'off':'on';persist();render();announce(stats.tutorial==='on'?'Samouczek włączony.':'Samouczek wyłączony.');});
   root.querySelectorAll('[data-pause]').forEach(b=>b.onclick=()=>{game.paused=!game.paused;driver?.reset();persist();render();});
   root.querySelectorAll('[data-speed]').forEach(b=>b.onclick=()=>{game.speed=Number(b.dataset.speed);driver?.reset();persist();render();});
-  root.querySelectorAll('[data-monitor]').forEach(b=>b.onclick=()=>{game.monitoring=!game.monitoring;if(game.monitoring)sampleMonitor(game);persist();render();});
+  // A monitor that was never attached (expert) is attached as an action that takes time; afterwards the button only pauses readings.
+  root.querySelectorAll('[data-monitor]').forEach(b=>b.onclick=()=>{if(game.monitorAttached===false){executeAction('monitor','chest');return;}game.monitoring=!game.monitoring;if(game.monitoring)sampleMonitor(game);persist();render();});
   const search=root.querySelector('[data-bag-search]');
   if(search){search.value=bagSearch;search.oninput=e=>{bagSearch=e.target.value;filterBag();};}
   const filter=root.querySelector('[data-bag-filter]');if(filter){filter.value=bagFilter;filter.onchange=e=>{bagFilter=e.target.value;filterBag();};}
@@ -159,9 +169,11 @@ driver=createRealtimeDriver({
   canRun:()=>game.status==='active'&&!game.paused&&!procedureBusy&&!document.hidden&&!document.querySelector('dialog[open]'),
   getSpeed:()=>game.speed||1,
   onAdvance:seconds=>{
-    const before=game.status;game=advanceTime(game,seconds);
+    const before=game.status,events=complicationCount(game);game=advanceTime(game,seconds);
     if(before==='active'&&game.status!=='active'){recordRun();heldItem=null;persist();render();feedback(game.log.at(-1).text);return;}
-    persist();updateLiveHUD(root,game);
+    // A complication may change placed devices (IV, mask, dressing): redraw the scene, then announce it.
+    const complication=newComplication(game,events);
+    persist();if(complication){render();feedback(complication);}else updateLiveHUD(root,game);
   }
 });
 for(const dialog of document.querySelectorAll('dialog'))dialog.addEventListener('close',()=>driver.reset());

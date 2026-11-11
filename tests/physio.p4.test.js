@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createGame, advanceTime, restoreGame, SCENARIOS } from '../src/engine.js';
+import { advanceTime, restoreGame, SCENARIOS } from '../src/engine.js';
 import { tick } from '../src/simulation/physiology.js';
 import { clinicalSnapshot, initPhys } from '../src/simulation/physio-model.js';
 import { coagOf, coagParts } from '../src/simulation/physio-hemostasis.js';
@@ -11,7 +11,7 @@ import { handoverQuality, scoreRun } from '../src/simulation/scoring.js';
 import { injuryPhysiology, segmentTbsa } from '../src/content/injury-physiology.js';
 import { BODY_PARTS } from '../src/content/body.js';
 import { GUIDES } from '../src/content/guides.js';
-import { act, bloodIndex } from './support.js';
+import { act, bloodIndex, createGame } from './support.js';
 
 const index=id=>SCENARIOS.findIndex(s=>s.id===id);
 // A painless 75 kg patient indoors with the given injuries and legacy blood points; no ambulance due.

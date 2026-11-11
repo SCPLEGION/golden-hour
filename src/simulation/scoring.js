@@ -2,6 +2,7 @@ import { ITEMS } from '../content/items.js';
 import { difficultyById } from '../content/difficulty.js';
 import { protocolShare, protocolStatus } from './protocol.js';
 import { clinicalSnapshot } from './physio-model.js';
+import { complicationSummary } from './complications.js';
 const clamp=(v,min=0,max=1)=>Math.min(max,Math.max(min,Number.isFinite(v)?v:min));
 const GRADES=[['S',90],['A',75],['B',60],['C',40]];
 const pl=(n,d=1)=>n.toFixed(d).replace('.',',');
@@ -23,6 +24,8 @@ function handover(g){
   const q=handoverQuality(s);
   return {...q,note:`${lossNote(s)}, SpO₂ ${Math.round(s.spo2)}%, ${pl(s.tempC)} °C, GCS ${s.gcs}, mleczany ${pl(s.lactate??1)} mmol/l, indeks wstrząsowy ${Number.isFinite(q.index)?pl(q.index,2):'—'}.`};
 }
+// Complications (0.9) are reported next to the economy; they never change a part's maximum.
+const complicationNote=(g,difficulty)=>{const c=complicationSummary(g);return c.total||difficulty.complications?` Komplikacje: ${c.total} (opanowane ${c.controlled}).`:'';};
 // Survival time for the procedural mode: elapsed stops advancing once the run is no longer active, so it is the time at the end.
 export const survivalResult=g=>({seconds:g.elapsed,saved:g.status==='saved'});
 // Pure end-of-run score. Economy and call speed count only for a patient handed over alive in at least half-good state.
@@ -41,7 +44,7 @@ export function scoreRun(g) {
     {id:'outcome',label:'Wynik interwencji',points:outcome,max:40,note:g.status==='saved'?'Pacjent przekazany żywy.':g.status==='lost'?'Pacjent zmarł.':'Interwencja trwa.'},
     {id:'state',label:'Stan przy przekazaniu',points:state,max:25,note:stateNote},
     {id:'reaction',label:'Szybkość wezwania pomocy',points:reaction,max:20,note:`${called?`Ewakuację zgłoszono po ${Math.round(g.transportCalledAt)} s.`:'Nie zgłoszono ewakuacji.'}${called&&!earned?` ${gate}`:''}`},
-    {id:'economy',label:'Gospodarka sprzętem',points:economy,max:15,note:`Zużyto ${used} z ${total} sztuk sprzętu i leków (pozostało ${Math.round(100*left/(total||1))}%).${earned?'':` ${gate}`}`}
+    {id:'economy',label:'Gospodarka sprzętem',points:economy,max:15,note:`Zużyto ${used} z ${total} sztuk sprzętu i leków (pozostało ${Math.round(100*left/(total||1))}%).${earned?'':` ${gate}`}${complicationNote(g,difficulty)}`}
   ];
   // With a patient-state protocol the other parts shrink to 85 points so the total still tops out at 100.
   const share=protocolShare(g);
@@ -51,5 +54,5 @@ export function scoreRun(g) {
     parts.push({id:'protocol',label:'Protokół',points:Math.round(15*share),max:15,note:`Na czas ${steps.filter(s=>s.onTime).length}, spóźnione ${steps.filter(s=>s.late).length}, pominięte ${steps.filter(s=>!s.onTime&&!s.late).length} z ${steps.length} kroków.`});
   }
   const score=Math.min(100,Math.round(parts.reduce((n,p)=>n+p.points,0)*difficulty.scoreMultiplier));
-  return {total:score,grade:(GRADES.find(([,min])=>score>=min)||['D'])[0],parts,difficulty:{id:difficulty.id,name:difficulty.name,multiplier:difficulty.scoreMultiplier}};
+  return {complications:complicationSummary(g),total:score,grade:(GRADES.find(([,min])=>score>=min)||['D'])[0],parts,difficulty:{id:difficulty.id,name:difficulty.name,multiplier:difficulty.scoreMultiplier}};
 }

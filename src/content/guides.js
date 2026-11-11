@@ -302,5 +302,10 @@ export const GUIDES = [
     "id": "p4-clot-pressure",
     "title": "Skrzep i ciśnienie",
     "text": "W grze rana zabezpieczona opatrunkiem lub gazą krwawi coraz słabiej, bo z czasem tworzy się w niej skrzep. Skrzep rośnie tylko wtedy, gdy przepływ w ranie jest już mały, a krzepnięcie sprawne. Krzepnięcie słabnie, gdy pacjent jest wychłodzony, gdy krew jest rozcieńczona dużą ilością płynów, gdy narasta zakwaszenie we wstrząsie i gdy pacjent stracił już dużo krwi — to tak zwana triada śmierci, która sama napędza dalsze krwawienie. Świeży skrzep jest kruchy: utrzymuje ciśnienie zbliżone do tego, przy którym powstał. Gwałtowny wzrost ciśnienia — po szybkim podaniu płynów, po lekach podnoszących ciśnienie albo przy silnym bólu — może go zerwać i opatrunek znów zaczyna przesiąkać. Dlatego w grze opłaca się utrzymywać krążenie wystarczające do zachowania przytomności, zamiast na siłę przywracać pełne ciśnienie, chronić pacjenta przed zimnem i oszczędnie gospodarować płynami. To umowny model gry, nie wytyczne postępowania."
+  },
+  {
+    "id": "complications",
+    "title": "Komplikacje w trakcie interwencji",
+    "text": "Na poziomach normalnym, trudnym i eksperckim stan poszkodowanego może się nagle zmienić także po wykonaniu właściwych czynności: założony sprzęt bywa zawodny, a pacjent reaguje nieprzewidywalnie. Każda komplikacja jest ogłaszana komunikatem i wpisem w dzienniku. Zatrzymaj się wtedy, oceń jeszcze raz miejsce, którego dotyczy, i sprawdź, czy wcześniejsze zabezpieczenie nadal działa — każdą da się opanować sprzętem i czynnościami z torby. Na koniec ocena podaje liczbę komplikacji i to, ile z nich opanowano; nie zmienia to maksymalnej liczby punktów. Na poziomie eksperckim monitor trzeba najpierw podłączyć, a większość urazów widać dopiero po zbadaniu okolicy."
   }
 ];

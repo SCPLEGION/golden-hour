@@ -1,12 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createGame, advanceTime, restoreGame, itemUnavailable, SCENARIOS, ITEMS } from '../src/engine.js';
+import { advanceTime, restoreGame, itemUnavailable, SCENARIOS, ITEMS } from '../src/engine.js';
 import { CONDITIONS, CONDITION_SCENARIOS } from '../src/content/conditions.js';
 import { tick } from '../src/simulation/physiology.js';
 import { clinicalSnapshot, applyInsult, initPhys } from '../src/simulation/physio-model.js';
 import { severinghaus, invSeveringhaus, arterialSaturation, gcsOf, avpuOf } from '../src/simulation/physio-respiration.js';
 import { RESP_TUNING } from '../src/content/physiology-data.js';
-import { act, working } from './support.js';
+import { act, working, createGame } from './support.js';
 
 const index=id=>SCENARIOS.findIndex(s=>s.id===id);
 const scenario=id=>createGame(index(id),()=>.99);

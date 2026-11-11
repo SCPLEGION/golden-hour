@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {SCENARIOS,createGame,validateCatalogs} from '../src/engine.js';
-import { act, respiratory, bloodIndex, spo2Of } from './support.js';
+import { SCENARIOS, validateCatalogs } from '../src/engine.js';
+import { act, respiratory, bloodIndex, spo2Of, createGame } from './support.js';
 import {INJURIES} from '../src/content/injuries.js';
 import {BODY_PARTS,resolvePart,proximalTourniquetSite} from '../src/content/body.js';
 import {ITEMS} from '../src/content/items.js';

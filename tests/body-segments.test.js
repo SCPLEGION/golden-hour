@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { act, legacyRate } from './support.js';
-import { createGame, restoreGame, SCENARIOS, ITEMS, itemUnavailable, vitals } from '../src/engine.js';
+import { act, legacyRate, createGame } from './support.js';
+import { restoreGame, SCENARIOS, ITEMS, itemUnavailable, vitals } from '../src/engine.js';
 import { BODY_PARTS, BODY_OUTLINES, LEGACY_PARTS, resolvePart, bodyPart, matchesRegion } from '../src/content/body.js';
 import { IV_PROCEDURE } from '../src/content/procedures.js';
 import { injuryBleeding, pain } from '../src/simulation/selectors.js';

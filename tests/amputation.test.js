@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { act, legacyRate, bloodIndex } from './support.js';
+import { act, legacyRate, bloodIndex, createGame } from './support.js';
 import { injuryPhysiology } from '../src/content/injury-physiology.js';
 import { clinicalSnapshot } from '../src/simulation/physio-model.js';
-import { createGame, restoreGame, SCENARIOS, ITEMS, itemUnavailable } from '../src/engine.js';
+import { restoreGame, SCENARIOS, ITEMS, itemUnavailable } from '../src/engine.js';
 import { BODY_PARTS, BODY_OUTLINES, bodyPart, splintReach, proximalTourniquetSite, cutPoint } from '../src/content/body.js';
 import { INJURIES } from '../src/content/injuries.js';
 import { GUIDES } from '../src/content/guides.js';

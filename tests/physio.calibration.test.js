@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createGame, advanceTime, SCENARIOS } from '../src/engine.js';
+import { advanceTime, SCENARIOS } from '../src/engine.js';
 import { tick } from '../src/simulation/physiology.js';
 import { clinicalSnapshot, applyInsult, initPhys, hbOf } from '../src/simulation/physio-model.js';
 import { HEMORRHAGE_CLASSES } from '../src/content/physiology-data.js';
-import { act } from './support.js';
+import { act, createGame } from './support.js';
 
 // A healthy, painless 75 kg reference patient (EBV 5250 mL) on an empty scene.
 const fresh=(profile={sex:'M',massKg:75})=>{const g=createGame(SCENARIOS.findIndex(s=>s.id==='footballPitch'),()=>.5,{profile});g.injuries=[];initPhys(g,100);g.blood=100;return g;};

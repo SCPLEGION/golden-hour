@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createGame, advanceTime, SCENARIOS } from '../src/engine.js';
 import { tick } from '../src/simulation/physiology.js';
-import { act } from './support.js';
+import { act, respondToComplications } from './support.js';
 
 const index=id=>SCENARIOS.findIndex(s=>s.id===id);
 const seeded=(s=3)=>()=>(s=(s*16807)%2147483647)/2147483647;
@@ -17,10 +17,10 @@ test('performance: 20 000 physiology ticks take under 400 ms',()=>{
 });
 
 test('determinism: same seed and actions give identical states; ticks never use Math.random',()=>{
-  const play=()=>{let g=createGame(index('workshop'),seeded(),{difficulty:'hard'});g=act(g,'transport');g=advanceTime(g,40);g=act(g,'tourniquet','rightLeg');g=act(g,'iv','leftArm');g=act(g,'fluid','leftArm');for(let i=0;i<5;i++)g=advanceTime(g,120);return g;};
+  const play=()=>{let g=createGame(index('workshop'),seeded(),{difficulty:'hard'});g=act(g,'transport');g=advanceTime(g,40);g=act(g,'tourniquet','rightLeg');g=act(g,'iv','leftArm');g=act(g,'fluid','leftArm');for(let i=0;i<5;i++)g=respondToComplications(advanceTime(g,120));return g;};
   const original=Math.random;
   Math.random=()=>{throw new Error('Math.random used in the simulation');};
-  try{const a=play(),b=play();assert.deepEqual(a,b);assert.deepEqual(a.monitorHistory,b.monitorHistory);assert.ok(new Set(a.monitorHistory.map(v=>v.pulse)).size>1,'noise still varies');}
+  try{const a=play(),b=play();assert.deepEqual(a,b);assert.deepEqual(a.monitorHistory,b.monitorHistory);assert.ok(new Set(a.monitorHistory.map(v=>v.pulse)).size>1,'noise still varies');assert.ok(a.complications.log.length>0,'the seeded complication stream ran');}
   finally{Math.random=original;}
   const other=createGame(index('workshop'),seeded(9),{difficulty:'hard'});assert.notEqual(other.profile.seed,createGame(index('workshop'),seeded(),{difficulty:'hard'}).profile.seed);
 });

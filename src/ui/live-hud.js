@@ -1,6 +1,6 @@
 import { condition } from '../simulation/selectors.js';
 import { renderSupport } from './game-screen.js';
-import { trendPath, vitalLevel } from './patient.js';
+import { trendPath, vitalLevel, monitorCaption } from './patient.js';
 import { escape, time } from './format.js';
 // Only replace instrument text and paths. Never reconstruct a focused bag input,
 // dragged item, body hit target, context menu, or expanded examination note.
@@ -18,10 +18,10 @@ export function updateLiveHUD(root,g,{suspended=false}={}){
   });
   for(const key of ['pulse','pressure','oxygen'])root.querySelectorAll(`[data-trend="${key}"]`).forEach(path=>path.setAttribute('d',trendPath(g.monitorHistory,key)));
   const live=g.monitoring&&!g.paused&&!suspended&&g.status==='active';
-  const state=g.status!=='active'?'Zakończono':g.paused||suspended?'Pauza':g.monitoring?'Na żywo':'Odczyt zatrzymany';
+  const state=g.status!=='active'?'Zakończono':g.paused||suspended?'Pauza':g.monitoring?'Na żywo':g.monitorAttached===false?'Niepodłączony':'Odczyt zatrzymany';
   root.querySelectorAll('[data-monitor-status]').forEach(el=>el.textContent=state);
   root.querySelectorAll('[data-monitor-led]').forEach(el=>el.classList.toggle('on',live));
-  root.querySelectorAll('[data-monitor-caption]').forEach(el=>el.textContent=!g.monitoring?'Monitor odłączony — ostatni zapis.':g.paused||suspended?'Zegar automatyczny wstrzymany.':'Ciągły pomiar · ciśnienie (NIBP) co 3 min · historia 60 s.');
+  root.querySelectorAll('[data-monitor-caption]').forEach(el=>el.textContent=monitorCaption(g,suspended));
   root.querySelector('.vitals')?.classList.toggle('monitor-off',!g.monitoring);
   const journal=root.querySelector('.log ol');
   if(journal&&journal.dataset.count!==String(g.log.length)){journal.innerHTML=[...g.log].reverse().map(e=>`<li><time>${time(e.time)}</time><span>${escape(e.text)}</span></li>`).join('');journal.dataset.count=String(g.log.length);}

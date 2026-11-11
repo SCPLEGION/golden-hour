@@ -1,10 +1,11 @@
 import { BODY_PARTS, LEGACY_PARTS, bodyPart, resolvePart } from './content/body.js';
 import { SCENARIOS } from './content/scenarios.js';
 import { ITEMS, itemById } from './content/items.js';
-import { DIFFICULTIES, difficultyById } from './content/difficulty.js';
+import { DIFFICULTIES, difficultyById, TRANSPORT_DELAY_BOUNDS } from './content/difficulty.js';
 import { INJURIES } from './content/injuries.js';
 import { IV_PROCEDURE } from './content/procedures.js';
-import { EFFECTS, itemUnavailable } from './simulation/effects.js';
+import { EFFECTS, itemUnavailable, reusesDevice } from './simulation/effects.js';
+import { createComplications, validComplications, validateComplications, resolveComplications } from './simulation/complications.js';
 import { PROCEDURES } from './simulation/procedures.js';
 import { sampleMonitor, HISTORY_LIMIT } from './simulation/monitor.js';
 import { tick } from './simulation/physiology.js';
@@ -48,6 +49,7 @@ export function validateCatalogs() {
   validateConditions();
   validateInjuryPhysiology();
   validatePharmacology();
+  validateComplications();
   for(const c of [...SCENARIOS,...CONDITION_SCENARIOS])if(c.environment!==undefined&&!validEnvironment(c.environment))throw new Error(`Invalid environment in ${c.id}`);
 }
 validateCatalogs();
@@ -76,12 +78,14 @@ export function createGame(index=Math.floor(Math.random()*SCENARIOS.length),rand
     if(free.length){const [part,type]=free[Math.min(free.length-1,Math.floor(random()*free.length))];injuries.push({id:`extra-${k}`,part,type,treatments:{}});}
   }
   const name=['Adam','Michał','Kamil','Piotr','Tomasz'][Math.floor(random()*5)],age=22+Math.floor(random()*40);
-  const g={ version:3, scenarioId:c.id, patient:`${name}, ${age} lat`, elapsed:0, transportDelay:delayMin+Math.floor(random()*((delayMax-delayMin)/60+1))*60, difficulty:difficulty.id, transportAt:null, transportCalledAt:null, status:'active', temperature:c.temperature??(injuries.some(i=>INJURIES[i.type].tags.includes('cold'))?35.4:injuries.some(i=>INJURIES[i.type].tags.includes('heat'))?38.6:36.7), injuries, body:Object.fromEntries(BODY_PARTS.map(p=>[p.id,{examinedAt:null,note:null,treatments:{},ivAt:null}])), allergies:[...(c.allergies||[])], historyKnown:false, initialUnconscious:injuries.some(i=>INJURIES[i.type].unconscious), airway:false, warm:false, oxygenUntil:0, ventilatingUntil:0, infusions:[], medications:[], arrest:null,vitals:null,monitoring:true,monitorHistory:[],paused:false,speed:1,supports:[],assessments:[], supplies:Object.fromEntries(ITEMS.filter(i=>i.count!==null).map(i=>[i.id,i.count===null?null:Math.max(1,Math.round(i.count*difficulty.supplyMultiplier))])), actions:0, log:[{time:0,text:'Docierasz do poszkodowanego. Masz torbę ratowniczą; zorganizuj ewakuację i rozpocznij ocenę.'}] };
+  const g={ version:3, scenarioId:c.id, patient:`${name}, ${age} lat`, elapsed:0, transportDelay:delayMin+Math.floor(random()*((delayMax-delayMin)/60+1))*60, difficulty:difficulty.id, transportAt:null, transportCalledAt:null, status:'active', temperature:c.temperature??(injuries.some(i=>INJURIES[i.type].tags.includes('cold'))?35.4:injuries.some(i=>INJURIES[i.type].tags.includes('heat'))?38.6:36.7), injuries, body:Object.fromEntries(BODY_PARTS.map(p=>[p.id,{examinedAt:null,note:null,treatments:{},ivAt:null}])), allergies:[...(c.allergies||[])], historyKnown:false, initialUnconscious:injuries.some(i=>INJURIES[i.type].unconscious), airway:false, warm:false, oxygenUntil:0, ventilatingUntil:0, infusions:[], medications:[], arrest:null,vitals:null,monitoring:difficulty.monitorAttached!==false,monitorAttached:difficulty.monitorAttached!==false,monitorHistory:[],paused:false,speed:1,supports:[],assessments:[], supplies:Object.fromEntries(ITEMS.filter(i=>i.count!==null).map(i=>[i.id,i.count===null?null:Math.max(1,Math.round(i.count*difficulty.supplyMultiplier))])), actions:0, log:[{time:0,text:'Docierasz do poszkodowanego. Masz torbę ratowniczą; zorganizuj ewakuację i rozpocznij ocenę.'}] };
   if(proc){g.mode='procedural';g.generated=c;}
   if(condition)g.protocol=createProtocol(condition,difficulty.deadlineMultiplier??1);
   // Drawn last so legacy seeds keep their scenario, patient and delay.
   // The scenario's legacy `blood`/`oxygen` presentation seeds g.phys; the state keeps no point-scale mirrors (P4).
   g.profile=createProfile(random,options?.profile,age);initPhys(g,c.blood,c.oxygen);g.phys.env=environmentOf(c);
+  // Complications draw from their own stream seeded by the patient seed (no extra draw from `random`).
+  g.complications=createComplications(g);if(options?.complications===false)g.complications.next=null;
   sampleMonitor(g);return g;
 }
 export function advanceTime(state,seconds=1){
@@ -111,7 +115,8 @@ export function act(state,id,target='chest',injuryId=null,procedureInput=null) {
   const outcome=procedure?.resolve(state,target,procedureInput);
   if(procedure&&!outcome)return state;
   const g=structuredClone(state), spec=item||action;
-  if(item && item.count!==null) g.supplies[id]--;
+  // Re-tightening a placed tourniquet or putting a displaced mask back on uses the device already in place.
+  if(item && item.count!==null && !reusesDevice(state,item,target)) g.supplies[id]--;
   let message='';
   if(item) {
     message=EFFECTS[item.effect]({g,item,target,injuryId,procedure:outcome});
@@ -130,6 +135,8 @@ export function act(state,id,target='chest',injuryId=null,procedureInput=null) {
   // A manual measurement (or attaching the monitor) takes a cuff reading now; the cuff then cycles every 180 s.
   if(id==='vitals'||item?.effect==='monitor')measureNibp(g);
   if(id==='vitals'||item?.effect==='monitor'||item?.effect==='aed')sampleMonitor(g,true);
+  // An examination is recorded after its ticks: let it control an open complication at once.
+  if(g.complications?.log.length)resolveComplications(g);
   return g;
 }
 const UNIT=n=>Number.isFinite(n)&&n>=0&&n<=1;
@@ -158,7 +165,7 @@ export function restoreGame(raw) {
     // `blood`/`oxygen` were point-scale mirrors until P4: required by v2 (migration input), optional in v3, then dropped.
     for(const key of ['elapsed','temperature','transportDelay','oxygenUntil','ventilatingUntil','actions',...(g.version===2?['fluidSupport','blood','oxygen']:[])]) if(!Number.isFinite(g[key]) || g[key]<0) return null;
     for(const key of ['blood','oxygen'])if(g[key]!==undefined&&!(Number.isFinite(g[key])&&g[key]>=0))return null;
-    if(g.transportDelay<900 || g.transportDelay>1500 || (g.transportAt!==null && !Number.isFinite(g.transportAt))) return null;
+    if(g.transportDelay<TRANSPORT_DELAY_BOUNDS[0] || g.transportDelay>TRANSPORT_DELAY_BOUNDS[1] || (g.transportAt!==null && !Number.isFinite(g.transportAt))) return null;
     g.difficulty??='normal';
     if(!DIFFICULTIES.some(d=>d.id===g.difficulty))return null;
     g.transportCalledAt??=null;
@@ -211,8 +218,8 @@ export function restoreGame(raw) {
     if(g.arrest){g.arrest.rhythm??='asystole';if(!['vf','pea','asystole'].includes(g.arrest.rhythm))return null;}
     if(g.vitals!==null && !Number.isFinite(g.vitals?.time)) return null;
     delete g.blood;delete g.oxygen;
-    delete g.cprBenefit;g.paused??=false;g.speed??=1;g.monitoring??=true;g.monitorHistory??=[];g.supports??=[];g.assessments??=[];
-    if(typeof g.paused!=='boolean'||typeof g.monitoring!=='boolean'||![1,2,4].includes(g.speed))return null;
+    delete g.cprBenefit;g.paused??=false;g.speed??=1;g.monitoring??=true;g.monitorAttached??=true;g.monitorHistory??=[];g.supports??=[];g.assessments??=[];
+    if(typeof g.paused!=='boolean'||typeof g.monitoring!=='boolean'||typeof g.monitorAttached!=='boolean'||![1,2,4].includes(g.speed))return null;
     if(!Array.isArray(g.monitorHistory)||g.monitorHistory.some(v=>!Number.isFinite(v.time)||!Number.isFinite(v.pulse)||!Number.isFinite(v.oxygen)||typeof v.pressure!=='string'))return null;
     if(g.monitorHistory.length>HISTORY_LIMIT)g.monitorHistory=g.monitorHistory.slice(-HISTORY_LIMIT);
     if(!Array.isArray(g.supports)||g.supports.some(s=>!itemById(s.id)||!g.body[s.target]||!Number.isFinite(s.until)))return null;
@@ -221,6 +228,8 @@ export function restoreGame(raw) {
     if(g.protocol!==undefined&&!validProtocol(g.protocol))delete g.protocol;
     else if(g.protocol)g.protocol.pain??=0;
     ensureSensors(g);if(!validSensors(g.phys))return null;
+    // Complications (0.9): older saves start their stream now; a corrupted one restarts without past events.
+    if(!validComplications(g.complications))g.complications=createComplications(g,g.elapsed);
     if(g.monitoring&&!g.vitals)sampleMonitor(g);
     return structuredClone(g);
   }catch{return null;}

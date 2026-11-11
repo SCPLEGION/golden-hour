@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createGame, advanceTime, restoreGame, SCENARIOS, ITEMS } from '../src/engine.js';
+import { advanceTime, restoreGame, SCENARIOS, ITEMS } from '../src/engine.js';
 import { tick } from '../src/simulation/physiology.js';
 import { clinicalSnapshot, initPhys } from '../src/simulation/physio-model.js';
 import { effectCurve, peakOf, drugEffects, drugStatus } from '../src/simulation/physio-pharmacology.js';
@@ -11,7 +11,7 @@ import { PK_ROUTES, HALF_LIFE_MIN, GLUCOSE } from '../src/content/physiology-dat
 import { GUIDES } from '../src/content/guides.js';
 import { renderSupport } from '../src/ui/game-screen.js';
 import { renderBag } from '../src/ui/bag.js';
-import { act } from './support.js';
+import { act, createGame } from './support.js';
 
 const index=id=>SCENARIOS.findIndex(s=>s.id===id);
 const scenario=(id,profile)=>createGame(index(id),()=>.99,profile?{profile}:{});

@@ -1,10 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createGame, act as engineAct, advanceTime, SCENARIOS, ITEMS, restoreGame, validateCatalogs } from '../src/engine.js';
+import { act as engineAct, advanceTime, SCENARIOS, ITEMS, restoreGame, validateCatalogs } from '../src/engine.js';
 import { bleedingRate, pain, visibleInjuries, activeMedicines, respiratoryBurden } from '../src/simulation/selectors.js';
 import { loadProgress, saveProgress } from '../src/storage.js';
 const perfectIV={point:{x:400,y:132.42105263157896},approach:42,depth:.62,aborted:false};
-import { act, legacyRate, bloodIndex, spo2Of } from './support.js';
+import { act, legacyRate, bloodIndex, spo2Of, createGame } from './support.js';
 const initial = index => createGame(index,()=>.99);
 const wait = (g,n=1) => {for(let i=0;i<n&&g.status==='active';i++)g=act(g,'wait60');return g;};
 test('catalog references resolve and every item has a registered effect',validateCatalogs);
