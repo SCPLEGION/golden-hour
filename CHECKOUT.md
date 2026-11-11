@@ -1,6 +1,6 @@
 # Field Medic — checkpoint projektu
 
-Ostatnia aktualizacja: 2026-11-11 · wersja aplikacji: 0.7.0
+Ostatnia aktualizacja: 2026-11-11 · wersja aplikacji: 0.8.0
 
 ## Co to jest
 
@@ -10,6 +10,8 @@ To fikcyjna symulacja gry, nie instruktaż ani narzędzie kliniczne. Dawki, wyni
 
 ## Aktualny stan
 
+- Poziom trudny dokłada 1–2 dodatkowe umiarkowane obrażenia (`extraInjuries` w `DIFFICULTIES`); łatwy i normalny zachowują dawny układ.
+- Tryb „Pełny proceduralny” (`src/simulation/procedural.js`): losowy pacjent, osobny wynik — czas utrzymania przy życiu (`stats.bestSurvival`), niezależny od rekordu 0–100.
 - Pozioma sylwetka outline, widoczne rany, urazy i założone wyposażenie; lokalne menu działa myszą, dotykiem i klawiaturą.
 - Leczenie przypisane do miejsca/konkretnej rany; staza może zablokować IV w tej samej ręce.
 - Wkłucie IV ma wybór miejsca i minigrę techniki, a jej jakość wpływa na przepływ i dostarczenie płynów/leków.

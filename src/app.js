@@ -3,7 +3,7 @@ import { renderNewCall } from './ui/new-call.js';
 import { validCategory } from './storage.js';
 import { createRealtimeDriver } from './simulation/realtime.js';
 import { sampleMonitor } from './simulation/monitor.js';
-import { scoreRun } from './simulation/scoring.js';
+import { scoreRun, survivalResult } from './simulation/scoring.js';
 import { updateLiveHUD } from './ui/live-hud.js';
 import { difficultyById } from './content/difficulty.js';
 import { itemById } from './content/items.js';
@@ -38,20 +38,29 @@ function openNewCall(){
   newCallDialog.querySelector('form').onsubmit=e=>{
     e.preventDefault();const data=new FormData(e.target);
     if(game.status==='active'&&!confirm('Przerwać obecną interwencję i przyjąć nowe wezwanie?'))return;
-    stats.category=validCategory(data.get('category'));stats.difficulty=difficultyById(data.get('difficulty')).id;
+    stats.mode=data.get('mode')==='procedural'?'procedural':'calls';if(stats.mode==='calls')stats.category=validCategory(data.get('category'));stats.difficulty=difficultyById(data.get('difficulty')).id;
     newCallDialog.close();startCall();
   };
+  const fields=newCallDialog.querySelector('.category-fields');
+  newCallDialog.querySelectorAll('input[name=mode]').forEach(r=>r.onchange=()=>{const p=newCallDialog.querySelector('input[name=mode]:checked').value==='procedural';fields.disabled=p;fields.classList.toggle('is-disabled',p);});
   newCallDialog.showModal();
-  (newCallDialog.querySelector('input[name=category]:checked')||newCallDialog.querySelector('input[name=category]'))?.focus();
+  newCallDialog.querySelector('input[name=mode]:checked')?.focus();
 }
 function startCall(){
   const previous=game.protocol?.conditionId;
-  for(let i=0;i<4;i++){game=createGame(0,Math.random,{difficulty:stats.difficulty,category:stats.category});if(game.protocol.conditionId!==previous)break;}
+  if(stats.mode==='procedural')game=createGame(0,Math.random,{difficulty:stats.difficulty,mode:'procedural'});
+  else for(let i=0;i<4;i++){game=createGame(0,Math.random,{difficulty:stats.difficulty,category:stats.category});if(game.protocol?.conditionId!==previous)break;}
   target=game.injuries[0].part;tab='equipment';selectedWound=null;heldItem=null;bagSearch='';bagFilter='all';logOpen=false;persist();render();window.scrollTo({top:0,behavior:'instant'});announce('Nowe wezwanie. Oceń poszkodowanego.');
 }
 function setDifficulty(id){stats.difficulty=id;persist();feedback(`Poziom „${difficultyById(stats.difficulty).name}” obowiązuje od następnego wezwania.`);}
 const announce=text=>{document.querySelector('#announcement').textContent=text;};
-function recordRun(){const r=scoreRun(game);stats[game.status]++;stats.best=Math.max(stats.best||0,r.total);stats.history=sanitizeHistory([...(stats.history||[]),{scenarioId:game.scenarioId,status:game.status,total:r.total,grade:r.grade,difficulty:game.difficulty}]);}
+// Procedural runs set the separate survival record; the 0–100 record stays with normal calls.
+function recordRun(){
+  const r=scoreRun(game),proc=game.mode==='procedural',seconds=Math.floor(survivalResult(game).seconds);
+  stats[game.status]++;
+  if(proc)stats.bestSurvival=Math.max(stats.bestSurvival||0,seconds);else stats.best=Math.max(stats.best||0,r.total);
+  stats.history=sanitizeHistory([...(stats.history||[]),{scenarioId:game.scenarioId,status:game.status,total:r.total,grade:r.grade,difficulty:game.difficulty,...(proc?{mode:'procedural',survival:seconds}:{})}]);
+}
 function persist(){saved=saveProgress(game,stats);}
 function feedback(text){announce(text);const box=document.querySelector('#feedback');box.textContent=text;box.hidden=false;clearTimeout(feedback.timer);feedback.timer=setTimeout(()=>box.hidden=true,6500);}
 // On a missing (amputated) segment the only thing to act on is its stump injury.

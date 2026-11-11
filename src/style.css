@@ -412,7 +412,7 @@ dialog::backdrop{background:#050604d9;background-image:var(--scanlines)}
 .guide-results ul{margin:0 0 6px;padding-left:20px}
 .guide-results>p{padding:14px 0}
 /* stats panel */
-.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;margin:16px 0;background:var(--line);border:1px solid var(--line)}
+.stats-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;margin:16px 0;background:var(--line);border:1px solid var(--line)}
 .stats-grid div{padding:10px 12px;background:var(--bg-1)}
 .stats-grid dd{margin:5px 0 0;font:600 24px/1 var(--mono);color:var(--ink)}
 #stats .difficulty-select{margin:0 0 18px;font-size:10.5px}
@@ -583,6 +583,11 @@ dialog::backdrop{background:#050604d9;background-image:var(--scanlines)}
 .category-card:has(input:checked){background:var(--amber-bg);border-color:var(--amber);box-shadow:inset 3px 0 0 var(--amber)}
 .category-card:has(input:focus-visible){outline:2px solid var(--amber);outline-offset:2px}
 .category-name{font:700 17px/1.1 var(--font-head);letter-spacing:.04em;text-transform:uppercase;color:var(--ink)}
+.mode-select{margin-bottom:14px}
+.category-fields.is-disabled{opacity:.4;pointer-events:none}
+.survival-result{margin:12px 0;padding:10px 14px;border-left:3px solid var(--amber);background:var(--amber-bg)}
+.survival-result span,.survival-result small{display:block;font:500 10.5px var(--mono);letter-spacing:var(--track);text-transform:uppercase;color:var(--ink-2)}
+.survival-result strong{display:block;margin:4px 0;font:700 34px/1 var(--mono);color:var(--ink)}
 .category-card small{font-size:12.5px;line-height:1.4;color:var(--ink-2)}
 .category-count{font:500 10.5px var(--mono);letter-spacing:var(--track);text-transform:uppercase;color:var(--amber-ink)}
 .category-card.random{border-style:dashed}

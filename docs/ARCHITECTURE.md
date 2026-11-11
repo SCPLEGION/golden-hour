@@ -5,7 +5,7 @@
 ```text
 content/ (definicje, bez stanu i DOM)
     ↓
-simulation/ (selektory, efekty, fizjologia)
+simulation/ (selektory, efekty, fizjologia, generator procedural.js)
     ↓
 engine.js (tworzenie stanu, transakcja akcji, wersjonowanie)
     ↓

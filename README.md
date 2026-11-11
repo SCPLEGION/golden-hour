@@ -68,4 +68,10 @@ Geometria i balans minigry są w `src/content/procedures.js`, wynik liczy `src/s
 
 Gra zawiera dokładnie 100 nowych wpisów: 25 urazów, 25 zgłoszeń, 20 elementów wyposażenia, 10 leków i 20 tematów poradnika. Runda 2 dodała 6 urazów, 6 zgłoszeń, 4 elementy sprzętu, 2 leki i 6 poradników ([lista](docs/EXPANSION-ROUND2.md)). [Lista wszystkich dodatków](docs/EXPANSION-100.md) i maszynowe manifesty pokazują stabilne identyfikatory oraz ich powiązanie z katalogami. Monitor gromadzi trend z ostatnich 60 sekund, a fizjologia reaguje na urazy, krążenie, leki i wsparcie. Moduły `src/simulation/realtime.js`, `monitor.js` i `modifiers.js` oddzielają zegar, historię pomiarów i modyfikatory od interfejsu.
 
+## Tryb pełny proceduralny i trudność (0.8)
+
+Poziom **trudny** dokłada poszkodowanemu 1–2 dodatkowe, umiarkowane obrażenia (złamanie, rana, stłuczenie, zwichnięcie i podobne) na wolnych segmentach ciała. Łatwy i normalny losują jak dotąd, więc ich ziarna dają te same układy.
+
+W oknie nowego wezwania można wybrać tryb **Pełny proceduralny**: cały poszkodowany jest losowany (zestaw urazów, otoczenie, parametry, ewentualna alergia), bez protokołu stanu. Generator `src/simulation/procedural.js` składa 2–4 urazy plus bonus poziomu (łatwy +0, normalny +1, trudny +2), pilnując, by nie powtarzały się na jednym segmencie ani nie łączyły z amputacją. Nie każdy przypadek da się uratować, dlatego osobnym wynikiem jest **czas utrzymania przy życiu** (`survivalResult` w `scoring.js`), z własnym rekordem w panelu dyżuru i na pasku górnym. Rekord 0–100 dotyczy tylko zgłoszeń; ocena punktowa pojawia się przy procedurze tylko dla pacjenta przekazanego żywego.
+
 Stan prac i propozycję dalszej kolejności opisuje [CHECKOUT.md](CHECKOUT.md).

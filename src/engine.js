@@ -19,6 +19,7 @@ import { ensureNeuro, validNeuro } from './simulation/physio-neuro.js';
 import { migrateDose, validatePharmacology } from './simulation/physio-pharmacology.js';
 import { environmentOf, validEnvironment } from './simulation/physio-thermal.js';
 import { ensureHemostasis, validHemostasis } from './simulation/physio-hemostasis.js';
+import { generateProcedural, MODERATE_POOL } from './simulation/procedural.js';
 import { ensureSensors, validSensors, measureNibp } from './simulation/physio-sensors.js';
 export { SCENARIOS, ITEMS, itemUnavailable };
 export { condition, vitals } from './simulation/selectors.js';
@@ -58,17 +59,25 @@ export function pickCondition(options,random=Math.random){
   return list[Math.min(list.length-1,Math.floor(random()*list.length))];
 }
 export function createGame(index=Math.floor(Math.random()*SCENARIOS.length),random=Math.random,options={}) {
-  const condition=pickCondition(options,random);
-  const c=condition?scenarioById(conditionScenarioId(condition)):SCENARIOS[index];
-  const difficulty=difficultyById(options?.difficulty), [delayMin,delayMax]=difficulty.transportDelayRange;
+  const proc=options?.mode==='procedural',difficulty=difficultyById(options?.difficulty), [delayMin,delayMax]=difficulty.transportDelayRange;
+  // Procedural calls ignore category/condition: the whole patient comes from generateProcedural.
+  const condition=proc?null:pickCondition(options,random);
+  const c=proc?generateProcedural(random,difficulty):condition?scenarioById(conditionScenarioId(condition)):SCENARIOS[index];
   if(!c) throw new Error('Unknown scenario');
   const injuries=c.injuries.map(([part,type],i)=>({id:`injury-${i}`,part:resolvePart(part),type,treatments:{}}));
-  if(random()>.65) {
+  if(!proc&&random()>.65) {
     const missing=missingSegments({injuries}),available=BODY_PARTS.filter(p=>!injuries.some(i=>i.part===p.id)&&!missing.includes(p.id));
     if(available.length) injuries.push({id:'extra',part:available[Math.floor(random()*available.length)].id,type:'contusion',treatments:{}});
   }
+  // Harder levels add moderate complications; drawn only when the level asks for them, so easy/normal sequences stay identical.
+  const [extraMin,extraMax]=difficulty.extraInjuries||[0,0];
+  if(!proc&&extraMax>0)for(let n=extraMin+Math.floor(random()*(extraMax-extraMin+1)),k=1;k<=n;k++){
+    const missing=missingSegments({injuries}),free=MODERATE_POOL.filter(([part])=>!injuries.some(i=>i.part===part)&&!missing.includes(part));
+    if(free.length){const [part,type]=free[Math.min(free.length-1,Math.floor(random()*free.length))];injuries.push({id:`extra-${k}`,part,type,treatments:{}});}
+  }
   const name=['Adam','Michał','Kamil','Piotr','Tomasz'][Math.floor(random()*5)],age=22+Math.floor(random()*40);
   const g={ version:3, scenarioId:c.id, patient:`${name}, ${age} lat`, elapsed:0, transportDelay:delayMin+Math.floor(random()*((delayMax-delayMin)/60+1))*60, difficulty:difficulty.id, transportAt:null, transportCalledAt:null, status:'active', temperature:c.temperature??(injuries.some(i=>INJURIES[i.type].tags.includes('cold'))?35.4:injuries.some(i=>INJURIES[i.type].tags.includes('heat'))?38.6:36.7), injuries, body:Object.fromEntries(BODY_PARTS.map(p=>[p.id,{examinedAt:null,note:null,treatments:{},ivAt:null}])), allergies:[...(c.allergies||[])], historyKnown:false, initialUnconscious:injuries.some(i=>INJURIES[i.type].unconscious), airway:false, warm:false, oxygenUntil:0, ventilatingUntil:0, infusions:[], medications:[], arrest:null,vitals:null,monitoring:true,monitorHistory:[],paused:false,speed:1,supports:[],assessments:[], supplies:Object.fromEntries(ITEMS.filter(i=>i.count!==null).map(i=>[i.id,i.count===null?null:Math.max(1,Math.round(i.count*difficulty.supplyMultiplier))])), actions:0, log:[{time:0,text:'Docierasz do poszkodowanego. Masz torbę ratowniczą; zorganizuj ewakuację i rozpocznij ocenę.'}] };
+  if(proc){g.mode='procedural';g.generated=c;}
   if(condition)g.protocol=createProtocol(condition,difficulty.deadlineMultiplier??1);
   // Drawn last so legacy seeds keep their scenario, patient and delay.
   // The scenario's legacy `blood`/`oxygen` presentation seeds g.phys; the state keeps no point-scale mirrors (P4).
@@ -81,8 +90,12 @@ export function advanceTime(state,seconds=1){
   for(let i=0;i<Math.min(600,Math.floor(seconds))&&g.status==='active';i++)tick(g);
   return g;
 }
-export const scenarioById = id => SCENARIOS.find(c=>c.id===id)||CONDITION_SCENARIOS.find(c=>c.id===id);
-export const scenarioFor = g => scenarioById(g.scenarioId);
+export const PROCEDURAL_PLACEHOLDER={id:'procedural',title:'Pełny proceduralny'};
+export const scenarioById = id => id==='procedural'?PROCEDURAL_PLACEHOLDER:SCENARIOS.find(c=>c.id===id)||CONDITION_SCENARIOS.find(c=>c.id===id);
+export const scenarioFor = g => g.scenarioId==='procedural'?g.generated:scenarioById(g.scenarioId);
+const TEXT=v=>typeof v==='string'&&v.length>0&&v.length<2000;
+// A generated record must be playable on its own: texts, valid [segment, type] pairs, environment and presentation vitals.
+const validGenerated=c=>Boolean(c&&typeof c==='object'&&c.id==='procedural'&&['title','scene','quote','history','lesson'].every(k=>TEXT(c[k]))&&Array.isArray(c.injuries)&&c.injuries.length>0&&c.injuries.every(p=>Array.isArray(p)&&p.length===2&&bodyPart(p[0])&&Object.hasOwn(INJURIES,p[1]))&&validEnvironment(c.environment)&&Number.isFinite(c.blood)&&Number.isFinite(c.oxygen)&&(c.allergies===undefined||Array.isArray(c.allergies)&&c.allergies.every(TEXT)));
 export const conditionFor = g => g.protocol?conditionById(g.protocol.conditionId):undefined;
 export function act(state,id,target='chest',injuryId=null,procedureInput=null) {
   if(state.status!=='active') return state;
@@ -136,6 +149,9 @@ function migrateLegacyParts(g){
 export function restoreGame(raw) {
   try {
     const g=typeof raw==='string'?JSON.parse(raw):structuredClone(raw);
+    if(g?.mode!==undefined&&g.mode!=='procedural')return null;
+    if((g?.mode==='procedural')!==(g?.scenarioId==='procedural')||(g?.scenarioId==='procedural'&&!validGenerated(g.generated)))return null;
+    if(g?.mode!=='procedural')delete g?.generated;
     if(![2,3].includes(g?.version) || !scenarioFor(g) || !['active','saved','lost'].includes(g.status)) return null;
     if(g.respiratoryDepression!==undefined&&!(Number.isFinite(g.respiratoryDepression)&&g.respiratoryDepression>=0))return null;
     delete g.respiratoryDepression;

@@ -23,6 +23,8 @@ function handover(g){
   const q=handoverQuality(s);
   return {...q,note:`${lossNote(s)}, SpO₂ ${Math.round(s.spo2)}%, ${pl(s.tempC)} °C, GCS ${s.gcs}, mleczany ${pl(s.lactate??1)} mmol/l, indeks wstrząsowy ${Number.isFinite(q.index)?pl(q.index,2):'—'}.`};
 }
+// Survival time for the procedural mode: elapsed stops advancing once the run is no longer active, so it is the time at the end.
+export const survivalResult=g=>({seconds:g.elapsed,saved:g.status==='saved'});
 // Pure end-of-run score. Economy and call speed count only for a patient handed over alive in at least half-good state.
 export function scoreRun(g) {
   const outcome=g.status==='saved'?40:0;

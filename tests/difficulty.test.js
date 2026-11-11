@@ -52,3 +52,14 @@ test('storage tolerates missing or invalid difficulty',()=>{
   assert.equal(loadProgress(store('bogus')).stats.difficulty,'normal');
   assert.equal(loadProgress(store('hard')).stats.difficulty,'hard');
 });
+test('hard adds extra injuries, easy and normal keep the legacy count',()=>{
+  const count=(d,seed)=>{let s=seed;return createGame(0,()=>(s=(s*16807)%2147483647)/2147483647,{difficulty:d}).injuries.length;};
+  for(const seed of [3,7,11,19,23,42,101]){
+    assert.ok(count('hard',seed)>count('normal',seed),`seed ${seed}`);
+    assert.equal(count('easy',seed),count('normal',seed));
+  }
+  const g=createGame(0,seeded(),{difficulty:'hard'}),extras=g.injuries.filter(i=>i.id.startsWith('extra-'));
+  assert.ok(extras.length>=1&&extras.length<=2);
+  assert.equal(new Set(g.injuries.map(i=>i.id)).size,g.injuries.length);
+  assert.ok(restoreGame(structuredClone(g)));
+});
