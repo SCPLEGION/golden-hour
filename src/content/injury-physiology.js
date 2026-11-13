@@ -24,7 +24,12 @@ export const INJURY_PHYSIOLOGY = {
   neckLaceration:r(MIXED,90), groinBleed:r(MIXED,100), degloving:r(MIXED,80), scalpAvulsion:r(VENOUS,45), openSkullFracture:r(VENOUS,30),
   spleenContusion:{vessel:'internal',pExp:1,rate:8,capMl:500}, spleenRupture:{vessel:'internal',pExp:1.2,rate:60,capMl:2200},
   tamponadeBleed:{vessel:'internal',pExp:1.2,rate:30,capMl:1400}, compartmentSyndrome:{vessel:'internal',pExp:.5,rate:10,capMl:450},
-  flailChest:{vessel:'internal',pExp:1,rate:12,capMl:600}, pelvicFracture:{vessel:'internal',pExp:.8,rate:45,capMl:2200}
+  flailChest:{vessel:'internal',pExp:1,rate:12,capMl:600}, pelvicFracture:{vessel:'internal',pExp:.8,rate:45,capMl:2200},
+  // Round 4 (0.11): hidden thoracic losses and tension use RESPIRATORY (below); arterial brachial bleed is a mixed-flow source.
+  toothAvulsion:r(CAPILLARY,4), earLaceration:r(VENOUS,15), eyelidCut:r(VENOUS,8), lipLaceration:r(VENOUS,12),
+  thumbSprain:NONE, clavicleFracture:{...NONE,bone:true}, kneecapDislocation:NONE, achillesRupture:NONE, femurFracture:{...NONE,bone:true},
+  eviscerationWound:r(VENOUS,35), brachialArtery:r(ARTERIAL,220), crushedHand:r(VENOUS,30,{bone:true}),
+  tensionPneumo:NONE, simplePneumo:NONE, kidneyInjury:{vessel:'internal',pExp:1,rate:18,capMl:900}
 };
 // Burns (P4, physio-thermal.js): `frac` = burned share of the injured segment [at onset, fully progressed] (TBSA% =
 // TBSA[segment]·frac), `tauS` = progression τ until an item in `stoppedBy` is applied to the wound (chemical burns keep
@@ -63,7 +68,10 @@ export const RESPIRATORY = {
   spinalCordInjury:{va:[.7,.5],tauS:600},                                      // diaphragm weakness
   // Round 3: concealed chest bleeding, unstable chest wall (a rib support pad relieves it) and deep fast breathing at very high glucose.
   tamponadeBleed:{va:[.93,.8],aa:[12,38],tauS:600}, flailChest:{painVa:.8,va:[.88,.78],aa:[12,18],tauS:480},
-  ketoacidosis:{aa:[10,16],va:[.9,.78],tauS:1200}
+  ketoacidosis:{aa:[10,16],va:[.9,.78],tauS:1200},
+  // Round 4: a tension pneumothorax collapses ventilation and oxygenation until it is decompressed; the simple one is slower.
+  tensionPneumo:{shunt:[.1,.4],aa:[14,32],va:[.82,.5],tauS:200}, simplePneumo:{va:[.9,.78],aa:[9,14],tauS:600},
+  airwayBurn:{obstruct:[.88,.5],aa:[2,3],tauS:600}
 };
 // Circulatory components (P3): anaphylaxis leaks plasma (mL/min for the 75 kg reference, scaled by EBV) and lowers SVR
 // (target × svr); the `relievesTag` drug (adrenaline) stops both in proportion to its effect. An injury's `scale`
@@ -78,7 +86,8 @@ export const NEURO_INJURY = {
   postIctal:{gcs:[4,0],tauS:900},   // R: post-ictal confusion clears over ~15–30 min
   headInjury:{gcs:[1,1]},           // repeats questions: confused (GCS 14)
   strokeSigns:{gcs:[1,1]},          // slurred speech
-  openSkullFracture:{gcs:[2,2]}     // drowsy: GCS 13, no oral drugs
+  openSkullFracture:{gcs:[2,2]},    // drowsy: GCS 13, no oral drugs
+  subduralHematoma:{gcs:[2,2]}, alcoholIntox:{gcs:[1,1]}  // round 4: drowsy / slowed (GCS 14 still swallows)
 };
 const RESP_KEYS=['obstruct','va','depress','aa','shunt'];
 const validResp=r=>RESP_KEYS.every(k=>r[k]===undefined||(Array.isArray(r[k])&&r[k].length===2&&r[k].every(n=>Number.isFinite(n)&&n>=0&&(k==='aa'||n<=1))))&&(r.painVa===undefined||(r.painVa>0&&r.painVa<=1))&&(r.tauS===undefined||r.tauS>=5);

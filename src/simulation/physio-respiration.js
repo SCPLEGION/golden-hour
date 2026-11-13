@@ -48,6 +48,8 @@ function reliefOf(g,injury,def,resp,drugs){
   let r=1-woundModifiers(injury).oxygenMultiplier;
   for(const d of drugs){if(def.tags.includes(d.relievesTag))r=Math.max(r,d.reliefStrength);if(resp.reliefTag&&d.respiratoryReliefTag===resp.reliefTag)r=Math.max(r,d.respiratoryRelief||0);}
   if(def.tags.includes('chest')&&(injury.treatments??g.body[injury.part].treatments).seal!==undefined)r=Math.max(r,injury.sealQuality??1);
+  // Needle decompression is the only treatment a tension injury accepts: any recorded treatment relieves it.
+  if(def.tags.includes('tension')&&Object.keys(injury.treatments||{}).length)r=1;
   return bounded(r,0,1);
 }
 export function respire(g){

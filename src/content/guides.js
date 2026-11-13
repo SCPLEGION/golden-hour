@@ -382,5 +382,105 @@ export const GUIDES = [
       "id": "r3-supply-variants",
       "title": "Warianty sprzętu i nożyce ratownicze",
       "text": "W torbie pojawiły się warianty znanych elementów: szeroka staza, duża gaza hemostatyczna, pas miednicy SAM i opaska uciskowa na szyję. Działają jak odpowiedniki, ale mają różne zapasy i miejsca zastosowania. Nożyce ratownicze odsłaniają widoczne zmiany w wybranej okolicy, nie ujawniają urazów ukrytych i nie zastępują badania."
+  },
+  {
+      "id": "r4-tension-pneumo",
+      "title": "Odma prężna: kiedy klatka dusi pacjenta",
+      "text": "Duszność narastająca mimo tlenu, cichy oddech po jednej stronie, przesunięta tchawica i sinienie to sygnały odmy prężnej. W grze to uraz ukryty: dopóki nie zbadasz klatki albo nie osłuchasz jej stetoskopem, nie zobaczysz go. Odbarczenie igłą po stronie urazu natychmiast poprawia oddech; tlen sam nie wystarczy. Po zabiegu nadal obserwuj saturację."
+  },
+  {
+      "id": "r4-needle-decompression",
+      "title": "Zestaw do odbarczenia odmy prężnej",
+      "text": "Zestaw działa tylko na klatkę z odmą prężną i zużywa się po jednym użyciu. Wybierz klatkę piersiową i właściwą ranę z listy urazów. Użycie przy innym urazie niczego nie zmienia. Efekt jest widoczny od razu w saturacji i oddechu, a po zabiegu pacjent nadal wymaga tlenu i ewakuacji."
+  },
+  {
+      "id": "r4-nasal-airway",
+      "title": "Rurka nosowo-gardłowa u pacjenta przytomnego",
+      "text": "Rurka ustno-gardłowa nie jest tolerowana przez pacjenta, który reaguje. Rurka nosowo-gardłowa utrzymuje drożność także wtedy, gdy pacjent jeszcze odpowiada. W grze zakładasz ją na głowę i działa jak udrożnienie dróg oddechowych. Nie zastępuje tlenu, a przy podejrzeniu urazu głowy wybieraj ją ostrożnie."
+  },
+  {
+      "id": "r4-airway-burn",
+      "title": "Oparzenie dróg oddechowych po pożarze",
+      "text": "Osmolone włosy w nosie, sadza w ustach, ochrypły głos i kaszel po dymie zapowiadają obrzęk gardła. Obrzęk narasta z minuty na minutę, więc drożność zabezpieczasz wcześnie, zanim pacjent zacznie się dusić. Dodaj tlen i obserwuj głos. Oparzenie dłoni jest ważne, ale nie przed oddechem."
+  },
+  {
+      "id": "r4-lucid-interval",
+      "title": "Pozorna poprawa po urazie głowy",
+      "text": "Krótka utrata przytomności, chwilowa poprawa i narastająca senność mogą oznaczać krwiak, który rośnie po cichu. W grze poprawa po urazie głowy bywa pozorna: badanie źrenic i wczesna ewakuacja ograniczają ryzyko pogorszenia. Nie zostawiaj pacjenta samego i nie podawaj niczego doustnie, jeśli senność narasta."
+  },
+  {
+      "id": "r4-femur",
+      "title": "Złamanie kości udowej i ukryta utrata krwi",
+      "text": "Udo mieści kilkaset mililitrów krwi w jednym krwiaku, więc złamanie uda wymaga szyny i obserwacji krążenia, a nie samego opatrunku. Szyna trakcyjna zmniejsza ból i ogranicza ukryty krwiak. Jeśli pacjent blednie i przyspiesza, myśl o utracie krwi, a nie tylko o bólu."
+  },
+  {
+      "id": "r4-kidney",
+      "title": "Uraz nerki po upadku",
+      "text": "Ból pleców, ciemny mocz i bladość po upadku to sygnały uszkodzenia nerki. Krwawienie jest ukryte, więc badaj brzuch i plecy, rozważ kwas traneksamowy i wezwij ewakuację. Opatrunek niczego tu nie zmienia, bo rany zewnętrznej zwykle nie ma."
+  },
+  {
+      "id": "r4-brachial-artery",
+      "title": "Tętnica ramienia: staza w pierwszej minucie",
+      "text": "Jasna krew w rytmie tętna z ramienia wymaga stazy powyżej rany. Opatrunek uciskowy nie wystarczy, a każda minuta zwłoki to utrata krwi. Po założeniu stazy sprawdź, czy krwawienie ustało, i zanotuj czas założenia, bo długie utrzymanie pogarsza ukrwienie kończyny."
+  },
+  {
+      "id": "r4-abdominal-wound",
+      "title": "Rana brzucha z wypadnięciem narządów",
+      "text": "Wypadniętych narządów nie wpychasz z powrotem. W grze zakrywasz ranę wilgotnym opatrunkiem, układasz pacjenta wygodnie i szybko wzywasz ewakuację. Nie podawaj nic doustnie. Opatrunek ogranicza krwawienie, ale nie zastępuje szpitala."
+  },
+  {
+      "id": "r4-crushed-hand",
+      "title": "Zmiażdżona dłoń: opatrunek, szyna i ból",
+      "text": "Dłoń po zmiażdżeniu krwawi z tkanek miękkich i ma wiele złamań. Najpierw zabezpiecz ranę, potem unieruchom rękę, a ból łagodź lekiem dostosowanym do stanu pacjenta. Staza jest potrzebna dopiero wtedy, gdy krwotok z przedramienia nie ustępuje."
+  },
+  {
+      "id": "r4-clavicle",
+      "title": "Złamany obojczyk i unieruchomienie barku",
+      "text": "Opuszczony bark, widoczny uskok kości i podtrzymywanie ręki drugą dłonią wskazują na złamanie obojczyka. Unieruchom bark ósemką lub temblakiem, ułóż rękę wygodnie i oceń czucie w palcach. Nie zginaj barku na siłę."
+  },
+  {
+      "id": "r4-kneecap",
+      "title": "Zwichnięta rzepka i unieruchomienie kolana",
+      "text": "Zwichnięta rzepka powoduje ostry ból i niemożność wyprostowania nogi. W grze nie nastawiasz stawu: podpierasz kolano w pozycji, którą pacjent przyjął, chłodzisz i unieruchamiasz ortezą. Sprawdź czucie i ukrwienie stopy."
+  },
+  {
+      "id": "r4-achilles",
+      "title": "Zerwanie ścięgna Achillesa",
+      "text": "Nagły ból przy sprincie, trzask i brak siły w zgięciu stopy sugerują zerwanie ścięgna. Odciąż nogę, unieruchom kostkę ortezą i chłodź. Pacjent powinien się nie obciążać, a transport powinien uwzględniać uniesioną nogę."
+  },
+  {
+      "id": "r4-frostbite",
+      "title": "Odmrożone palce: ogrzewanie bez rozcierania",
+      "text": "Woskowo blade, twarde palce bez czucia to objaw odmrożenia. Nie rozcieraj ich, nie przykładaj ognia ani gorącej wody. Okryj dłonie i całego pacjenta, zdejmij mokre rękawice, chroń przed urazem. Dalsze wychłodzenie jest groźniejsze niż samo odmrożenie."
+  },
+  {
+      "id": "r4-alcohol-masks",
+      "title": "Alkohol maskuje urazy",
+      "text": "Zapach alkoholu nie wyklucza urazu głowy, niskiej glukozy ani krwawienia. Zawsze zbierz wywiad, zmierz glukozę i zbadaj głowę. Pacjent pijany może zasnąć i zachłysnąć się, więc pilnuj drożności i temperatury."
+  },
+  {
+      "id": "r4-eye-protection",
+      "title": "Osłona oka bez ucisku",
+      "text": "Uszkodzone oko osłaniasz sztywną osłoną, a nie bandażem uciskowym. Nie wyjmuj ciał obcych i nie płucz, jeśli nie ma oparzenia chemicznego. Zakryj oba oczy tylko wtedy, gdy ruch jednego powoduje ruch drugiego, i uspokój pacjenta."
+  },
+  {
+      "id": "r4-avulsed-tooth",
+      "title": "Wybity ząb i rana wargi",
+      "text": "Wybity ząb chwytasz za koronkę, nie za korzeń, i przechowujesz w odpowiednim płynie. Krwawienie z dziąsła zatrzymuje gaza. Wargę opatrz osobno, a pacjenta ułóż w pozycji siedzącej. Czas do zgłoszenia się do stomatologa ma znaczenie."
+  },
+  {
+      "id": "r4-ear-eyelid",
+      "title": "Rany ucha i powieki",
+      "text": "Rany głowy i twarzy krwawią obficie, ale zwykle wystarcza opatrunek. Ucho zabezpiecz opatrunkiem, powiekę osłoń lekko i bez ucisku na gałkę. Zawsze sprawdź, czy nie ma urazu głowy ani oka."
+  },
+  {
+      "id": "r4-new-meds",
+      "title": "Nowe leki: opioidy, rozkurczowe i uspokajające",
+      "text": "W torbie pojawiły się nalbufina, oksykodon, butyloskopolamina, diazepam, terbutalina, glukagon, prometazyna, naproksen, nefopam i żel z lidokainą. Różnią się drogą podania, czasem działania i obciążeniem oddechu. Opioidy wymagają kontroli oddechu, a leki przeciwbólowe z grupy niesteroidowych mogą nasilać krwawienie."
+  },
+  {
+      "id": "r4-supply-variants",
+      "title": "Nowe warianty sprzętu: osłony, ortezy, ogrzewacze",
+      "text": "W torbie pojawiły się szyna trakcyjna uda, ósemka na obojczyk, orteza kolana, but kostki, szyna na kciuk, osłona oka, opatrunek na ucho, opatrunek brzuszny, zestaw na ząb, bivak, ogrzewacze i proszek hemostatyczny. Każdy ma swoje wskazanie, więc czytaj opisy przed użyciem."
   }
 ];

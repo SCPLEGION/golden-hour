@@ -33,9 +33,12 @@ function use(g,id){
   if(it.requires==='iv'&&!ivSiteFor(g,site))g=act(g,'iv',site.startsWith('left')?'leftForearm':'rightForearm');
   return act(g,id,site);
 }
+// The oropharyngeal airway is refused by a conscious patient (round 4: nasal airway).
+const openAirway=g=>{g=act(g,'airway','head');return g.airway?g:act(g,'nasalAirway','head');};
 function care(g,injury){
   const d=INJURIES[injury.type],limb=bodyPart(injury.part).limb;
   if(d.tags.includes('massive')&&limb)return act(g,'tourniquet',d.tags.includes('amputation')?proximalTourniquetSite(injury.part):injury.part);
+  if(d.tags.includes('tension'))return act(g,'needleDecompression',injury.part,injury.id);
   if(d.tags.includes('chest'))return act(g,'seal',injury.part,injury.id);
   if(d.tags.includes('wound'))return act(g,g.supplies.hemostatic>0?'hemostatic':'dressing',injury.part,injury.id);
   return g;
@@ -51,7 +54,7 @@ function solve(g,check){
   if(type==='itemAny')return use(g,value[0]);
   if(type==='treatedInjury'||type==='treatedAll'){for(const i of g.injuries.filter(i=>i.type===value))g=care(g,i);return g;}
   if(type==='warm')return act(g,'blanket','chest');
-  if(type==='airway')return g.injuries.some(i=>tags(i).includes('airwayFluid'))?use(g,'suction'):act(g,'airway','head');
+  if(type==='airway')return g.injuries.some(i=>tags(i).includes('airwayFluid'))?use(g,'suction'):openAirway(g);
   if(type==='oxygenGiven')return act(g,'oxygen','head');
   throw new Error(type);
 }
@@ -65,7 +68,7 @@ const finish=(g,{oxygen=true}={})=>{
 function goodPlay(id,difficulty='normal'){
   let g=act(make(id,difficulty),'transport');
   for(const step of conditionById(id).protocol)g=solve(g,step.check);
-  if(g.injuries.some(i=>tags(i).includes('airway')))g=act(g,'airway','head');
+  if(g.injuries.some(i=>tags(i).includes('airway')))g=openAirway(g);
   if(g.injuries.some(i=>tags(i).includes('bronchospasm')))g=act(g,'salbutamol','chest');
   for(const injury of [...g.injuries]){g=care(g,injury);if(tags(injury).includes('fracture')&&bodyPart(injury.part).limb)g=act(g,'splint',injury.part);}
   return {mid:g,get end(){return finish(act(g,'blanket','chest'));}};

@@ -106,7 +106,7 @@ test('smoke: every new item on every segment keeps vitals finite',()=>{
 });
 
 test('rescue: the reference policy saves every new scenario and state (normal, heavy; the full matrix incl. light/hard/expert is in reference-care*.test.js); neglect punishes the serious and puzzle states',()=>{
-  const sub={scenarios:SCENARIOS.slice(-15),conditions:CONDITIONS.filter(c=>NEW.condition.includes(c.id)),create:(i,r,o)=>createGame(o?.conditionId?0:SCENARIOS.length-15+i,r,o)};
+  const sub={scenarios:SCENARIOS.filter(s=>NEW.scenario.includes(s.id)),conditions:CONDITIONS.filter(c=>NEW.condition.includes(c.id)),create:(i,r,o)=>createGame(o?.conditionId?0:SCENARIOS.findIndex(s=>s.id===NEW.scenario[i]),r,o)};
   assert.deepEqual(sub.scenarios.map(s=>s.id),NEW.scenario);
   for(const [name,profile] of Object.entries(PROFILES).filter(([n])=>n==='heavy')){
     const rows=rescueMatrix('normal',profile,sub);

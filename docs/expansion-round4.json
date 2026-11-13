@@ -1,0 +1,502 @@
+[
+  {
+    "category": "injury",
+    "id": "tensionPneumo",
+    "title": "Odma prężna opłucnej"
+  },
+  {
+    "category": "injury",
+    "id": "toothAvulsion",
+    "title": "Wybity ząb"
+  },
+  {
+    "category": "injury",
+    "id": "earLaceration",
+    "title": "Rozerwane ucho"
+  },
+  {
+    "category": "injury",
+    "id": "eyelidCut",
+    "title": "Rana powieki"
+  },
+  {
+    "category": "injury",
+    "id": "lipLaceration",
+    "title": "Rozcięta warga"
+  },
+  {
+    "category": "injury",
+    "id": "thumbSprain",
+    "title": "Skręcony kciuk"
+  },
+  {
+    "category": "injury",
+    "id": "clavicleFracture",
+    "title": "Złamanie obojczyka"
+  },
+  {
+    "category": "injury",
+    "id": "kneecapDislocation",
+    "title": "Zwichnięcie rzepki"
+  },
+  {
+    "category": "injury",
+    "id": "achillesRupture",
+    "title": "Zerwane ścięgno Achillesa"
+  },
+  {
+    "category": "injury",
+    "id": "eviscerationWound",
+    "title": "Rozległa rana brzucha z wypadnięciem narządów"
+  },
+  {
+    "category": "injury",
+    "id": "subduralHematoma",
+    "title": "Narastający krwiak pod oponą twardą"
+  },
+  {
+    "category": "injury",
+    "id": "femurFracture",
+    "title": "Złamanie kości udowej"
+  },
+  {
+    "category": "injury",
+    "id": "simplePneumo",
+    "title": "Odma opłucnowa prosta"
+  },
+  {
+    "category": "injury",
+    "id": "airwayBurn",
+    "title": "Oparzenie dróg oddechowych"
+  },
+  {
+    "category": "injury",
+    "id": "eyeInjury",
+    "title": "Uraz gałki ocznej"
+  },
+  {
+    "category": "injury",
+    "id": "brachialArtery",
+    "title": "Uszkodzenie tętnicy ramiennej"
+  },
+  {
+    "category": "injury",
+    "id": "crushedHand",
+    "title": "Zmiażdżona dłoń"
+  },
+  {
+    "category": "injury",
+    "id": "alcoholIntox",
+    "title": "Upojenie alkoholowe"
+  },
+  {
+    "category": "injury",
+    "id": "frostbiteFingers",
+    "title": "Odmrożone palce dłoni"
+  },
+  {
+    "category": "injury",
+    "id": "kidneyInjury",
+    "title": "Stłuczenie nerki"
+  },
+  {
+    "category": "condition",
+    "id": "toothBrawl",
+    "title": "Wybity ząb i rozcięta warga"
+  },
+  {
+    "category": "condition",
+    "id": "thumbSki",
+    "title": "Skręcony kciuk i otarcie"
+  },
+  {
+    "category": "condition",
+    "id": "earPiercing",
+    "title": "Rozerwane ucho i rana powieki"
+  },
+  {
+    "category": "condition",
+    "id": "brachialCut",
+    "title": "Przecięta tętnica ramienia"
+  },
+  {
+    "category": "condition",
+    "id": "crushPress",
+    "title": "Zmiażdżona dłoń w prasie"
+  },
+  {
+    "category": "condition",
+    "id": "abdoGlass",
+    "title": "Rana brzucha z wypadnięciem narządów"
+  },
+  {
+    "category": "condition",
+    "id": "calmTension",
+    "title": "Cichy pacjent z narastającą dusznością"
+  },
+  {
+    "category": "condition",
+    "id": "lucidHead",
+    "title": "Pozorna poprawa po uderzeniu w głowę"
+  },
+  {
+    "category": "condition",
+    "id": "quietKidney",
+    "title": "Ból pleców po upadku"
+  },
+  {
+    "category": "condition",
+    "id": "quietPneumo",
+    "title": "Zadyszka po upadku z drabiny"
+  },
+  {
+    "category": "condition",
+    "id": "barNight",
+    "title": "Upojenie alkoholowe i rana głowy"
+  },
+  {
+    "category": "condition",
+    "id": "panicEye",
+    "title": "Uraz oka i szybki oddech"
+  },
+  {
+    "category": "condition",
+    "id": "diabeticDrunk",
+    "title": "Niska glukoza i alkohol"
+  },
+  {
+    "category": "condition",
+    "id": "waspPicnic",
+    "title": "Reakcja po użądleniu na pikniku"
+  },
+  {
+    "category": "condition",
+    "id": "fireAirway",
+    "title": "Dym i oparzenie dróg oddechowych"
+  },
+  {
+    "category": "condition",
+    "id": "frostCamp",
+    "title": "Odmrożone palce i wychłodzenie"
+  },
+  {
+    "category": "condition",
+    "id": "ropeSnap",
+    "title": "Zerwana lina i złamany obojczyk"
+  },
+  {
+    "category": "condition",
+    "id": "stairFall",
+    "title": "Udo, nerka i skręcony kciuk"
+  },
+  {
+    "category": "condition",
+    "id": "stabBrawl",
+    "title": "Rana kłuta, rozcięta warga i powieka"
+  },
+  {
+    "category": "condition",
+    "id": "quarryAccident",
+    "title": "Tętnica ramienia, rzepka i ucho"
+  },
+  {
+    "category": "scenario",
+    "id": "knifeBar",
+    "title": "Pchnięcie nożem przed barem"
+  },
+  {
+    "category": "scenario",
+    "id": "ladderFall",
+    "title": "Upadek z drabiny w sadzie"
+  },
+  {
+    "category": "scenario",
+    "id": "hockeyTooth",
+    "title": "Wypadek na lodowisku"
+  },
+  {
+    "category": "scenario",
+    "id": "sprintTendon",
+    "title": "Zerwanie ścięgna na boisku"
+  },
+  {
+    "category": "scenario",
+    "id": "ploughFemur",
+    "title": "Ciągnik na zboczu"
+  },
+  {
+    "category": "scenario",
+    "id": "axeArm",
+    "title": "Siekiera w lesie"
+  },
+  {
+    "category": "scenario",
+    "id": "lathePalm",
+    "title": "Dłoń pod prasą"
+  },
+  {
+    "category": "scenario",
+    "id": "bullGore",
+    "title": "Rozdarty brzuch w zagrodzie"
+  },
+  {
+    "category": "scenario",
+    "id": "kayakEar",
+    "title": "Odłamek szyby w kajaku"
+  },
+  {
+    "category": "scenario",
+    "id": "frostSummit",
+    "title": "Odmrożenia pod szczytem"
+  },
+  {
+    "category": "scenario",
+    "id": "tavernBrawl",
+    "title": "Cios butelką w karczmie"
+  },
+  {
+    "category": "scenario",
+    "id": "torchEye",
+    "title": "Błysk z palnika w warsztacie"
+  },
+  {
+    "category": "scenario",
+    "id": "partyDrunk",
+    "title": "Zasypiający po zabawie"
+  },
+  {
+    "category": "scenario",
+    "id": "playgroundKnee",
+    "title": "Zwichnięta rzepka na boisku"
+  },
+  {
+    "category": "scenario",
+    "id": "scaffoldFall",
+    "title": "Upadek z rusztowania na budowie"
+  },
+  {
+    "category": "equipment",
+    "id": "needleDecompression",
+    "title": "Zestaw do odbarczenia odmy prężnej"
+  },
+  {
+    "category": "equipment",
+    "id": "nasalAirway",
+    "title": "Rurka nosowo-gardłowa"
+  },
+  {
+    "category": "equipment",
+    "id": "femurSplint",
+    "title": "Szyna trakcyjna uda"
+  },
+  {
+    "category": "equipment",
+    "id": "clavicleBrace",
+    "title": "Ósemka na obojczyk"
+  },
+  {
+    "category": "equipment",
+    "id": "kneeImmobilizer",
+    "title": "Unieruchomienie kolana"
+  },
+  {
+    "category": "equipment",
+    "id": "ankleBoot",
+    "title": "But stabilizujący kostkę"
+  },
+  {
+    "category": "equipment",
+    "id": "thumbSplint",
+    "title": "Szyna na kciuk"
+  },
+  {
+    "category": "equipment",
+    "id": "eyeCup",
+    "title": "Sztywna osłona oka"
+  },
+  {
+    "category": "equipment",
+    "id": "earDressing",
+    "title": "Opatrunek na ucho"
+  },
+  {
+    "category": "equipment",
+    "id": "abdominalDressing",
+    "title": "Wilgotny opatrunek brzuszny"
+  },
+  {
+    "category": "equipment",
+    "id": "dentalKit",
+    "title": "Zestaw na wybity ząb"
+  },
+  {
+    "category": "equipment",
+    "id": "thermalBivvy",
+    "title": "Worek termiczny (bivak)"
+  },
+  {
+    "category": "equipment",
+    "id": "handWarmers",
+    "title": "Chemiczne ogrzewacze do rąk"
+  },
+  {
+    "category": "equipment",
+    "id": "pocketTourniquet",
+    "title": "Mała staza kieszonkowa"
+  },
+  {
+    "category": "equipment",
+    "id": "hemostaticPowder",
+    "title": "Proszek hemostatyczny"
+  },
+  {
+    "category": "medicine",
+    "id": "naproxen",
+    "title": "Naproksen"
+  },
+  {
+    "category": "medicine",
+    "id": "nalbuphine",
+    "title": "Nalbufina"
+  },
+  {
+    "category": "medicine",
+    "id": "lidocaineGel",
+    "title": "Żel z lidokainą"
+  },
+  {
+    "category": "medicine",
+    "id": "terbutaline",
+    "title": "Terbutalina"
+  },
+  {
+    "category": "medicine",
+    "id": "glucagon",
+    "title": "Glukagon"
+  },
+  {
+    "category": "medicine",
+    "id": "promethazine",
+    "title": "Prometazyna"
+  },
+  {
+    "category": "medicine",
+    "id": "butylscopolamine",
+    "title": "Butyloskopolamina"
+  },
+  {
+    "category": "medicine",
+    "id": "oxycodone",
+    "title": "Oksykodon"
+  },
+  {
+    "category": "medicine",
+    "id": "diazepam",
+    "title": "Diazepam"
+  },
+  {
+    "category": "medicine",
+    "id": "nefopam",
+    "title": "Nefopam"
+  },
+  {
+    "category": "guide",
+    "id": "r4-tension-pneumo",
+    "title": "Odma prężna: kiedy klatka dusi pacjenta"
+  },
+  {
+    "category": "guide",
+    "id": "r4-needle-decompression",
+    "title": "Zestaw do odbarczenia odmy prężnej"
+  },
+  {
+    "category": "guide",
+    "id": "r4-nasal-airway",
+    "title": "Rurka nosowo-gardłowa u pacjenta przytomnego"
+  },
+  {
+    "category": "guide",
+    "id": "r4-airway-burn",
+    "title": "Oparzenie dróg oddechowych po pożarze"
+  },
+  {
+    "category": "guide",
+    "id": "r4-lucid-interval",
+    "title": "Pozorna poprawa po urazie głowy"
+  },
+  {
+    "category": "guide",
+    "id": "r4-femur",
+    "title": "Złamanie kości udowej i ukryta utrata krwi"
+  },
+  {
+    "category": "guide",
+    "id": "r4-kidney",
+    "title": "Uraz nerki po upadku"
+  },
+  {
+    "category": "guide",
+    "id": "r4-brachial-artery",
+    "title": "Tętnica ramienia: staza w pierwszej minucie"
+  },
+  {
+    "category": "guide",
+    "id": "r4-abdominal-wound",
+    "title": "Rana brzucha z wypadnięciem narządów"
+  },
+  {
+    "category": "guide",
+    "id": "r4-crushed-hand",
+    "title": "Zmiażdżona dłoń: opatrunek, szyna i ból"
+  },
+  {
+    "category": "guide",
+    "id": "r4-clavicle",
+    "title": "Złamany obojczyk i unieruchomienie barku"
+  },
+  {
+    "category": "guide",
+    "id": "r4-kneecap",
+    "title": "Zwichnięta rzepka i unieruchomienie kolana"
+  },
+  {
+    "category": "guide",
+    "id": "r4-achilles",
+    "title": "Zerwanie ścięgna Achillesa"
+  },
+  {
+    "category": "guide",
+    "id": "r4-frostbite",
+    "title": "Odmrożone palce: ogrzewanie bez rozcierania"
+  },
+  {
+    "category": "guide",
+    "id": "r4-alcohol-masks",
+    "title": "Alkohol maskuje urazy"
+  },
+  {
+    "category": "guide",
+    "id": "r4-eye-protection",
+    "title": "Osłona oka bez ucisku"
+  },
+  {
+    "category": "guide",
+    "id": "r4-avulsed-tooth",
+    "title": "Wybity ząb i rana wargi"
+  },
+  {
+    "category": "guide",
+    "id": "r4-ear-eyelid",
+    "title": "Rany ucha i powieki"
+  },
+  {
+    "category": "guide",
+    "id": "r4-new-meds",
+    "title": "Nowe leki: opioidy, rozkurczowe i uspokajające"
+  },
+  {
+    "category": "guide",
+    "id": "r4-supply-variants",
+    "title": "Nowe warianty sprzętu: osłony, ortezy, ogrzewacze"
+  }
+]

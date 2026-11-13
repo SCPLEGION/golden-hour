@@ -31,9 +31,9 @@ test('expansion manifests account for exactly 100 concrete catalog additions',()
   }
 });
 
-test('all 57 cases reference actual body parts and every added injury is reachable',()=>{
-  assert.equal(SCENARIOS.length,57);assert.equal(Object.keys(INJURIES).length,77); // 45 + 12 patient-state injuries (conditions.js) + 20 from round 3
-  assert.equal(new Set(SCENARIOS.map(c=>c.id)).size,57);
+test('all 72 cases reference actual body parts and every added injury is reachable',()=>{
+  assert.equal(SCENARIOS.length,72);assert.equal(Object.keys(INJURIES).length,97); // 45 + 12 patient-state injuries (conditions.js) + 20 from round 3 + 20 from round 4
+  assert.equal(new Set(SCENARIOS.map(c=>c.id)).size,72);
   const parts=new Set(BODY_PARTS.map(p=>p.id));
   for(const c of SCENARIOS){
     assert.ok(c.title&&c.scene&&c.history&&c.lesson,c.id);assert.ok(c.injuries.length,c.id);
@@ -54,6 +54,7 @@ test('every case remains rescuable with a 25-minute evacuation using core care',
       if(d.tags.includes('massive')&&limb)g=act(g,'tourniquet',d.tags.includes('amputation')?proximalTourniquetSite(injury.part):injury.part);
       else if(d.tags.includes('wound'))g=act(g,g.supplies.hemostatic>0?'hemostatic':'dressing',injury.part,injury.id);
       if(d.tags.includes('chest'))g=act(g,'seal',injury.part,injury.id);
+      if(d.tags.includes('tension'))g=act(g,'needleDecompression',injury.part,injury.id);
       if(d.tags.includes('fracture')&&limb)g=act(g,'splint',injury.part);
     }
     g=act(g,'blanket','chest');

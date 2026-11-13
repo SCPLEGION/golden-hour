@@ -6,6 +6,7 @@ import { hasAccess, hasFlow, flowEfficiency, accessSites, tourniquetOver, ivSite
 import { endArrest, roscPossible } from './physiology.js';
 import { THERMAL } from '../content/physiology-data.js';
 import { drugEffects, drugProfileText } from './physio-pharmacology.js';
+import { applyInsult } from './physio-model.js';
 import { TUNING } from '../content/physiology-data.js';
 // Effect handlers mutate only the engine's cloned working state.
 // Add an effect and register it here; UI and action dispatch need no changes.
@@ -38,11 +39,18 @@ export const EFFECTS = {
     const v=vitals(g),part=bodyPart(target).name,occluded=tourniquetOver(g,target,.5)!==undefined;
     const local=g.injuries.filter(i=>i.part===target);
     const sensoryLoss=occluded||local.some(i=>INJURIES[i.type].sensoryLoss);
-    const breathingSounds=local.some(i=>INJURIES[i.type].tags.includes('bronchospasm'))?' Świsty wydechowe.':local.some(i=>INJURIES[i.type].tags.includes('chest'))?' Szmer oddechowy jednostronnie osłabiony.':'';
+    const breathingSounds=local.some(i=>INJURIES[i.type].tags.includes('tension'))?' Brak szmeru oddechowego po stronie urazu, tchawica przesunięta.':local.some(i=>INJURIES[i.type].tags.includes('bronchospasm'))?' Świsty wydechowe.':local.some(i=>INJURIES[i.type].tags.includes('chest'))?' Szmer oddechowy jednostronnie osłabiony.':'';
     const headTags=g.injuries.filter(i=>['head','face'].includes(i.part)).flatMap(i=>INJURIES[i.type].tags);
     const texts={pupils:`Ocena źrenic: ${headTags.includes('opioidOd')?'bardzo wąskie, słabo reagują na światło':headTags.includes('headTrauma')?'reagują nierówno — jedna wolniej':isConscious(g)?'reagują na światło':'kontakt utrudniony; oceń także drożność i oddech'}.`,perfusion:`Ocena perfuzji: ${occluded?'staza odcina przepływ; brak tętna obwodowego':circulation(g)<55?'powrót kapilarny opóźniony, obwodowe tętno słabe':'powrót kapilarny zachowany, tętno obwodowe wyczuwalne'}.`,glucose:`Odczyt glukozy: ${g.injuries.some(i=>INJURIES[i.type].tags.includes('glucoseHigh'))?'powyżej zakresu miernika':`${v.glucose.toFixed(1).replace(".",",")} mmol/l`}.`,exposure:`Odsłonięto okolicę: ${local.filter(i=>INJURIES[i.type].visible).map(i=>INJURIES[i.type].name.toLocaleLowerCase('pl')).join(', ')||'bez widocznych zmian'}.`,temperature:`Temperatura: ${v.temperature}°C.`,breathing:`Oddychanie: ${v.breathing}/min, SpO₂ ${v.spo2==='—'?'— (brak sygnału)':`${v.spo2}%`}.${breathingSounds}`,neurology:`Ocena neurologiczna: ${isConscious(g)?(sensoryLoss?'reaguje na głos; czucie w tej okolicy osłabione':'reaguje na głos; czucie w tej okolicy zachowane'):'pacjent nie odpowiada'}.`};
     const text=`${part}: ${texts[item.assessment]||'Badanie kontrolne wykonane.'}`;
     g.assessments??=[];g.assessments.push({id:item.id,part:target,time:g.elapsed,text});return text;
+  },
+  // Needle decompression: relieves a tension injury (respiration reads its treatment) and restores some saturation at once.
+  decompress:({g,target,item,injuryId})=>{
+    const injury=g.injuries.find(i=>i.part===target&&INJURIES[i.type].tags.includes('tension')&&(!injuryId||i.id===injuryId)&&i.treatments?.[item.id]===undefined);
+    if(!injury)return 'Zużyto sprzęt, ale w tej okolicy nie ma urazu, na który działa.';
+    injury.treatments??={};injury.treatments[item.id]=g.elapsed;g.body[target].treatments[item.id]=g.elapsed;applyInsult(g,{kind:'oxygen',pts:4});
+    return `${bodyPart(target).name}: odbarczono odmę prężną. Powietrze ucieka, oddech i krążenie zaczynają się poprawiać.`;
   },
   dressing:treatment('dressing','wound','założono opatrunek. Oceń, czy krwawienie ustępuje.'),
   hemostatic:treatment('hemostatic','wound',p=>`zabezpieczono ranę gazą hemostatyczną.${p?` Jakość tamponady ${Math.round(p.quality*100)}%.`:''}`,'packQuality'),
@@ -141,7 +149,7 @@ export function itemUnavailable(g,item,target,injuryId=null) {
   if(item.requires==='iv' && !ivSiteFor(g,target)) return 'Najpierw wenflon na tej ręce';
   // Oral routes need a fully alert patient (GCS ≥ 14); an oropharyngeal airway is tolerated only at GCS ≤ 8.
   if(item.route==='Doustnie' && !canSwallow(g)) return isConscious(g)?'Pacjent nie połyka bezpiecznie — świadomość zaburzona':'Pacjent nie może przełykać';
-  if(item.effect==='airway' && !g.airway && !toleratesOPA(g)) return 'Pacjent reaguje — nie toleruje rurki ustno-gardłowej';
+  if(item.effect==='airway' && !item.nasal && !g.airway && !toleratesOPA(g)) return 'Pacjent reaguje — nie toleruje rurki ustno-gardłowej';
   if(item.effect==='airway' && g.airway) return 'Drożność zabezpieczona';
   if(item.effect==='blanket' && g.warm) return 'Koc już założony';
   if(item.effect==='removeIV'&&!ivSiteFor(g,target))return 'Brak wenflonu w tej ręce';
@@ -149,7 +157,7 @@ export function itemUnavailable(g,item,target,injuryId=null) {
   if(item.effect==='oxygen' && g.oxygenUntil>g.elapsed) return 'Tlen już podłączony';
   if(item.effect==='support'&&(g.supports||[]).some(s=>s.id===item.id&&s.target===target&&s.until>g.elapsed))return 'Wsparcie nadal działa';
   if(item.scope==='wound') {
-    const treatmentKey=item.effect==='stabilize'?item.id:item.effect;
+    const treatmentKey=['stabilize','decompress'].includes(item.effect)?item.id:item.effect;
     const matching=g.injuries.filter(i=>i.part===target && (!injuryId||i.id===injuryId) && (!item.contextTags||item.contextTags.some(tag=>INJURIES[i.type].tags.includes(tag))));
     if(injuryId&&!matching.length)return 'Ten sprzęt nie pasuje do tej rany';
     if(matching.length&&matching.every(i=>i.treatments?.[treatmentKey]!==undefined))return 'Rana już zabezpieczona';

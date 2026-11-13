@@ -64,8 +64,11 @@ function nicheCare(g){
   }
   return g;
 }
+// Round 4: a tension injury needs needle decompression; a conscious patient with an airway injury gets the nasal airway (the oropharyngeal one is refused).
+function openAirway(g){g=act(g,'airway','head');return g.airway?g:act(g,'nasalAirway','head');}
 function woundCare(g,injury){
   const d=INJURIES[injury.type],limb=bodyPart(injury.part).limb;
+  if(d.tags.includes('tension'))return useItem(g,'needleDecompression');
   if(d.tags.includes('massive')&&limb)return act(g,'tourniquet',d.tags.includes('amputation')?proximalTourniquetSite(injury.part):injury.part);
   if(d.tags.includes('chest'))return act(g,'seal',injury.part,injury.id);
   if(d.tags.includes('wound')&&(injury.treatments||{}).hemostatic===undefined&&(injury.treatments||{}).dressing===undefined)return act(g,g.supplies.hemostatic>0?'hemostatic':'dressing',injury.part,injury.id);
@@ -82,7 +85,7 @@ export function solveCheck(g,check){
   if(type==='itemAny')return useItem(g,value[0]);
   if(type==='treatedInjury'||type==='treatedAll'){for(const i of g.injuries.filter(i=>i.type===value))g=woundCare(g,i);return g;}
   if(type==='warm')return act(g,'blanket','chest');
-  if(type==='airway')return has(g,'airwayFluid')?useItem(g,'suction'):act(g,'airway','head');
+  if(type==='airway')return has(g,'airwayFluid')?useItem(g,'suction'):openAirway(g);
   if(type==='oxygenGiven')return act(g,'oxygen','head');
   throw new Error(type);
 }
@@ -132,7 +135,8 @@ function referenceCarePolicy(g,{trace=null}={}){
   if(g.transportAt===null)g=act(g,'transport');
   for(const i of g.injuries.filter(i=>tagsOf(i).includes('massive')&&bodyPart(i.part).limb))g=woundCare(g,i);
   if(has(g,'airwayFluid'))g=useItem(g,'suction');
-  if(has(g,'airway')&&!g.airway)g=act(g,'airway','head');
+  if(has(g,'airway')&&!g.airway)g=openAirway(g);
+  for(const i of g.injuries.filter(i=>tagsOf(i).includes('tension')))g=woundCare(g,i);
   // Expert starts without the monitor (it only shows readings; the policy reads the snapshot).
   if(!g.monitorAttached)g=act(g,'monitor','chest');
   g=revealHidden(g);

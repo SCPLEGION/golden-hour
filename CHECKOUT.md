@@ -1,6 +1,6 @@
 # Golden Hour — checkpoint projektu
 
-Ostatnia aktualizacja: 2026-11-13 · wersja aplikacji: 0.10.0
+Ostatnia aktualizacja: 2026-11-13 · wersja aplikacji: 0.11.0
 
 ## Co to jest
 
@@ -18,7 +18,7 @@ To fikcyjna symulacja gry, nie instruktaż ani narzędzie kliniczne. Dawki, wyni
 - Monitor dynamiczny: puls, ciśnienie (NIBP co 3 min lub na żądanie), saturacja (z utratą sygnału przy złym ukrwieniu), oddech, temperatura, GCS/AVPU i ból; wykresy pokazują historię do 60 sekund gry.
 - Zegar ma pauzę i tempa 1×/2×/4×. Procedura, poradnik i ukryta karta zatrzymują automatyczne tykanie. Czynność wykonana przez gracza nadal zużywa czas symulacji.
 - Torba ma wyszukiwanie i filtry dostępności/dopasowania. Aktualizacje czasu nie odbierają fokusu polu wyszukiwania.
-- Katalog obejmuje 77 urazów, 57 zgłoszeń (+39 zgłoszeń wbudowanych w stany poszkodowanego), 76 stanów poszkodowanego w 6 kategoriach, 55 elementów wyposażenia, 26 leków i 64 poradniki. Rozszerzenia: 100 pozycji ([lista](docs/EXPANSION-100.md)), runda 2, 24 pozycje ([lista](docs/EXPANSION-ROUND2.md)) oraz runda 3, 100 pozycji ([lista](docs/EXPANSION-ROUND3.md), manifest `docs/expansion-round3.json`).
+- Katalog obejmuje 97 urazów, 72 zgłoszenia (+59 zgłoszeń wbudowanych w stany poszkodowanego), 96 stanów poszkodowanego w 6 kategoriach, 70 elementów wyposażenia, 36 leków i 84 poradniki. Rozszerzenia: 100 pozycji ([lista](docs/EXPANSION-100.md)), runda 2, 24 pozycje ([lista](docs/EXPANSION-ROUND2.md)) runda 3, 100 pozycji ([lista](docs/EXPANSION-ROUND3.md), manifest `docs/expansion-round3.json`) oraz runda 4, 100 pozycji ([lista](docs/EXPANSION-ROUND4.md), manifest `docs/expansion-round4.json`).
 - Zapis lokalny zachowuje zgodność z wcześniejszymi stanami gry.
 
 ## Uruchomienie
@@ -46,6 +46,14 @@ npm test
 - `docs/ARCHITECTURE.md` — kontrakty rozszerzania katalogów oraz mechanik.
 
 Dodawanie treści zaczynaj od katalogów i testu referencji/osiągalności. Nowy efekt mechaniczny dodawaj do rejestru symulacji; nie umieszczaj reguł leczenia w komponencie UI.
+
+## Dodane w 0.11
+
+- **Runda 4: dokładnie 100 nowych pozycji katalogu:** 20 urazów, 20 stanów poszkodowanego (po 3–4 w każdej kategorii, w tym 4 zagadki), 15 zgłoszeń, 15 elementów sprzętu, 10 leków (profile w `PHARMACOLOGY`) i 20 poradników. Lista id: `docs/EXPANSION-ROUND4.md`, manifest: `docs/expansion-round4.json`, test: `tests/expansion4.test.js`.
+- **Odma prężna i odbarczenie igłą** (jeden uraz + jeden przedmiot): ukryty uraz `tensionPneumo` zapada oddech, dopóki nie zadziała nowy efekt `decompress` (`needleDecompression`, `src/simulation/effects.js`; `reliefOf` w `physio-respiration.js`). Zabieg dodatkowo poprawia saturację przez `applyInsult`.
+- **Rurka nosowo-gardłowa** (`nasalAirway`): efekt `airway` z flagą `nasal`, tolerowana przez pacjenta przytomnego; obsługuje `airwayBurn`.
+- **Zmiany generyczne w testach:** opieka referencyjna odbarcza tag `tension` i w razie odmowy rurki ustno-gardłowej zakłada nosowo-gardłową; rozwiązywanie kroków protokołu w `conditions.test.js` robi to samo; test ratunku w `expansion3.test.js` wybiera zgłoszenia rundy 3 po id.
+- Testy: liczby w `expansion.test.js` (72 zgłoszenia, 97 urazów). Opieka referencyjna ratuje 96% uruchomień na poziomie Expert (próg 80% bez zmian).
 
 ## Dodane w 0.10
 

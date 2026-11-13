@@ -125,7 +125,18 @@ export const PHARMACOLOGY = {
   clemastine:{half:'veryLong',ke0HalfS:900,channels:{analgesia:{ec50:.4,n:1.5},respDepression:{ec50:2,n:2},sedation:{emax:3,ec50:2,n:2}}},
   glucoseDrink:{half:'medium',ke0HalfS:90,absHalfS:240,lagS:60,channels:{glucose:{linear:true,emax:2},relief:{ec50:.3,n:1.5}}},
   drotaverine:{half:'long',ke0HalfS:600,channels:{relief:{ec50:.3,n:1.5},analgesia:{ec50:.5,n:1.5}}},
-  budesonide:{half:'veryLong',ke0HalfS:1200,channels:{relief:{ec50:.3,n:1.5}}}
+  budesonide:{half:'veryLong',ke0HalfS:1200,channels:{relief:{ec50:.3,n:1.5}}},
+  // Round 4 (0.11): variants of existing channels.
+  naproxen:{half:'veryLong',ke0HalfS:900,channels:{analgesia:{ec50:.4,n:1.5},bleeding:{ec50:.4,n:1}}},
+  nalbuphine:{half:'long',ke0HalfS:300,channels:{analgesia:{ec50:.35,n:1.5},respDepression:{ec50:2.6,n:2},sedation:{emax:4,ec50:2.4,n:2.5}}},
+  lidocaineGel:{half:'short',ke0HalfS:90,channels:{analgesia:{ec50:.4,n:1.5}}},
+  terbutaline:{half:'medium',ke0HalfS:150,channels:{relief:{ec50:.3,n:1.5},hr:{ec50:.8,n:1.5}}},
+  glucagon:{half:'medium',ke0HalfS:120,absHalfS:240,lagS:60,channels:{glucose:{linear:true,emax:2.5},relief:{ec50:.3,n:1.5}}},
+  promethazine:{half:'veryLong',ke0HalfS:900,channels:{relief:{ec50:.3,n:1.5},sedation:{emax:3,ec50:2,n:2},respDepression:{ec50:2.5,n:2}}},
+  butylscopolamine:{half:'long',ke0HalfS:180,channels:{relief:{ec50:.3,n:1.5},analgesia:{ec50:.5,n:1.5},hr:{ec50:1,n:1.5}}},
+  oxycodone:{half:'long',ke0HalfS:900,channels:{analgesia:{ec50:.35,n:1.5},respDepression:{ec50:2.2,n:2},sedation:{emax:5,ec50:2.4,n:3}}},
+  diazepam:{half:'veryLong',ke0HalfS:300,channels:{relief:{ec50:.3,n:1.5},sedation:{emax:5,ec50:2,n:2.5},respDepression:{ec50:2.2,n:2}}},
+  nefopam:{half:'long',ke0HalfS:300,channels:{analgesia:{ec50:.4,n:1.5},hr:{ec50:.8,n:1.5}}}
 };
 export const PK_TUNING = {
   activeFrac:.1,            // "active" = first channel above 10% of its Emax
