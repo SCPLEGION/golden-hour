@@ -1,0 +1,527 @@
+[
+  {
+    "category": "injury",
+    "id": "fingerFracture",
+    "title": "Złamanie palca"
+  },
+  {
+    "category": "injury",
+    "id": "burnBlister",
+    "title": "Pęcherze po oparzeniu"
+  },
+  {
+    "category": "injury",
+    "id": "deepSplinter",
+    "title": "Głęboka drzazga"
+  },
+  {
+    "category": "injury",
+    "id": "jawFracture",
+    "title": "Złamanie żuchwy"
+  },
+  {
+    "category": "injury",
+    "id": "nailAvulsion",
+    "title": "Oderwany paznokieć"
+  },
+  {
+    "category": "injury",
+    "id": "neckLaceration",
+    "title": "Rana szyi z krwawieniem węzłowym"
+  },
+  {
+    "category": "injury",
+    "id": "groinBleed",
+    "title": "Rana pachwiny z krwawieniem węzłowym"
+  },
+  {
+    "category": "injury",
+    "id": "degloving",
+    "title": "Zdarcie skóry przedramienia"
+  },
+  {
+    "category": "injury",
+    "id": "scalpAvulsion",
+    "title": "Zerwany płat skóry głowy"
+  },
+  {
+    "category": "injury",
+    "id": "openSkullFracture",
+    "title": "Otwarte złamanie czaszki"
+  },
+  {
+    "category": "injury",
+    "id": "spleenContusion",
+    "title": "Stłuczenie śledziony"
+  },
+  {
+    "category": "injury",
+    "id": "spleenRupture",
+    "title": "Pęknięcie śledziony"
+  },
+  {
+    "category": "injury",
+    "id": "tamponadeBleed",
+    "title": "Ukryty krwiak w klatce piersiowej"
+  },
+  {
+    "category": "injury",
+    "id": "compartmentSyndrome",
+    "title": "Narastający ucisk w przedramieniu"
+  },
+  {
+    "category": "injury",
+    "id": "flailChest",
+    "title": "Niestabilna klatka piersiowa"
+  },
+  {
+    "category": "injury",
+    "id": "pelvicFracture",
+    "title": "Niestabilne złamanie miednicy"
+  },
+  {
+    "category": "injury",
+    "id": "hypothermicAfterdrop",
+    "title": "Wtórne wychłodzenie po ogrzaniu"
+  },
+  {
+    "category": "injury",
+    "id": "hyperventilation",
+    "title": "Hiperwentylacja"
+  },
+  {
+    "category": "injury",
+    "id": "renalColic",
+    "title": "Kolka nerkowa"
+  },
+  {
+    "category": "injury",
+    "id": "ketoacidosis",
+    "title": "Zaburzenie przy bardzo wysokiej glukozie"
+  },
+  {
+    "category": "condition",
+    "id": "doorFinger",
+    "title": "Palec przytrzaśnięty drzwiami",
+    "group": "drobne"
+  },
+  {
+    "category": "condition",
+    "id": "blisterKitchen",
+    "title": "Pęcherze i drzazga w dłoniach",
+    "group": "drobne"
+  },
+  {
+    "category": "condition",
+    "id": "jawPunch",
+    "title": "Złamana żuchwa i krwawienie z nosa",
+    "group": "drobne"
+  },
+  {
+    "category": "condition",
+    "id": "splinterWrist",
+    "title": "Drzazga w dłoni i skręcony nadgarstek",
+    "group": "drobne"
+  },
+  {
+    "category": "condition",
+    "id": "neckGlass",
+    "title": "Rana szyi po szkle",
+    "group": "zewnetrzne"
+  },
+  {
+    "category": "condition",
+    "id": "groinCrash",
+    "title": "Krwotok z pachwiny",
+    "group": "zewnetrzne"
+  },
+  {
+    "category": "condition",
+    "id": "degloveRoller",
+    "title": "Zdarta skóra przedramienia",
+    "group": "zewnetrzne"
+  },
+  {
+    "category": "condition",
+    "id": "scalpFarm",
+    "title": "Zerwany płat skóry głowy",
+    "group": "zewnetrzne"
+  },
+  {
+    "category": "condition",
+    "id": "skullFall",
+    "title": "Otwarte złamanie czaszki",
+    "group": "zewnetrzne"
+  },
+  {
+    "category": "condition",
+    "id": "quietSpleen",
+    "title": "Opóźnione krwawienie ze śledziony",
+    "group": "zagadka"
+  },
+  {
+    "category": "condition",
+    "id": "quietChest",
+    "title": "Ukryte krwawienie w klatce",
+    "group": "zagadka"
+  },
+  {
+    "category": "condition",
+    "id": "tightCast",
+    "title": "Narastający ucisk w przedramieniu",
+    "group": "zagadka"
+  },
+  {
+    "category": "condition",
+    "id": "hiddenPelvis",
+    "title": "Ukryte złamanie miednicy",
+    "group": "zagadka"
+  },
+  {
+    "category": "condition",
+    "id": "sweetBreath",
+    "title": "Głęboki oddech przy wysokiej glukozie",
+    "group": "zagadka"
+  },
+  {
+    "category": "condition",
+    "id": "panicBreath",
+    "title": "Hiperwentylacja",
+    "group": "medyczne"
+  },
+  {
+    "category": "condition",
+    "id": "colicBus",
+    "title": "Kolka nerkowa",
+    "group": "medyczne"
+  },
+  {
+    "category": "condition",
+    "id": "coughNight",
+    "title": "Napad kaszlu i duszności",
+    "group": "medyczne"
+  },
+  {
+    "category": "condition",
+    "id": "nightHypo",
+    "title": "Niska glukoza w nocy",
+    "group": "medyczne"
+  },
+  {
+    "category": "condition",
+    "id": "afterdropHut",
+    "title": "Wtórne wychłodzenie po ogrzaniu",
+    "group": "srodowisko"
+  },
+  {
+    "category": "condition",
+    "id": "steamBoiler",
+    "title": "Oparzenia parą i wdychanie dymu",
+    "group": "srodowisko"
+  },
+  {
+    "category": "condition",
+    "id": "crushedRibs",
+    "title": "Niestabilna klatka po przygnieceniu",
+    "group": "srodowisko"
+  },
+  {
+    "category": "condition",
+    "id": "sawSpleen",
+    "title": "Zdarcie skóry i ukryte krwawienie w brzuchu",
+    "group": "mieszane"
+  },
+  {
+    "category": "condition",
+    "id": "ridgeFall",
+    "title": "Rana głowy, miednica i palec",
+    "group": "mieszane"
+  },
+  {
+    "category": "condition",
+    "id": "blastFlail",
+    "title": "Niestabilna klatka, drzazga i oparzenie",
+    "group": "mieszane"
+  },
+  {
+    "category": "condition",
+    "id": "busCrash",
+    "title": "Żuchwa, oddech i ucisk w przedramieniu",
+    "group": "mieszane"
+  },
+  {
+    "category": "scenario",
+    "id": "bottleNeck",
+    "title": "Rozbita butelka w barze"
+  },
+  {
+    "category": "scenario",
+    "id": "wireGroin",
+    "title": "Zahaczenie o drut na budowie"
+  },
+  {
+    "category": "scenario",
+    "id": "rollerGlove",
+    "title": "Rękawica wciągnięta w walcarkę"
+  },
+  {
+    "category": "scenario",
+    "id": "ladderScalp",
+    "title": "Upadek z drabiny przy dachu"
+  },
+  {
+    "category": "scenario",
+    "id": "crashSkull",
+    "title": "Wypadek na hulajnodze elektrycznej"
+  },
+  {
+    "category": "scenario",
+    "id": "bikeSpleen",
+    "title": "Rowerzysta po zderzeniu z płotem"
+  },
+  {
+    "category": "scenario",
+    "id": "pelvisHorse",
+    "title": "Upadek z konia na rozległym polu"
+  },
+  {
+    "category": "scenario",
+    "id": "palletForearm",
+    "title": "Przygniecenie ręki paletą"
+  },
+  {
+    "category": "scenario",
+    "id": "blastRibs",
+    "title": "Uderzenie w klatkę po wybuchu gazu"
+  },
+  {
+    "category": "scenario",
+    "id": "knifeChest",
+    "title": "Niewielka rana po bójce"
+  },
+  {
+    "category": "scenario",
+    "id": "doorHands",
+    "title": "Drzwi chłodni i gorąca para"
+  },
+  {
+    "category": "scenario",
+    "id": "steamKitchen",
+    "title": "Drzazga i oparzenie w stolarni"
+  },
+  {
+    "category": "scenario",
+    "id": "cabinCold",
+    "title": "Wyniesiony z zaspy do chaty"
+  },
+  {
+    "category": "scenario",
+    "id": "sideColic",
+    "title": "Ból boku w poczekalni dworca"
+  },
+  {
+    "category": "scenario",
+    "id": "sugarHaze",
+    "title": "Zmęczony kierowca na stacji"
+  },
+  {
+    "category": "equipment",
+    "id": "junctionalTourniquet",
+    "title": "Staza węzłowa (pachwina)"
+  },
+  {
+    "category": "equipment",
+    "id": "neckPressureWrap",
+    "title": "Opaska uciskowa na szyję"
+  },
+  {
+    "category": "equipment",
+    "id": "samPelvicSling",
+    "title": "Pas miednicy SAM"
+  },
+  {
+    "category": "equipment",
+    "id": "fingerSplint",
+    "title": "Szyna na palec"
+  },
+  {
+    "category": "equipment",
+    "id": "nasalTampon",
+    "title": "Tampon do nosa"
+  },
+  {
+    "category": "equipment",
+    "id": "blanketXL",
+    "title": "Duży koc ratunkowy"
+  },
+  {
+    "category": "equipment",
+    "id": "closureStrips",
+    "title": "Paski zamykające ranę"
+  },
+  {
+    "category": "equipment",
+    "id": "traumaShears",
+    "title": "Nożyce ratownicze"
+  },
+  {
+    "category": "equipment",
+    "id": "headImmobilizer",
+    "title": "Stabilizator głowy"
+  },
+  {
+    "category": "equipment",
+    "id": "coldPack",
+    "title": "Chemiczny okład chłodzący"
+  },
+  {
+    "category": "equipment",
+    "id": "blisterDressing",
+    "title": "Opatrunek na pęcherze"
+  },
+  {
+    "category": "equipment",
+    "id": "ribSupportPad",
+    "title": "Pas stabilizujący żebra"
+  },
+  {
+    "category": "equipment",
+    "id": "jawBandage",
+    "title": "Bandaż unieruchamiający żuchwę"
+  },
+  {
+    "category": "equipment",
+    "id": "wideTourniquet",
+    "title": "Szeroka staza taktyczna"
+  },
+  {
+    "category": "equipment",
+    "id": "hemostaticXL",
+    "title": "Duża gaza hemostatyczna"
+  },
+  {
+    "category": "medicine",
+    "id": "diclofenac",
+    "title": "Diklofenak"
+  },
+  {
+    "category": "medicine",
+    "id": "tramadol",
+    "title": "Tramadol"
+  },
+  {
+    "category": "medicine",
+    "id": "midazolam",
+    "title": "Midazolam"
+  },
+  {
+    "category": "medicine",
+    "id": "inhaledAnalgesic",
+    "title": "Gaz przeciwbólowy do wdychania"
+  },
+  {
+    "category": "medicine",
+    "id": "dexamethasone",
+    "title": "Deksametazon"
+  },
+  {
+    "category": "medicine",
+    "id": "clemastine",
+    "title": "Klemastyna"
+  },
+  {
+    "category": "medicine",
+    "id": "glucoseDrink",
+    "title": "Napój glukozowy"
+  },
+  {
+    "category": "medicine",
+    "id": "ketorolac",
+    "title": "Ketorolak"
+  },
+  {
+    "category": "medicine",
+    "id": "drotaverine",
+    "title": "Drotaweryna"
+  },
+  {
+    "category": "medicine",
+    "id": "budesonide",
+    "title": "Budezonid"
+  },
+  {
+    "category": "guide",
+    "id": "r3-junctional",
+    "title": "Krwawienie węzłowe: gdzie staza nie pasuje"
+  },
+  {
+    "category": "guide",
+    "id": "r3-neck-groin",
+    "title": "Szyja i pachwina: kolejność działań"
+  },
+  {
+    "category": "guide",
+    "id": "r3-degloving",
+    "title": "Zdarcie skóry: staza nad raną"
+  },
+  {
+    "category": "guide",
+    "id": "r3-scalp-skull",
+    "title": "Rana głowy a uraz czaszki"
+  },
+  {
+    "category": "guide",
+    "id": "r3-spleen-delay",
+    "title": "Opóźnione krwawienie wewnętrzne"
+  },
+  {
+    "category": "guide",
+    "id": "r3-hidden-chest",
+    "title": "Ukryty krwiak w klatce"
+  },
+  {
+    "category": "guide",
+    "id": "r3-compartment",
+    "title": "Napięte przedramię: ból bez rany"
+  },
+  {
+    "category": "guide",
+    "id": "r3-flail-support",
+    "title": "Niestabilna klatka i pas stabilizujący"
+  },
+  {
+    "category": "guide",
+    "id": "r3-afterdrop",
+    "title": "Wtórne wychłodzenie"
+  },
+  {
+    "category": "guide",
+    "id": "r3-puzzle-clues",
+    "title": "Zagadki: jak czytać mylący opis"
+  },
+  {
+    "category": "guide",
+    "id": "r3-small-injuries",
+    "title": "Drobne urazy: kolejność i oszczędzanie zapasów"
+  },
+  {
+    "category": "guide",
+    "id": "r3-colic-vs-bleed",
+    "title": "Ból bez urazu: kolka i hiperwentylacja"
+  },
+  {
+    "category": "guide",
+    "id": "r3-analgesic-choice",
+    "title": "Wybór leku przeciwbólowego"
+  },
+  {
+    "category": "guide",
+    "id": "r3-sedation",
+    "title": "Uspokojenie i sedacja"
+  },
+  {
+    "category": "guide",
+    "id": "r3-supply-variants",
+    "title": "Warianty sprzętu i nożyce ratownicze"
+  }
+]

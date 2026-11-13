@@ -307,5 +307,80 @@ export const GUIDES = [
     "id": "complications",
     "title": "Komplikacje w trakcie interwencji",
     "text": "Na poziomach normalnym, trudnym i eksperckim stan poszkodowanego może się nagle zmienić także po wykonaniu właściwych czynności: założony sprzęt bywa zawodny, a pacjent reaguje nieprzewidywalnie. Każda komplikacja jest ogłaszana komunikatem i wpisem w dzienniku. Zatrzymaj się wtedy, oceń jeszcze raz miejsce, którego dotyczy, i sprawdź, czy wcześniejsze zabezpieczenie nadal działa — każdą da się opanować sprzętem i czynnościami z torby. Na koniec ocena podaje liczbę komplikacji i to, ile z nich opanowano; nie zmienia to maksymalnej liczby punktów. Na poziomie eksperckim monitor trzeba najpierw podłączyć, a większość urazów widać dopiero po zbadaniu okolicy."
+  },
+  {
+      "id": "r3-junctional",
+      "title": "Krwawienie węzłowe: gdzie staza nie pasuje",
+      "text": "Szyja i pachwina to miejsca, w których zwykła staza nie działa. W grze takie rany oznaczono jako węzłowe: zatrzymuje je tamponada gazą hemostatyczną, opatrunek uciskowy albo wyspecjalizowany sprzęt (opaska na szyję, staza węzłowa przy pachwinie). Zacznij od zabezpieczenia rany, dopiero potem wracaj do reszty badania. Sprzęt węzłowy działa tylko w swoim miejscu: opaska na szyję nie zadziała na pachwinie. To uproszczony balans rozgrywki, nie instrukcja."
+  },
+  {
+      "id": "r3-neck-groin",
+      "title": "Szyja i pachwina: kolejność działań",
+      "text": "Przy krwotoku z szyi lub pachwiny czas liczy się w sekundach. Wezwij ewakuację, zabezpiecz ranę, a dopiero potem podłączaj monitor i zakładaj IV. Rana szyi pogarsza także oddech, więc obserwuj saturację. W grze tego rodzaju rany krwawią silniej niż większość ran kończyn, ale zwykła gaza hemostatyczna redukuje krwawienie bardzo mocno."
+  },
+  {
+      "id": "r3-degloving",
+      "title": "Zdarcie skóry: staza nad raną",
+      "text": "Rozległe zdarcie skóry kończyny w grze krwawi jak duże naczynie. Zwykły opatrunek tylko spowalnia krwawienie, dlatego zakładasz stazę powyżej rany: na ramieniu lub przedramieniu. Szeroka staza taktyczna działa tak samo jak podstawowa, ale masz tylko jedną. Po założeniu stazy zajmij się pozostałymi urazami; staza nie leczy złamania ani bólu."
+  },
+  {
+      "id": "r3-scalp-skull",
+      "title": "Rana głowy a uraz czaszki",
+      "text": "Rany skóry głowy krwawią obficie, ale zwykle da się je opanować opatrunkiem. Jeśli w ranie widać zapadniętą kość, to w grze uraz czaszki: osłoń ranę bez ucisku, sprawdź źrenice i pilnuj oddechu. Ospałość jest sygnałem, że doustne leki nie będą bezpieczne. Wczesna ewakuacja jest równie ważna jak opatrunek."
+  },
+  {
+      "id": "r3-spleen-delay",
+      "title": "Opóźnione krwawienie wewnętrzne",
+      "text": "Niektóre urazy brzucha na początku wyglądają niewinnie. W grze stłuczenie śledziony może po zaniedbaniu przejść w aktywne krwawienie wewnętrzne. Badaj brzuch po każdym uderzeniu w bok lub tułów, nawet jeśli pacjent twierdzi, że nic mu nie jest. Krwawienia wewnętrznego nie zatrzyma opatrunek; wspierają je szybka ewakuacja i lek hamujący krwawienie."
+  },
+  {
+      "id": "r3-hidden-chest",
+      "title": "Ukryty krwiak w klatce",
+      "text": "Niewielka rana zewnętrzna nie mówi, co dzieje się w klatce. W grze ukryte krwawienie w klatce objawia się szybkim, płytkim oddechem, bladością i słabnącym tętnem. Opatrunek wentylowy nie pomoże, bo nie ma otwartej rany do uszczelnienia. Liczą się tlen, osłuchanie, kontrola parametrów i wczesna ewakuacja."
+  },
+  {
+      "id": "r3-compartment",
+      "title": "Napięte przedramię: ból bez rany",
+      "text": "Przygniecenie ręki może wywołać narastające napięcie tkanek, mimo braku widocznej rany. W grze objawia się twardym, bolesnym przedramieniem i drętwieniem palców. Zimny okład i środek przeciwbólowy pomagają, ale zasadniczym działaniem jest wczesna ewakuacja. Nie zakładaj dodatkowych ciasnych opasek."
+  },
+  {
+      "id": "r3-flail-support",
+      "title": "Niestabilna klatka i pas stabilizujący",
+      "text": "Gdy fragment klatki porusza się przeciwnie do oddechu, oddychanie staje się płytkie i bolesne. Pas stabilizujący żebra poprawia oddychanie i zmniejsza ból w grze, a środek przeciwbólowy dodatkowo ułatwia głębszy oddech. Tlen pomaga, ale nie rozwiązuje przyczyny. Jeśli pas jest na wyczerpaniu, zachowaj go dla pacjenta, który naprawdę go potrzebuje."
+  },
+  {
+      "id": "r3-afterdrop",
+      "title": "Wtórne wychłodzenie",
+      "text": "Pacjent po wejściu do ciepła czuje się lepiej, ale jego temperatura nadal może spadać. W grze takie wychłodzenie wymaga ciągłego ogrzewania: koc, pakiet ogrzewający i duży koc ratunkowy działają przez ograniczony czas. Co kilka minut sprawdzaj temperaturę termometrem. Sama poprawa samopoczucia nie jest dowodem, że pacjent jest bezpieczny."
+  },
+  {
+      "id": "r3-puzzle-clues",
+      "title": "Zagadki: jak czytać mylący opis",
+      "text": "W stanach z kategorii zagadka opis zdarzenia celowo prowadzi na fałszywy trop. Zwróć uwagę na wywiad, pytania pacjenta i zachowanie otoczenia. Badaj wszystkie okolice wskazane przez objawy, nawet jeśli pacjent twierdzi, że nic nie boli. Nagłe pogorszenie po upływie terminu oznacza, że przyczyna nadal trwa; wróć do badania."
+  },
+  {
+      "id": "r3-small-injuries",
+      "title": "Drobne urazy: kolejność i oszczędzanie zapasów",
+      "text": "Drobne urazy nie zagrażają życiu, ale zużywają czas i sprzęt. Najpierw zabezpiecz krwawienie, potem unieruchom złamany palec, na koniec osłoń oparzenie lub otarcie. Paski zamykające ranę, tampon do nosa i szyna na palec mają mały zapas, więc nie marnuj ich na rany, które lepiej opatrzyć zwykłym opatrunkiem."
+  },
+  {
+      "id": "r3-colic-vs-bleed",
+      "title": "Ból bez urazu: kolka i hiperwentylacja",
+      "text": "Nie każdy silny ból oznacza krwawienie. Kolka nerkowa i hiperwentylacja w grze nie powodują utraty krwi, więc sprzęt do krwawień nie pomoże. Lek rozkurczowy lub przeciwbólowy zmniejsza ból, a rozmowa, wywiad i pomiar oddechu pomagają przy szybkim oddychaniu. Najważniejsze jest wykluczenie groźniejszych przyczyn przed uznaniem objawów za niegroźne."
+  },
+  {
+      "id": "r3-analgesic-choice",
+      "title": "Wybór leku przeciwbólowego",
+      "text": "Leki z grupy niesteroidowych (ibuprofen, diklofenak, ketorolak) zwiększają w grze tempo krwawienia, więc przy aktywnym krwawieniu wybieraj inne. Tramadol działa jak słaby opioid: lekko obciąża oddech i można go odwrócić naloksonem. Gaz do wdychania działa szybko i krótko. Kolejne porcje zawsze się kumulują."
+  },
+  {
+      "id": "r3-sedation",
+      "title": "Uspokojenie i sedacja",
+      "text": "Lek uspokajający w grze łagodzi stan lęku i napięcia, ale usypia i obciąża oddech. Nie podawaj go pacjentowi z zaburzonym oddechem bez bardzo dobrego powodu. Środek działa szybko i krótko, więc po podaniu ponownie oceń oddech i świadomość. Razem z lekami opioidowymi jego działanie się sumuje."
+  },
+  {
+      "id": "r3-supply-variants",
+      "title": "Warianty sprzętu i nożyce ratownicze",
+      "text": "W torbie pojawiły się warianty znanych elementów: szeroka staza, duża gaza hemostatyczna, pas miednicy SAM i opaska uciskowa na szyję. Działają jak odpowiedniki, ale mają różne zapasy i miejsca zastosowania. Nożyce ratownicze odsłaniają widoczne zmiany w wybranej okolicy, nie ujawniają urazów ukrytych i nie zastępują badania."
   }
 ];

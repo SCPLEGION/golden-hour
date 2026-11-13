@@ -31,9 +31,9 @@ test('expansion manifests account for exactly 100 concrete catalog additions',()
   }
 });
 
-test('all 42 cases reference actual body parts and every added injury is reachable',()=>{
-  assert.equal(SCENARIOS.length,42);assert.equal(Object.keys(INJURIES).length,57); // 45 + 12 patient-state injuries (conditions.js)
-  assert.equal(new Set(SCENARIOS.map(c=>c.id)).size,42);
+test('all 57 cases reference actual body parts and every added injury is reachable',()=>{
+  assert.equal(SCENARIOS.length,57);assert.equal(Object.keys(INJURIES).length,77); // 45 + 12 patient-state injuries (conditions.js) + 20 from round 3
+  assert.equal(new Set(SCENARIOS.map(c=>c.id)).size,57);
   const parts=new Set(BODY_PARTS.map(p=>p.id));
   for(const c of SCENARIOS){
     assert.ok(c.title&&c.scene&&c.history&&c.lesson,c.id);assert.ok(c.injuries.length,c.id);

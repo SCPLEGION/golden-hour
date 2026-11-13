@@ -52,6 +52,18 @@ export function useItem(g,id){
   if(it.requires==='iv'&&!ivSiteFor(g,site))g=act(g,'iv',site.startsWith('left')?'leftForearm':'rightForearm');
   return act(g,id,site);
 }
+// Round 3 (0.10): an injury still untreated that carries a tag outside the long-standing ones gets the first stabilizing item that
+// lists the tag in `treatsTags` (rib support pad, jaw bandage, cold pack ...). Generic: no ids.
+const BASIC=new Set(['external','wound','massive','amputation','burn','bruise','sprain','fracture','foreignBody','eyes','airwayFluid','crush','internal','spine','chest','headTrauma','airway','bronchospasm','anaphylaxis','nausea','poisoning','cold','heat','dehydration','glucoseLow','opioidOd','neuro']);
+function nicheCare(g){
+  for(const i of [...g.injuries]){
+    if(Object.keys(i.treatments||{}).length||g.status!=='active')continue;
+    const niche=tagsOf(i).filter(t=>!BASIC.has(t));
+    const it=niche.length&&ITEMS.find(it=>it.effect==='stabilize'&&it.treatsTags?.some(t=>niche.includes(t))&&g.supplies[it.id]>0&&(!it.regions||matchesRegion(it.regions,i.part)));
+    if(it)g=act(g,it.id,i.part,i.id);
+  }
+  return g;
+}
 function woundCare(g,injury){
   const d=INJURIES[injury.type],limb=bodyPart(injury.part).limb;
   if(d.tags.includes('massive')&&limb)return act(g,'tourniquet',d.tags.includes('amputation')?proximalTourniquetSite(injury.part):injury.part);
@@ -131,6 +143,7 @@ function referenceCarePolicy(g,{trace=null}={}){
   if(has(g,'foreignBody'))g=useItem(g,'impaledSupport');
   // P4: the binder acts only on the pelvis (hidden pelvic loss, pelvic crush/internal bleeding).
   if(g.injuries.some(i=>tagsOf(i).some(t=>t==='internal'||t==='crush'||t==='fracture')&&i.part==='pelvis'))g=useItem(g,'pelvicBinder');
+  g=nicheCare(g);
   for(const i of g.injuries.filter(i=>tagsOf(i).includes('fracture')&&bodyPart(i.part).limb))g=act(g,g.supplies.splint>0?'splint':'armSling',i.part,g.supplies.splint>0?null:i.id);
   const bleeding=has(g,'internal')||has(g,'massive')||clinicalSnapshot(g).lossFrac>.2,arm=ivArm(g);
   if(bleeding&&arm){g=act(g,'iv',arm);g=act(g,'txa',arm);if(circulation(g)<75)g=act(g,'fluid',arm);}

@@ -18,7 +18,13 @@ export const INJURY_PHYSIOLOGY = {
   abrasion:r(CAPILLARY,5),
   // Burns do not bleed: they leak plasma and lose heat by %TBSA (BURNS).
   thermalBurn:NONE, chemicalBurn:NONE, electricalBurn:NONE, flashBurn:NONE,
-  amputationHand:r(ARTERIAL,120), amputationForearm:r(ARTERIAL,180), amputationFoot:r(ARTERIAL,140), amputationShin:r(ARTERIAL,250)
+  amputationHand:r(ARTERIAL,120), amputationForearm:r(ARTERIAL,180), amputationFoot:r(ARTERIAL,140), amputationShin:r(ARTERIAL,250),
+  // Round 3 (0.10): junctional bleeds sit where a tourniquet does not fit (neck, groin); hidden bleeds are capped contained losses.
+  fingerFracture:{...NONE,bone:true}, jawFracture:NONE, burnBlister:NONE, deepSplinter:r(VENOUS,4), nailAvulsion:r(CAPILLARY,3),
+  neckLaceration:r(MIXED,90), groinBleed:r(MIXED,100), degloving:r(MIXED,80), scalpAvulsion:r(VENOUS,45), openSkullFracture:r(VENOUS,30),
+  spleenContusion:{vessel:'internal',pExp:1,rate:8,capMl:500}, spleenRupture:{vessel:'internal',pExp:1.2,rate:60,capMl:2200},
+  tamponadeBleed:{vessel:'internal',pExp:1.2,rate:30,capMl:1400}, compartmentSyndrome:{vessel:'internal',pExp:.5,rate:10,capMl:450},
+  flailChest:{vessel:'internal',pExp:1,rate:12,capMl:600}, pelvicFracture:{vessel:'internal',pExp:.8,rate:45,capMl:2200}
 };
 // Burns (P4, physio-thermal.js): `frac` = burned share of the injured segment [at onset, fully progressed] (TBSA% =
 // TBSA[segment]·frac), `tauS` = progression τ until an item in `stoppedBy` is applied to the wound (chemical burns keep
@@ -27,7 +33,8 @@ export const BURNS = {
   thermalBurn:{frac:[.6,.6]},
   flashBurn:{frac:[.5,.5],superficial:true},
   electricalBurn:{frac:[.05,.05]},
-  chemicalBurn:{frac:[.3,.9],tauS:600,stoppedBy:['salineIrrigation']}
+  chemicalBurn:{frac:[.3,.9],tauS:600,stoppedBy:['salineIrrigation']},
+  burnBlister:{frac:[.1,.1],superficial:true}
 };
 export const segmentTbsa=part=>TBSA[part]??TBSA[String(part).replace(/^(left|right)/,'')]??0;
 // Respiratory physiology (P2, simulation/physio-respiration.js). Components, each [at onset, fully progressed]:
@@ -53,7 +60,10 @@ export const RESPIRATORY = {
   opioidOverdose:{obstruct:[.752,.65],depress:[.67,.5],reliefTag:'opioid',tauS:600},
   postIctal:{obstruct:[.596,.5],aa:[9.2,12],tauS:600},
   headBleedSevere:{obstruct:[.7,.45],tauS:600}, strokeSevere:{obstruct:[.72,.45],tauS:600},
-  spinalCordInjury:{va:[.7,.5],tauS:600}                                       // diaphragm weakness
+  spinalCordInjury:{va:[.7,.5],tauS:600},                                      // diaphragm weakness
+  // Round 3: concealed chest bleeding, unstable chest wall (a rib support pad relieves it) and deep fast breathing at very high glucose.
+  tamponadeBleed:{va:[.93,.8],aa:[12,38],tauS:600}, flailChest:{painVa:.8,va:[.88,.78],aa:[12,18],tauS:480},
+  ketoacidosis:{aa:[10,16],va:[.9,.78],tauS:1200}
 };
 // Circulatory components (P3): anaphylaxis leaks plasma (mL/min for the 75 kg reference, scaled by EBV) and lowers SVR
 // (target × svr); the `relievesTag` drug (adrenaline) stops both in proportion to its effect. An injury's `scale`
@@ -67,7 +77,8 @@ export const CIRCULATORY = {
 export const NEURO_INJURY = {
   postIctal:{gcs:[4,0],tauS:900},   // R: post-ictal confusion clears over ~15–30 min
   headInjury:{gcs:[1,1]},           // repeats questions: confused (GCS 14)
-  strokeSigns:{gcs:[1,1]}           // slurred speech
+  strokeSigns:{gcs:[1,1]},          // slurred speech
+  openSkullFracture:{gcs:[2,2]}     // drowsy: GCS 13, no oral drugs
 };
 const RESP_KEYS=['obstruct','va','depress','aa','shunt'];
 const validResp=r=>RESP_KEYS.every(k=>r[k]===undefined||(Array.isArray(r[k])&&r[k].length===2&&r[k].every(n=>Number.isFinite(n)&&n>=0&&(k==='aa'||n<=1))))&&(r.painVa===undefined||(r.painVa>0&&r.painVa<=1))&&(r.tauS===undefined||r.tauS>=5);

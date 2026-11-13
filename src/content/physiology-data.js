@@ -114,7 +114,18 @@ export const PHARMACOLOGY = {
   // G: buccal gel absorbs faster than a tablet; glucose is consumed (short effective half-life).
   glucoseGel:{half:'medium',ke0HalfS:60,absHalfS:180,lagS:30,channels:{glucose:{linear:true,emax:2.5},relief:{ec50:.3,n:1.5}}},
   chlorphenamine:{half:'veryLong',ke0HalfS:900,channels:{analgesia:{ec50:.4,n:1.5},respDepression:{ec50:2,n:2},sedation:{emax:3,ec50:2,n:2}}},
-  lidocaineSpray:{half:'short',ke0HalfS:60,channels:{analgesia:{ec50:.35,n:1.5}}}
+  lidocaineSpray:{half:'short',ke0HalfS:60,channels:{analgesia:{ec50:.35,n:1.5}}},
+  // Round 3 (0.10): variants built from the existing channels (no new mechanics).
+  diclofenac:{half:'long',ke0HalfS:600,channels:{analgesia:{ec50:.4,n:1.5},bleeding:{ec50:.4,n:1}}},
+  ketorolac:{half:'long',ke0HalfS:300,channels:{analgesia:{ec50:.4,n:1.5},bleeding:{ec50:.4,n:1}}},
+  tramadol:{half:'long',ke0HalfS:900,channels:{analgesia:{ec50:.4,n:1.5},respDepression:{ec50:2.5,n:2},sedation:{emax:3,ec50:2.4,n:2}}},
+  midazolam:{half:'short',ke0HalfS:120,channels:{relief:{ec50:.3,n:1.5},sedation:{emax:6,ec50:2,n:2.5},respDepression:{ec50:2,n:2}}},
+  inhaledAnalgesic:{half:'veryShort',ke0HalfS:45,channels:{analgesia:{ec50:.35,n:1.5},sedation:{emax:2,ec50:2,n:2}}},
+  dexamethasone:{half:'veryLong',ke0HalfS:3600,lagS:5400,channels:{oxygen:{ec50:.6,n:3},analgesia:{ec50:.6,n:3}}},
+  clemastine:{half:'veryLong',ke0HalfS:900,channels:{analgesia:{ec50:.4,n:1.5},respDepression:{ec50:2,n:2},sedation:{emax:3,ec50:2,n:2}}},
+  glucoseDrink:{half:'medium',ke0HalfS:90,absHalfS:240,lagS:60,channels:{glucose:{linear:true,emax:2},relief:{ec50:.3,n:1.5}}},
+  drotaverine:{half:'long',ke0HalfS:600,channels:{relief:{ec50:.3,n:1.5},analgesia:{ec50:.5,n:1.5}}},
+  budesonide:{half:'veryLong',ke0HalfS:1200,channels:{relief:{ec50:.3,n:1.5}}}
 };
 export const PK_TUNING = {
   activeFrac:.1,            // "active" = first channel above 10% of its Emax

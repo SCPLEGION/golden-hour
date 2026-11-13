@@ -1,6 +1,6 @@
 # Golden Hour — checkpoint projektu
 
-Ostatnia aktualizacja: 2026-11-11 · wersja aplikacji: 0.9.0
+Ostatnia aktualizacja: 2026-11-13 · wersja aplikacji: 0.10.0
 
 ## Co to jest
 
@@ -18,7 +18,7 @@ To fikcyjna symulacja gry, nie instruktaż ani narzędzie kliniczne. Dawki, wyni
 - Monitor dynamiczny: puls, ciśnienie (NIBP co 3 min lub na żądanie), saturacja (z utratą sygnału przy złym ukrwieniu), oddech, temperatura, GCS/AVPU i ból; wykresy pokazują historię do 60 sekund gry.
 - Zegar ma pauzę i tempa 1×/2×/4×. Procedura, poradnik i ukryta karta zatrzymują automatyczne tykanie. Czynność wykonana przez gracza nadal zużywa czas symulacji.
 - Torba ma wyszukiwanie i filtry dostępności/dopasowania. Aktualizacje czasu nie odbierają fokusu polu wyszukiwania.
-- Katalog obejmuje 57 urazów, 42 zgłoszenia (+14 zgłoszeń wbudowanych w stany poszkodowanego), 51 stanów poszkodowanego w 6 kategoriach, 40 elementów wyposażenia, 16 leków i 49 poradników. Rozszerzenia: 100 pozycji ([lista](docs/EXPANSION-100.md)) oraz runda 2, 24 pozycje ([lista](docs/EXPANSION-ROUND2.md)).
+- Katalog obejmuje 77 urazów, 57 zgłoszeń (+39 zgłoszeń wbudowanych w stany poszkodowanego), 76 stanów poszkodowanego w 6 kategoriach, 55 elementów wyposażenia, 26 leków i 64 poradniki. Rozszerzenia: 100 pozycji ([lista](docs/EXPANSION-100.md)), runda 2, 24 pozycje ([lista](docs/EXPANSION-ROUND2.md)) oraz runda 3, 100 pozycji ([lista](docs/EXPANSION-ROUND3.md), manifest `docs/expansion-round3.json`).
 - Zapis lokalny zachowuje zgodność z wcześniejszymi stanami gry.
 
 ## Uruchomienie
@@ -47,6 +47,15 @@ npm test
 
 Dodawanie treści zaczynaj od katalogów i testu referencji/osiągalności. Nowy efekt mechaniczny dodawaj do rejestru symulacji; nie umieszczaj reguł leczenia w komponencie UI.
 
+## Dodane w 0.10
+
+- **Runda 3: dokładnie 100 nowych pozycji katalogu** (bez zmian w silniku poza jednym wpisem tekstowym w `assess`): 20 urazów, 25 stanów poszkodowanego (po 3–5 w każdej kategorii, w tym 5 zagadek z mylącym opisem), 15 zgłoszeń, 15 elementów sprzętu, 10 leków (profile w `PHARMACOLOGY`) i 15 poradników. Lista id: `docs/EXPANSION-ROUND3.md`, manifest: `docs/expansion-round3.json`, test: `tests/expansion3.test.js` (~3 s).
+- **Krwawienia węzłowe** (szyja, pachwina): tag `junctional`, `massive` bez możliwości stazy — zatrzymuje je tamponada/opatrunek albo sprzęt ograniczony tagiem i regionem (`neckPressureWrap`, `junctionalTourniquet`).
+- **Ukryte i opóźnione urazy:** `spleenContusion` → `spleenRupture` (konsekwencja `worsen` w protokole), `tamponadeBleed` (ukryty krwiak w klatce, tabela `RESPIRATORY`), `compartmentSyndrome`, `pelvicFracture` (pas `pelvicBinder`/`samPelvicSling`), `flailChest` (pas `ribSupportPad` z `oxygenRelief` zmniejsza składowe oddechowe).
+- **Pominięte lub zastąpione:** odma prężna (brak sprzętu do odbarczenia) → niestabilna klatka; rurka nosowo-gardłowa (tolerancja rurki jest wpisana w silniku na stałe) → warianty stazy, gazy, pasa miednicy; węgiel aktywny i magnez (brak kanału) → ketorolak, drotaweryna, budezonid.
+- **Zmiany generyczne:** `referenceCare` (tests/support.js) leczy jeszcze nieopatrzony uraz z tagiem spoza dotychczasowych pierwszym pasującym elementem `stabilize` (`treatsTags`); asesment `exposure` (nożyce) i odczyt glukometru przy tagu `glucoseHigh` w `effects.js`.
+- Testy: liczby w `expansion.test.js` (57 zgłoszeń, 77 urazów); `perf.test.js` używa ziarna 4 (większa pula dodatkowych urazów zmieniła los ziarna 3).
+
 ## Dodane w 0.9
 
 - **Trudny przebudowany** (gracze uznali go za za łatwy): krwawienie ×1,5, połowa sprzętu, terminy protokołu ×0,6, 2–3 dodatkowe obrażenia, dojazd 25–30 min (1500–1800 s), mnożnik punktów ×1,3, częste komplikacje.
@@ -60,7 +69,7 @@ Dodawanie treści zaczynaj od katalogów i testu referencji/osiągalności. Nowy
 
 - Minigry: wkłucie IV, staza, RKO, tamponada i opatrunek wentylowy klatki (z trybem bez minigier).
 - Ciało z 31 segmentów (stawy jako segmenty pośrednie) i amputacje urazowe z rysowaniem kikuta.
-- 51 stanów poszkodowanego w 6 kategoriach, z ukrytym protokołem kroków i częścią oceny „Protokół”.
+- 76 stanów poszkodowanego w 6 kategoriach, z ukrytym protokołem kroków i częścią oceny „Protokół”.
 - Fizjologia w realnych jednostkach, fazy P0–P4: krążenie w mL z baroreflexem i klasami ATLS, utlenowanie (FiO₂, PaCO₂, przeciek, Severinghaus), leki PK/PD z kumulacją, bilans cieplny i środowisko, glukoza w mmol/l, pełne GCS/AVPU, triada śmierci (mleczany, pH, krzepliwość), skrzep i ponowne krwawienie przy wzroście ciśnienia, realne tempa krwawień, oparzenia wg %TBSA, ocena przekazania z utratą krwi, SpO₂, temperaturą, GCS i mleczanami.
 - Taktyczny HUD: monitor na żywo, panel podtrzymania (butla, worki, fazy leków), znaczniki zabezpieczeń.
 
@@ -92,6 +101,6 @@ Nie ma podłączonego backendu, integracji FiveM, kont użytkownika ani usług z
 ## Ostatnia weryfikacja checkpointu
 
 - `npm run check` — zaliczono, 61 modułów.
-- `npm test` — zaliczono, 208 testów w 24 plikach (~23 s przy uruchamianiu równoległym); wydajność ~255 ms / 20 000 ticków (limit 400).
-- Losowe ziarna (wszystkie scenariusze i stany, `referenceCare`): zgony łatwy 0%, normalny 0%, trudny 0%, ekspert 9%.
+- `npm test` — zaliczono, 220 testów w 25 plikach (~28 s przy uruchamianiu równoległym); test wydajności mieści się w limicie 400 ms na 20 000 ticków.
+- Losowe ziarna (wszystkie scenariusze i stany, `referenceCare`): zgony łatwy 0%, normalny 0%, trudny 0%, ekspert 7% (po rundzie 3; przegrywają m.in. `§quietSpleen`, `§hiddenPelvis`, `§sawSpleen`, `§ridgeFall`, `§coughNight`). Zaniedbanie (transport only): normal 28%, trudny 59%, ekspert 79%.
 - Kontrola przeglądarkowa 0.9 — zrzuty z Electron 40 offscreen (bez Playwright) z serwera :5173: start eksperta (monitor „Niepodłączony”, siedem kafelków „—”, widoczne tylko masywne krwawienie, „Ekspert” w listach wyboru) oraz komunikat „Komplikacja: Wenflon wysunął się z żyły…” podczas biegu zegara z przerysowaną sceną. Skrypty Playwright (`tests/browser_*.py`) nadal nieuruchomione.

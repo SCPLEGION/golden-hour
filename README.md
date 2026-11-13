@@ -1,6 +1,6 @@
 # Golden Hour — Złota godzina
 
-Golden Hour to przeglądarkowa symulacja ratownictwa w terenie. Poszkodowany leży na poziomym stole zabiegowym, a ty go badasz, leczysz prawdziwym sprzętem z torby i utrzymujesz przy życiu do przyjazdu ewakuacji. Gra modeluje fizjologię w rzeczywistych jednostkach: objętość krwi w mL, klasy krwotoku, SpO₂ wynikające z wentylacji i przecieku płucnego, kinetykę leków oraz temperaturę ciała. Ciało ma 31 segmentów, w tym amputacje. Sześć kategorii wezwań prowadzi do 51 stanów pacjenta, a tryb pełny proceduralny losuje cały przypadek. Minigry obejmują wkłucie IV, opaskę uciskową, RKO, tamponadę rany i uszczelnienie klatki piersiowej. Poziomy trudności wahają się od Łatwego do Eksperta, a w trakcie dyżuru mogą pojawić się powikłania.
+Golden Hour to przeglądarkowa symulacja ratownictwa w terenie. Poszkodowany leży na poziomym stole zabiegowym, a ty go badasz, leczysz prawdziwym sprzętem z torby i utrzymujesz przy życiu do przyjazdu ewakuacji. Gra modeluje fizjologię w rzeczywistych jednostkach: objętość krwi w mL, klasy krwotoku, SpO₂ wynikające z wentylacji i przecieku płucnego, kinetykę leków oraz temperaturę ciała. Ciało ma 31 segmentów, w tym amputacje. Sześć kategorii wezwań prowadzi do 76 stanów pacjenta, a tryb pełny proceduralny losuje cały przypadek. Minigry obejmują wkłucie IV, opaskę uciskową, RKO, tamponadę rany i uszczelnienie klatki piersiowej. Poziomy trudności wahają się od Łatwego do Eksperta, a w trakcie dyżuru mogą pojawić się powikłania.
 
 > **To gra i fikcyjny model — nie jest instrukcją medyczną ani narzędziem klinicznym. W prawdziwym zagrożeniu dzwoń na 112.**
 
@@ -75,7 +75,7 @@ Geometria i balans minigry są w `src/content/procedures.js`, wynik liczy `src/s
 
 ## Symulacja na żywo i rozszerzenie zawartości (0.5)
 
-Gra zawiera dokładnie 100 nowych wpisów: 25 urazów, 25 zgłoszeń, 20 elementów wyposażenia, 10 leków i 20 tematów poradnika. Runda 2 dodała 6 urazów, 6 zgłoszeń, 4 elementy sprzętu, 2 leki i 6 poradników ([lista](docs/EXPANSION-ROUND2.md)). [Lista wszystkich dodatków](docs/EXPANSION-100.md) i maszynowe manifesty pokazują stabilne identyfikatory oraz ich powiązanie z katalogami. Monitor gromadzi trend z ostatnich 60 sekund, a fizjologia reaguje na urazy, krążenie, leki i wsparcie. Moduły `src/simulation/realtime.js`, `monitor.js` i `modifiers.js` oddzielają zegar, historię pomiarów i modyfikatory od interfejsu.
+Gra zawiera dokładnie 100 nowych wpisów: 25 urazów, 25 zgłoszeń, 20 elementów wyposażenia, 10 leków i 20 tematów poradnika. Runda 2 dodała 6 urazów, 6 zgłoszeń, 4 elementy sprzętu, 2 leki i 6 poradników ([lista](docs/EXPANSION-ROUND2.md)). Runda 3 (0.10) dodała 20 urazów, 25 stanów poszkodowanego, 15 zgłoszeń, 15 elementów sprzętu, 10 leków i 15 poradników ([lista](docs/EXPANSION-ROUND3.md)). [Lista wszystkich dodatków](docs/EXPANSION-100.md) i maszynowe manifesty pokazują stabilne identyfikatory oraz ich powiązanie z katalogami. Monitor gromadzi trend z ostatnich 60 sekund, a fizjologia reaguje na urazy, krążenie, leki i wsparcie. Moduły `src/simulation/realtime.js`, `monitor.js` i `modifiers.js` oddzielają zegar, historię pomiarów i modyfikatory od interfejsu.
 
 ## Tryb pełny proceduralny i trudność (0.8)
 

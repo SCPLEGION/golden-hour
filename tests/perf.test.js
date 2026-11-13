@@ -17,7 +17,7 @@ test('performance: 20 000 physiology ticks take under 400 ms',()=>{
 });
 
 test('determinism: same seed and actions give identical states; ticks never use Math.random',()=>{
-  const play=()=>{let g=createGame(index('workshop'),seeded(),{difficulty:'hard'});g=act(g,'transport');g=advanceTime(g,40);g=act(g,'tourniquet','rightLeg');g=act(g,'iv','leftArm');g=act(g,'fluid','leftArm');for(let i=0;i<5;i++)g=respondToComplications(advanceTime(g,120));return g;};
+  const play=()=>{let g=createGame(index('workshop'),seeded(4),{difficulty:'hard'});g=act(g,'transport');g=advanceTime(g,40);g=act(g,'tourniquet','rightLeg');g=act(g,'iv','leftArm');g=act(g,'fluid','leftArm');for(let i=0;i<5;i++)g=respondToComplications(advanceTime(g,120));return g;};
   const original=Math.random;
   Math.random=()=>{throw new Error('Math.random used in the simulation');};
   try{const a=play(),b=play();assert.deepEqual(a,b);assert.deepEqual(a.monitorHistory,b.monitorHistory);assert.ok(new Set(a.monitorHistory.map(v=>v.pulse)).size>1,'noise still varies');assert.ok(a.complications.log.length>0,'the seeded complication stream ran');}
